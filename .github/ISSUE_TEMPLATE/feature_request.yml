@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest something Etyma should be able to do.
+labels: [enhancement, needs triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Etyma keeps its API deliberately small. The most useful requests describe the
+        problem you hit rather than the API you would like — the second is often the part
+        we can improve on.
+
+        Some things are explicit non-goals for now: adapters for other frameworks, a CMS
+        integration, translation management UI, automatic translation, and anything needing
+        a compiler or code generator. See the README's non-goals before opening one of
+        those.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and where does Etyma get in the way?
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do today
+      description: The workaround, if you have one. This tells us how much the gap costs.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      description: Optional. A sketch of the API, or just a shape.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Which layer would it belong to?
+      options:
+        - '@etyma/core — portable, no framework'
+        - '@etyma/angular — Angular bindings'
+        - '@etyma/analog — routing, SSR and SEO'
+        - Tooling or documentation
+        - Not sure
+    validations:
+      required: true

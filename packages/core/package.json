@@ -1,0 +1,57 @@
+{
+  "name": "@etyma/core",
+  "version": "0.0.0",
+  "description": "Framework-agnostic internationalization engine for Etyma: JSON catalogs, MessageFormat 2 formatting, locale routing and lazy catalog loading.",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "messageformat",
+    "mf2",
+    "intl"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andersseen/etyma.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Andersseen/etyma/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/Andersseen/etyma/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.lib.json",
+    "dev": "tsc --project tsconfig.lib.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "messageformat": "4.0.0"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

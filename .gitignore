@@ -1,0 +1,51 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+.angular/
+.nitro/
+.output/
+.vinxi/
+*.tsbuildinfo
+
+# task caches
+.turbo/
+.vite/
+node_modules/.cache/
+
+# test output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# cloudflare / wrangler
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# compatibility fixtures install their own trees
+tools/compat/*/node_modules/
+tools/compat/*/package-lock.json
+tools/compat/*/dist/
+tools/compat/.tarballs/
+
+# editors & os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# local env
+.env
+.env.*
+!.env.example
+
+# tsc scratch output from the spec project
+dist-spec/

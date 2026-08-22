@@ -1,0 +1,4 @@
+{
+  "nav": { "docs": "Documentación" },
+  "footer": { "rights": "Licencia MIT. {$year :number useGrouping=never}" }
+}

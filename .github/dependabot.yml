@@ -1,0 +1,62 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      # One pull request per ecosystem rather than per package: Angular releases fifteen
+      # packages at once, and reviewing them separately means fifteen red CI runs.
+      angular:
+        patterns: ['@angular/*', '@angular-eslint/*', 'ng-packagr']
+      analog:
+        patterns: ['@analogjs/*']
+      tooling:
+        patterns:
+          - eslint
+          - '@eslint/*'
+          - typescript-eslint
+          - prettier
+          - turbo
+          - vitest
+          - vite
+          - '@vitest/*'
+          - publint
+          - '@arethetypeswrong/*'
+          - '@changesets/*'
+    ignore:
+      # Angular 21 is the build baseline: publishing partial declarations from a newer
+      # compiler and claiming Angular 21 support is exactly the mistake the compatibility
+      # fixtures exist to catch. Consumers on 22 are covered by those fixtures instead.
+      - dependency-name: '@angular/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: ng-packagr
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /tools/compat/angular-21
+    schedule:
+      interval: monthly
+    ignore:
+      - dependency-name: '@angular/*'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /tools/compat/angular-22
+    schedule:
+      interval: monthly
+    ignore:
+      - dependency-name: '@angular/*'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']

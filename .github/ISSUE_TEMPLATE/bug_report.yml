@@ -1,0 +1,100 @@
+name: Bug report
+description: Something in Etyma does not behave the way it says it does.
+labels: [bug, needs triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Etyma is alpha software — a clear report is genuinely
+        the most useful thing you can send.
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: Which package does the problem appear in?
+      multiple: true
+      options:
+        - '@etyma/core'
+        - '@etyma/angular'
+        - '@etyma/analog'
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Etyma version
+      placeholder: 0.0.1
+    validations:
+      required: true
+
+  - type: input
+    id: angular
+    attributes:
+      label: Angular version
+      placeholder: 21.2.0
+    validations:
+      required: true
+
+  - type: input
+    id: analog
+    attributes:
+      label: AnalogJS version
+      description: Leave blank if you are not using Analog.
+      placeholder: 2.7.0
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where does it happen?
+      multiple: true
+      options:
+        - Browser
+        - Server rendering
+        - During hydration
+        - Build time
+        - Cloudflare Workers or Pages
+        - Tests
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: >-
+        Steps, or a link to a minimal repository. Where the URL matters, please give the
+        exact path — locale routing bugs are almost always about a specific URL shape.
+      placeholder: |
+        1. Visit /es/docs/button
+        2. Click the language switcher
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: catalog
+    attributes:
+      label: The messages involved
+      description: The relevant part of your catalog, if the problem is about a message.
+      render: json
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: I am using Angular 21 or newer. Etyma does not support Angular 20 or below.
+          required: true

@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A push that supersedes another cancels it: a pull request's third force-push should not
+# wait behind the first two. Pushes to main are never cancelled - every commit on the
+# release branch gets a verdict of its own.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Read-only. Nothing in CI writes to the repository, publishes, or deploys.
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  DO_NOT_TRACK: '1'
+
+jobs:
+  quality:
+    name: Format, lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Third-party actions are pinned to the commit each release tag pointed at, so a
+      # re-tagged version cannot change what runs here. The trailing comment is the version
+      # a human reads, and what Dependabot updates.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore the Turborepo cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
+      - name: Formatting
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Unit tests
+        run: pnpm run test
+
+      - name: Build
+        run: pnpm run build
+
+  packages:
+    name: Package validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # publint, are-the-types-wrong, and assertions about the packed tarballs. Everything
+      # runs against `pnpm pack` output rather than the source tree, because that is where
+      # a broken `exports` map or an unrewritten `workspace:` range becomes visible.
+      - name: Validate the publishable packages
+        run: pnpm run package:check
+
+  compat:
+    name: Angular ${{ matrix.angular }} consumer
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        angular: ['21', '22']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Builds a clean application against the packed tarballs, with npm, outside the
+      # workspace, so nothing resolves through a symlink. Angular 22 brings TypeScript 6
+      # with it, which is the only place the published declarations meet a compiler a major
+      # version newer than the one that wrote them.
+      - name: Build the compatibility fixture
+        run: pnpm run compat:check angular-${{ matrix.angular }}
+
+  e2e:
+    name: End-to-end against the Cloudflare build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Only the browser the suite opens. Installing all three would triple the download
+      # for tests that never use them.
+      - name: Install Chromium
+        run: pnpm --filter @etyma/playground exec playwright install --with-deps chromium
+
+      - name: Build the packages
+        run: pnpm run build --filter='./packages/*'
+
+      # Playwright's own web server builds the playground with the Cloudflare preset and
+      # serves it through Wrangler, so these assertions run against production output in
+      # the runtime it is deployed to - including the raw-HTTP checks that no browser
+      # could stand in for.
+      - name: Run Playwright
+        run: pnpm run e2e
+
+      - name: Upload the report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: apps/playground/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore

@@ -1,0 +1,51 @@
+name: Release PR
+
+# Version bumps and changelogs only. This workflow never publishes: it opens (or updates) a
+# pull request that applies the pending changesets, so the version bump is reviewed like
+# any other change and the tag it eventually produces is not a surprise.
+#
+# Publishing is `publish.yml`, and it runs from the tag this pull request creates.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Open or update the release pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Changesets
+        uses: changesets/action@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
+        with:
+          version: pnpm run version-packages
+          title: 'release: version packages'
+          commit: 'release: version packages'
+          # No `publish` input on purpose. Merging the pull request this opens is the
+          # decision to release; `publish.yml` acts on the tag that follows.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

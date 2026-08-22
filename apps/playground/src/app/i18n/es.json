@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "docs": "Documentación",
+    "button": "Botón",
+    "language": "Idioma",
+    "skipToContent": "Saltar al contenido"
+  },
+  "home": {
+    "title": "Campo de pruebas de Etyma",
+    "lede": "Una aplicación Analog real que consume Etyma igual que lo haría una aplicación externa.",
+    "greeting": "¡Hola, {$name}!",
+    "localesHeading": "Idiomas"
+  },
+  "docs": {
+    "title": "Documentación",
+    "lede": "Dos páginas, tres idiomas, un único conjunto de archivos de ruta.",
+    "componentCount": ".input {$count :number}\n.match $count\none {{Hay {$count} componente documentado.}}\n*   {{Hay {$count} componentes documentados.}}"
+  },
+  "button": {
+    "title": "Botón",
+    "lede": "Una ruta localizada profunda, para demostrar que el prefijo sobrevive a más de un segmento.",
+    "released": "Publicado el {$on :date style=long}",
+    "status": ".input {$state :string}\n.match $state\nstable {{Estable}}\nbeta   {{Beta}}\n*      {{Experimental}}"
+  },
+  "footer": {
+    "rights": "Licencia MIT. {$year :number useGrouping=never}"
+  },
+  "seo": {
+    "siteName": "Campo de pruebas de Etyma",
+    "tagline": "Internacionalización para Angular y AnalogJS"
+  }
+}

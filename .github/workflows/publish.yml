@@ -1,0 +1,94 @@
+name: Publish
+
+# Publishes @etyma/core, @etyma/angular and @etyma/analog to npm.
+#
+# Runs only when a human dispatches it against a tag, so a merged release pull request does
+# not publish on its own. It re-runs the full quality gates first: the tag is what will be
+# on npm forever, and trusting a green run from an earlier commit is how a broken package
+# gets published.
+#
+# Authentication moves in two stages - see RELEASING.md:
+#   0.0.1  a granular NPM_TOKEN in the protected `npm-publish` environment, because npm
+#          Trusted Publishing cannot be configured for a package that does not exist yet.
+#   after  OIDC, with the token revoked. Set `use-oidc` to true once every @etyma package
+#          has this workflow registered as its trusted publisher.
+
+on:
+  workflow_dispatch:
+    inputs:
+      use-oidc:
+        description: 'Publish with npm Trusted Publishing (OIDC) instead of NPM_TOKEN'
+        type: boolean
+        default: false
+      dry-run:
+        description: 'Run every gate and pack the tarballs, but do not publish'
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm run package:check
+      - run: pnpm run compat:check
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # A protected environment is what holds the bootstrap token and, if configured, a
+    # required reviewer. Both stages run through it.
+    environment: npm-publish
+    permissions:
+      contents: read
+      # Provenance attestations are signed with this even when the registry credential is
+      # still a token, so 0.0.1 is provenance-backed too.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing needs npm >= 11.5.1, which is newer than the npm bundled with
+      # Node 22. Upgrading unconditionally keeps both paths on one CLI.
+      - name: Use an npm that understands trusted publishing
+        run: npm install --global npm@latest
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build --filter='./packages/*'
+
+      - name: Publish
+        if: ${{ !inputs.dry-run }}
+        run: pnpm run release
+        env:
+          # Empty when publishing through OIDC. npm ignores an empty token and falls back to
+          # the workflow's identity, which is what Trusted Publishing checks.
+          NODE_AUTH_TOKEN: ${{ inputs.use-oidc && '' || secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+      - name: Dry run
+        if: ${{ inputs.dry-run }}
+        run: pnpm run package:check

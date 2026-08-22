@@ -1,0 +1,19 @@
+# pnpm is the source of truth for the workspace graph.
+# Turborepo only orchestrates tasks over the graph pnpm defines.
+packages:
+  - 'packages/*'
+  - 'apps/*'
+
+# `tools/compat/*` is deliberately NOT a workspace member: those fixtures must
+# install the packed tarballs from `dist/`, not workspace symlinks, or they would
+# verify nothing about the published package format.
+
+# pnpm 10 does not run lifecycle scripts of dependencies unless they are listed
+# here. Keep this list as short as the toolchain allows.
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - lmdb
+  - msgpackr-extract
+  - unrs-resolver
+  - workerd

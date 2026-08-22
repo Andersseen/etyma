@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+dist/
+.turbo/
+.angular/
+.nitro/
+.output/
+coverage/
+playwright-report/
+test-results/
+.wrangler/
+tools/compat/*/node_modules/
+CHANGELOG.md

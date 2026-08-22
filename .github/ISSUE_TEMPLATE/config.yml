@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/Andersseen/etyma/discussions
+    about: Ask how something works, or float an idea before it becomes a proposal.
+  - name: Security report
+    url: https://github.com/Andersseen/etyma/security/advisories/new
+    about: Report a vulnerability privately. Please do not open a public issue.

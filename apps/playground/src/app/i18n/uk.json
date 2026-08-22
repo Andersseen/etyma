@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "Головна",
+    "docs": "Документація",
+    "button": "Кнопка",
+    "language": "Мова",
+    "skipToContent": "Перейти до вмісту"
+  },
+  "home": {
+    "title": "Майданчик Etyma",
+    "lede": "Справжній застосунок Analog, який використовує Etyma так само, як це робив би зовнішній застосунок.",
+    "greeting": "Привіт, {$name}!",
+    "localesHeading": "Мови"
+  },
+  "docs": {
+    "title": "Документація",
+    "lede": "Дві сторінки, три мови, один набір файлів маршрутів.",
+    "componentCount": ".input {$count :number}\n.match $count\none  {{Задокументовано {$count} компонент.}}\nfew  {{Задокументовано {$count} компоненти.}}\nmany {{Задокументовано {$count} компонентів.}}\n*    {{Задокументовано {$count} компонента.}}"
+  },
+  "button": {
+    "title": "Кнопка",
+    "lede": "Глибокий локалізований маршрут, щоб довести, що префікс переживає більше ніж один сегмент.",
+    "released": "Випущено {$on :date style=long}",
+    "status": ".input {$state :string}\n.match $state\nstable {{Стабільна}}\nbeta   {{Бета}}\n*      {{Експериментальна}}"
+  },
+  "footer": {
+    "rights": "Ліцензія MIT. {$year :number useGrouping=never}"
+  },
+  "seo": {
+    "siteName": "Майданчик Etyma",
+    "tagline": "Інтернаціоналізація для Angular та AnalogJS"
+  }
+}

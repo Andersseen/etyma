@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "home": "Home",
+    "docs": "Docs",
+    "button": "Button",
+    "language": "Language",
+    "skipToContent": "Skip to content"
+  },
+  "home": {
+    "title": "Etyma playground",
+    "lede": "A real Analog application that consumes Etyma exactly the way an external application would.",
+    "greeting": "Hello, {$name}!",
+    "localesHeading": "Locales"
+  },
+  "docs": {
+    "title": "Documentation",
+    "lede": "Two pages, three languages, one set of route files.",
+    "componentCount": ".input {$count :number}\n.match $count\none {{{$count} component is documented.}}\n*   {{{$count} components are documented.}}",
+    "sourceOnly": "This sentence exists only in the source catalog, so Spanish and Ukrainian fall back to it."
+  },
+  "button": {
+    "title": "Button",
+    "lede": "A deep localized route, to prove the prefix survives more than one segment.",
+    "released": "Released {$on :date style=long}",
+    "status": ".input {$state :string}\n.match $state\nstable {{Stable}}\nbeta   {{Beta}}\n*      {{Experimental}}"
+  },
+  "footer": {
+    "rights": "MIT licensed. {$year :number useGrouping=never}"
+  }
+}

@@ -1,0 +1,15 @@
+# Cloudflare Pages configuration for the Etyma playground.
+#
+# Deliberately free of account ids, project names beyond the default, and domains: the
+# account and API token come from GitHub Actions secrets, so nothing here has to be edited
+# to deploy a fork.
+name = "etyma-playground"
+compatibility_date = "2025-11-01"
+
+# Nitro's Cloudflare output uses a handful of Node built-ins through the runtime's
+# compatibility layer. Without this the worker fails to start rather than failing a request.
+compatibility_flags = ["nodejs_compat"]
+
+# Written by `pnpm build:cloudflare`, which runs the Analog build with the
+# `cloudflare-pages` preset. `_worker.js` lands inside it.
+pages_build_output_dir = "dist/analog/public"
