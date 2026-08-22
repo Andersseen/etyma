@@ -20,7 +20,7 @@
     "@etyma/angular": "file:../.tarballs/etyma-angular.tgz",
     "@etyma/analog": "file:../.tarballs/etyma-analog.tgz",
     "front-matter": "4.0.2",
-    "marked": "15.0.12",
+    "marked": "18.0.10",
     "marked-gfm-heading-id": "4.1.4",
     "marked-highlight": "2.2.4",
     "marked-mangle": "1.1.13",
