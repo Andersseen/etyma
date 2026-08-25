@@ -42,9 +42,9 @@ jobs:
       - name: Changesets
         uses: changesets/action@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
-          version: pnpm run version-packages
-          title: 'release: version packages'
-          commit: 'release: version packages'
+          version-script: pnpm run version-packages
+          pr-title: 'release: version packages'
+          commit-message: 'release: version packages'
           # No `publish` input on purpose. Merging the pull request this opens is the
           # decision to release; `publish.yml` acts on the tag that follows.
         env:

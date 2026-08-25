@@ -1,6 +1,32 @@
-# Etyma
+<p align="center">
+  <strong>Etyma</strong>
+</p>
 
-Internationalization for Angular and AnalogJS, built on web standards.
+<p align="center">
+  Typed i18n for Angular and AnalogJS apps: JSON catalogs, MessageFormat 2,
+  localized routes, SSR-translated HTML and hydration-safe lazy locale loading.
+</p>
+
+<p align="center">
+  <a href="https://etyma.andersseen.dev">Website</a>
+  ·
+  <a href="https://etyma-playground.pages.dev">Playground</a>
+  ·
+  <a href="packages/core">Core</a>
+  ·
+  <a href="packages/angular">Angular</a>
+  ·
+  <a href="packages/analog">AnalogJS</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Andersseen/etyma/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Andersseen/etyma/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/Andersseen/etyma/actions/workflows/deploy-sites.yml"><img alt="Deployments" src="https://img.shields.io/github/actions/workflow/status/Andersseen/etyma/deploy-sites.yml?branch=main&label=Deployments"></a>
+  <a href="https://github.com/Andersseen/etyma/releases"><img alt="Releases" src="https://img.shields.io/github/v/release/Andersseen/etyma?include_prereleases&label=release"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/Andersseen/etyma"></a>
+</p>
+
+## Overview
 
 Etyma is a small toolkit for translating an Angular application: JSON catalogs, typed
 message keys, MessageFormat 2 formatting, locale-prefixed routing, server-rendered
@@ -9,6 +35,17 @@ translations, and the localized `<head>` that makes a translated page findable.
 > **Status: pre-release / targeting `0.0.1`.** The API is small on purpose and the release
 > gates exercise packed packages, but nothing has been published yet. Read
 > [Non-goals](#non-goals) before adopting it.
+
+## Why Etyma exists
+
+Most Angular i18n stacks make one of three trade-offs: translation keys are untyped,
+localized routes are bolted on after routing, or SSR ships source-language HTML and lets
+hydration fix it later. Etyma keeps those pieces in one contract:
+
+- the source catalog is the type source;
+- the URL is the locale source of truth;
+- the server renders the requested language first;
+- the browser hydrates with the catalog the server already used.
 
 ## What it does today
 
@@ -45,6 +82,13 @@ translations, and the localized `<head>` that makes a translated page findable.
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
 `core` knows nothing about Angular, and `angular` knows nothing about Analog.
+
+## Apps
+
+| App                                  | Purpose                                                                                |
+| ------------------------------------ | -------------------------------------------------------------------------------------- |
+| [`apps/www`](apps/www)               | Official website built with AnalogJS, Volt UI, Tailwind 4, Angular Movement and Lumen. |
+| [`apps/playground`](apps/playground) | Dogfooding app that exercises Etyma as a production Cloudflare Pages build.            |
 
 ## Supported stack
 
@@ -195,11 +239,11 @@ Not planned for `0.0.x`, and not partially implemented anywhere:
 - A compiler or code-generation pipeline — including per-key MessageFormat parameter types,
   which need one
 - CommonJS output, NgModule APIs, an RxJS-first API, or Angular 20 and below
-- A documentation website. `apps/playground` is a test fixture, not a showcase.
 
 ## Repository layout
 
 ```
+apps/www             The official website deployed to Cloudflare Pages
 apps/playground      A real Analog 2 application that consumes Etyma like an external app
 packages/core        @etyma/core
 packages/angular     @etyma/angular
@@ -215,8 +259,9 @@ Requires Node >= 22.22 and pnpm 10 (`corepack enable` picks up the pinned versio
 ```sh
 pnpm install
 
-pnpm dev              # the playground, with the packages watched
-pnpm build            # every package and the playground
+pnpm dev              # the official website, with packages built first
+pnpm dev:playground   # the dogfooding playground
+pnpm build            # every package and app
 pnpm lint             # ESLint, including the layer boundaries
 pnpm typecheck        # tsc across the workspace
 pnpm test             # Vitest unit and type tests
@@ -227,10 +272,21 @@ pnpm compat:check     # builds the Angular 21 and 22 fixtures against packed tar
 pnpm changeset        # describe a change for the changelog
 ```
 
-`pnpm e2e` builds the playground with Analog's Cloudflare Pages preset and serves it through
-Wrangler, so the end-to-end suite runs against production output in the runtime it deploys
-to. The suite includes raw HTTP assertions, because a browser cannot tell you whether the
-_response_ was translated or only the page.
+`pnpm e2e` builds the website and playground with Analog's Cloudflare Pages preset and
+serves each through Wrangler, so the end-to-end suite runs against production output in the
+runtime it deploys to. The suite includes raw HTTP assertions, because a browser cannot
+tell you whether the _response_ was translated or only the page.
+
+## CI, releases and deployments
+
+- **CI** runs formatting, linting, typechecking, unit tests, package builds, packed package
+  validation, compatibility fixtures and Cloudflare-backed e2e tests.
+- **Release PR** is driven by Changesets. It opens or updates the version/changelog pull
+  request; publishing is a separate manual decision.
+- **Publish** is manual and protected. The first release uses `NPM_TOKEN`; later releases
+  can move to npm Trusted Publishing.
+- **Deploy sites** publishes the official website and playground to Cloudflare Pages after a
+  green `main`, creating GitHub Deployments for the repo sidebar.
 
 ## Contributing
 

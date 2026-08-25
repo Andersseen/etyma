@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
  * way to find the differences between the local worker and the real edge.
  */
 const externalBaseUrl = process.env['ETYMA_E2E_BASE_URL'];
-const baseURL = externalBaseUrl ?? 'http://localhost:8788';
+const baseURL = externalBaseUrl ?? 'http://localhost:8789';
 
 export default defineConfig({
   testDir: 'e2e',

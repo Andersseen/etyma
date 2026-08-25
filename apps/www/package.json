@@ -11,7 +11,7 @@
     "dev": "pnpm --filter @etyma/core --filter '!etyma-workspace' run build && pnpm --filter @etyma/angular --filter '!etyma-workspace' run build && pnpm --filter @etyma/analog --filter '!etyma-workspace' run build && vite",
     "build": "vite build",
     "build:cloudflare": "BUILD_PRESET=cloudflare-pages vite build",
-    "preview:cloudflare": "wrangler pages dev --port 8788",
+    "preview:cloudflare": "wrangler pages dev --port 8789",
     "deploy:cloudflare": "wrangler pages deploy",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run",

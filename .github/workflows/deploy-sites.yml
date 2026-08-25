@@ -1,8 +1,8 @@
-name: Deploy playground
+name: Deploy sites
 
-# Deploys the dogfooding application to Cloudflare Pages. Deliberately separate from
-# publishing: a website going out has nothing to do with a package going to npm, and
-# coupling them means one cannot be rolled back without the other.
+# Deploys the official website and the dogfooding playground to Cloudflare Pages.
+# Deliberately separate from publishing: a website going out has nothing to do with a
+# package going to npm, and coupling them means one cannot be rolled back without the other.
 
 on:
   workflow_run:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-playground
+  group: deploy-sites
   cancel-in-progress: true
 
 permissions:
@@ -20,16 +20,33 @@ permissions:
 
 jobs:
   deploy:
-    name: Cloudflare Pages
+    name: ${{ matrix.name }}
     # Only from a healthy main. A dispatch is a deliberate act and runs regardless.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Holds CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID. Nothing about the account is in
-    # the repository - a fork deploys to its own account by setting its own secrets.
-    environment: cloudflare-playground
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Official website
+            package: '@etyma/www'
+            path: apps/www
+            environment: cloudflare-www
+            url: https://etyma.andersseen.dev
+          - name: Playground
+            package: '@etyma/playground'
+            path: apps/playground
+            environment: cloudflare-playground
+            url: https://etyma-playground.pages.dev
+    # Creates GitHub Deployments for the repo sidebar. CLOUDFLARE_API_TOKEN and
+    # CLOUDFLARE_ACCOUNT_ID are repository secrets, so forks can deploy to their own
+    # accounts by defining their own values.
+    environment:
+      name: ${{ matrix.environment }}
+      url: ${{ matrix.url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,8 +64,8 @@ jobs:
       - name: Build the packages
         run: pnpm run build --filter='./packages/*'
 
-      - name: Build the playground for Cloudflare
-        run: pnpm --filter @etyma/playground run build:cloudflare
+      - name: Build ${{ matrix.name }} for Cloudflare
+        run: pnpm --filter ${{ matrix.package }} run build:cloudflare
 
       # Wrangler directly, not the Cloudflare dashboard's Git integration: the build that
       # is deployed is the one this workflow produced and CI already tested.
@@ -57,5 +74,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/playground
+          workingDirectory: ${{ matrix.path }}
           command: pages deploy --branch=main
