@@ -8,7 +8,9 @@ test.describe('site chrome', () => {
     await expect(header).toHaveCSS('position', 'fixed');
 
     const before = await header.boundingBox();
-    await page.evaluate(() => window.scrollTo(0, 900));
+    await page.evaluate(() => {
+      window.scrollTo(0, 900);
+    });
     const after = await header.boundingBox();
 
     expect(before?.y).toBe(0);
@@ -22,7 +24,7 @@ test.describe('site chrome', () => {
   test('uses the site primary color for the hero CTA', async ({ page }) => {
     await page.goto('/');
 
-    const colors = await page.getByTestId('hero-primary').evaluate((anchor) => {
+    const colors = await page.getByTestId('hero-primary').evaluate(anchor => {
       const button = anchor.querySelector('button');
       const root = document.documentElement;
       const probe = document.createElement('span');
@@ -67,10 +69,10 @@ test.describe('site chrome', () => {
   }) => {
     await page.goto('/');
 
-    await page.evaluate(() => window.scrollTo(0, 950));
+    await page.mouse.wheel(0, 950);
     await expect(page.getByTestId('back-to-top')).toBeVisible();
 
-    await page.evaluate(() => window.scrollTo(0, 520));
+    await page.mouse.wheel(0, -500);
     await expect(page.getByTestId('back-to-top')).toBeHidden();
   });
 });

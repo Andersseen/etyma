@@ -43,6 +43,8 @@ function run(command, args, cwd) {
   execFileSync(command, args, { cwd, stdio: 'inherit' });
 }
 
+console.log('Building the published packages...');
+run('pnpm', ['run', 'build', '--filter=./packages/*'], repoRoot);
 console.log('Packing the published packages...');
 packAll(tarballs);
 

@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 /** The chunk `vite.config.ts` gives each non-source catalog a stable name. */
 const localeChunk = (locale: string) => new RegExp(`/assets/etyma-locale-${locale}-[^/]+\\.js$`);
-const switchLocale = async (page: import('@playwright/test').Page, locale: string) => {
+const switchLocale = async (page: Page, locale: string) => {
   await page.getByTestId('language-trigger').click();
   await page.getByTestId(`switch-${locale}`).click();
 };

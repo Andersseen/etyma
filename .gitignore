@@ -31,6 +31,7 @@ blob-report/
 tools/compat/*/node_modules/
 tools/compat/*/package-lock.json
 tools/compat/*/dist/
+tools/compat/*/src/
 tools/compat/.tarballs/
 
 # editors & os
