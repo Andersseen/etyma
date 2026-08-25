@@ -5,10 +5,13 @@ name: Release PR
 # any other change and the tag it eventually produces is not a surprise.
 #
 # Publishing is `publish.yml`, and it runs from the tag this pull request creates.
+#
+# Manual until the repository setting "Allow GitHub Actions to create and approve pull
+# requests" is enabled, or a dedicated token is wired in. With the default setting, running
+# this on every push leaves `main` red even when CI and deployments are healthy.
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: release-pr
