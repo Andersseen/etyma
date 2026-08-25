@@ -1,7 +1,14 @@
 import { inject } from '@angular/core';
-import type { CanActivateFn, CanMatchFn, RouterFeatures, Routes } from '@angular/router';
+import {
+  Router,
+  type CanActivateFn,
+  type CanMatchFn,
+  type RouterFeatures,
+  type Routes,
+} from '@angular/router';
 import { routes as fileRoutes, withExtraRoutes } from '@analogjs/router';
 import { EtymaI18n, ETYMA_DEFINITION } from '@etyma/angular';
+import { Location } from '@angular/common';
 
 /**
  * The route parameter the locale prefix is captured in.
@@ -24,6 +31,22 @@ const isLocalePrefix: CanMatchFn = (_route, segments) => {
   return (
     first !== undefined && definition.router.isLocale(first) && first !== definition.sourceLocale
   );
+};
+
+/** Matches a source-locale prefix such as `/en/docs`, which redirects to `/docs`. */
+const isSourceLocalePrefix: CanMatchFn = (_route, segments) => {
+  const definition = inject(ETYMA_DEFINITION);
+
+  return segments[0]?.path === definition.sourceLocale;
+};
+
+/** Removes a duplicate source-locale prefix while preserving the current query and hash. */
+const redirectSourceLocalePrefix: CanActivateFn = () => {
+  const definition = inject(ETYMA_DEFINITION);
+  const location = inject(Location);
+  const router = inject(Router);
+
+  return router.parseUrl(definition.router.strip(location.path(true)));
 };
 
 /**
@@ -69,6 +92,12 @@ const activateSourceLocale: CanActivateFn = () => {
  */
 export function withLocalizedRoutes(): RouterFeatures {
   const localized: Routes = [
+    {
+      path: `:${ETYMA_LOCALE_PARAM}`,
+      canMatch: [isSourceLocalePrefix],
+      canActivate: [redirectSourceLocalePrefix],
+      children: fileRoutes,
+    },
     {
       path: `:${ETYMA_LOCALE_PARAM}`,
       canMatch: [isLocalePrefix],

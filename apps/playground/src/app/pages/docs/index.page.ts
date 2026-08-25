@@ -21,6 +21,9 @@ import { injectAppI18n } from '../../i18n/inject';
     <p>
       <a [routerLink]="i18n.path('/docs/button')" data-testid="to-button">{{ t('nav.button') }}</a>
     </p>
+    <p>
+      <a [routerLink]="i18n.path('/docs/themes')" data-testid="to-themes">{{ t('nav.themes') }}</a>
+    </p>
   `,
 })
 export default class DocsPage {

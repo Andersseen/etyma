@@ -17,7 +17,7 @@ names.
 pnpm add @etyma/core @etyma/angular @etyma/analog
 ```
 
-Requires AnalogJS 2.x on Angular 21 or 22.
+Requires AnalogJS 2.6.x or 2.7.x on Angular 21. Angular 22 is verified with AnalogJS 2.7.x.
 
 ## Use
 
@@ -66,6 +66,9 @@ Switching language is a navigation, not a state change. `i18n.setLocale('uk')` l
 catalog and then moves the URL, so the address bar and the rendered language never disagree.
 Nothing is read from or written to `localStorage`: a remembered preference that could
 override the path would mean `/es/docs` sometimes renders in English.
+
+The source locale is canonical only without a prefix. Etyma does not register a source
+locale prefix branch, so `/en/docs` is not treated as a duplicate of `/docs`.
 
 ## SEO
 

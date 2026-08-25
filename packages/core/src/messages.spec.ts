@@ -40,6 +40,11 @@ describe('flattenMessages', () => {
     );
   });
 
+  it('rejects a malformed catalog root', () => {
+    expect(() => flattenMessages(null as unknown as never)).toThrow(/root is null/);
+    expect(() => flattenMessages([] as unknown as never)).toThrow(/root is an array/);
+  });
+
   it('rejects an empty key', () => {
     expect(() => flattenMessages({ '': 'nameless' })).toThrow(/empty key/);
   });

@@ -6,9 +6,9 @@ Etyma is a small toolkit for translating an Angular application: JSON catalogs, 
 message keys, MessageFormat 2 formatting, locale-prefixed routing, server-rendered
 translations, and the localized `<head>` that makes a translated page findable.
 
-> **Status: alpha (`0.0.1`).** The API is small on purpose, it is tested, and it works — but
-> it is new, the version number means what it says, and things will change. Nothing here is
-> load-bearing for anybody yet. Read [Non-goals](#non-goals) before adopting it.
+> **Status: pre-release / targeting `0.0.1`.** The API is small on purpose and the release
+> gates exercise packed packages, but nothing has been published yet. Read
+> [Non-goals](#non-goals) before adopting it.
 
 ## What it does today
 
@@ -25,6 +25,7 @@ translations, and the localized `<head>` that makes a translated page findable.
   is a dynamic import that loads when a visitor asks for it.
 - **URL-driven locale.** `/docs` is English, `/es/docs` is Spanish, `/uk/docs` is Ukrainian.
   The URL is the only source of truth — nothing is read from or written to `localStorage`.
+  The source locale is canonical only without a prefix; `/en/docs` is not a duplicate route.
 - **Server-rendered translations.** `GET /es/docs` returns Spanish HTML. Not English HTML
   that becomes Spanish after hydration.
 - **Hydration without a second fetch.** The catalog the server rendered with is transferred
@@ -50,15 +51,15 @@ The dependency direction is one-way and enforced by ESLint as well as by the man
 |                 | Version                                                        |
 | --------------- | -------------------------------------------------------------- |
 | Angular         | 21 (build baseline) and 22 (verified consumer)                 |
-| AnalogJS        | 2.x                                                            |
+| AnalogJS        | 2.6.x and 2.7.x with Angular 21; 2.7.x with Angular 22         |
 | Node            | >= 22.22                                                       |
 | Package manager | pnpm 10.x                                                      |
 | Module format   | ESM only — there is no CommonJS build                          |
 | Runtimes        | Browsers, Node, and edge runtimes including Cloudflare Workers |
 
-The published packages are built with Angular 21 as Angular Package Format partial
-declarations. Angular 22 is verified by building a clean application against the packed
-tarballs on every CI run — with TypeScript 6, which Angular 22 requires.
+The packages are built with Angular 21 as Angular Package Format partial declarations.
+Angular and Analog compatibility is verified by building clean applications against packed
+tarballs, not workspace symlinks.
 
 ## Getting started
 
@@ -137,6 +138,9 @@ A message is a MessageFormat 2 pattern:
 
 Two things worth knowing about MessageFormat 2 before you write your first catalog:
 
+- **Simple interpolation needs a dollar sign.** A message like `Hello {name}` becomes
+  `Hello {$name}`. JSON stays JSON; the source locale stays a static import; secondary
+  locales become dynamic imports.
 - **A bare `{$count}` is formatted as a number**, with the grouping separator of the
   locale. A year written as `{$year}` renders as `2,026` in English. Write
   `{$year :number useGrouping=never}` when you mean a number that is not a quantity.
@@ -156,6 +160,20 @@ const seo = defineMessages({ siteName: 'Etyma', tagline: 'i18n for Angular' });
 
 export const i18n = defineI18n({ /* … */ source: { ...en, seo } });
 ```
+
+## Migrating from simple interpolation
+
+Etyma does not implement a custom `{name}` interpolator. Catalog strings are MessageFormat 2
+patterns:
+
+- `Hello {name}` -> `Hello {$name}`
+- `Items: {count}` -> `Items: {$count :number}`
+- `© {year}` -> `© {$year :number useGrouping=never}`
+- Plurals become MF2 matchers, for example `.input {$count :number}` followed by
+  `.match $count` variants.
+
+Keep the source locale catalog imported statically in the `source` option. Move secondary
+catalogs behind dynamic imports in `loaders` so they stay lazy.
 
 ## Goals
 

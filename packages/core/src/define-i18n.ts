@@ -129,6 +129,31 @@ export function defineI18n<const TSource extends MessageSource, const TLocales e
   }
 
   const loaders = new Map<Locale, MessageLoader>();
+  const configuredLoaders = Object.entries(options.loaders ?? {});
+
+  for (const [locale, loader] of configuredLoaders) {
+    assertWellFormedLocale(locale, 'defineI18n: `loaders`');
+
+    if (!seen.has(locale)) {
+      throw new EtymaError(
+        `defineI18n: loader configured for unknown locale "${locale}". ` +
+          `Configured locales: [${locales.join(', ')}].`,
+      );
+    }
+
+    if (locale === sourceLocale && loader !== undefined) {
+      throw new EtymaError(
+        `defineI18n: source locale "${sourceLocale}" must not have a loader. ` +
+          'Import the source catalog statically with `source` instead.',
+      );
+    }
+
+    if (loader !== undefined && typeof loader !== 'function') {
+      throw new EtymaError(
+        `defineI18n: loader for locale "${locale}" is a ${typeof loader}; expected a function.`,
+      );
+    }
+  }
 
   for (const locale of locales) {
     const loader = options.loaders?.[locale as TLocales[number]];

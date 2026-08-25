@@ -69,6 +69,7 @@ test.describe('navigation', () => {
     await expect(page.getByTestId('nav-home')).toHaveAttribute('href', '/uk');
     await expect(page.getByTestId('nav-docs')).toHaveAttribute('href', '/uk/docs');
     await expect(page.getByTestId('nav-button')).toHaveAttribute('href', '/uk/docs/button');
+    await expect(page.getByTestId('nav-themes')).toHaveAttribute('href', '/uk/docs/themes');
   });
 });
 
@@ -100,6 +101,29 @@ test.describe('switching language', () => {
 
     await expect(page).toHaveURL('/es/docs');
     await expect(title(page)).toHaveText('Documentación');
+  });
+
+  test('preserves query strings and fragments when switching locale', async ({ page }) => {
+    await page.goto('/es/docs?tab=api#example');
+
+    await page.getByTestId('switch-uk').click();
+
+    await expect(page).toHaveURL('/uk/docs?tab=api#example');
+    await expect(title(page)).toHaveText('Документація');
+  });
+
+  test('switches between two secondary locales without losing the logical page', async ({
+    page,
+  }) => {
+    await page.goto('/es/docs/themes');
+
+    await page.getByTestId('switch-uk').click();
+    await expect(page).toHaveURL('/uk/docs/themes');
+    await expect(title(page)).toHaveText('Теми');
+
+    await page.getByTestId('switch-es').click();
+    await expect(page).toHaveURL('/es/docs/themes');
+    await expect(title(page)).toHaveText('Temas');
   });
 
   test('marks the active language in the switcher', async ({ page }) => {

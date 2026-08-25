@@ -48,51 +48,59 @@ function canMatch(route: Route | undefined, path: string): boolean {
 describe('withLocalizedRoutes', () => {
   it('serves the page tree under a locale prefix and under the bare path', () => {
     expect(routes[0]?.path).toBe(`:${ETYMA_LOCALE_PARAM}`);
-    expect(routes[1]?.path).toBe('');
+    expect(routes[1]?.path).toBe(`:${ETYMA_LOCALE_PARAM}`);
+    expect(routes[2]?.path).toBe('');
   });
 
   it('matches a prefixed locale', () => {
-    expect(canMatch(routes[0], '/es/docs')).toBe(true);
-    expect(canMatch(routes[0], '/uk')).toBe(true);
+    expect(canMatch(routes[1], '/es/docs')).toBe(true);
+    expect(canMatch(routes[1], '/uk')).toBe(true);
   });
 
   it('does not mistake a page for a locale', () => {
-    expect(canMatch(routes[0], '/docs')).toBe(false);
-    expect(canMatch(routes[0], '/docs/button')).toBe(false);
-    expect(canMatch(routes[0], '/')).toBe(false);
+    expect(canMatch(routes[1], '/docs')).toBe(false);
+    expect(canMatch(routes[1], '/docs/button')).toBe(false);
+    expect(canMatch(routes[1], '/')).toBe(false);
   });
 
   it('does not match an unconfigured locale', () => {
-    expect(canMatch(routes[0], '/de/docs')).toBe(false);
+    expect(canMatch(routes[1], '/de/docs')).toBe(false);
   });
 
   it('does not match the source locale, which is served without a prefix', () => {
-    expect(canMatch(routes[0], '/en/docs')).toBe(false);
+    expect(canMatch(routes[1], '/en/docs')).toBe(false);
+  });
+
+  it('matches the source locale on its redirect branch', () => {
+    expect(canMatch(routes[0], '/en/docs')).toBe(true);
+    expect(canMatch(routes[0], '/es/docs')).toBe(false);
   });
 
   it('leaves the unprefixed branch open to everything, so it can act as the fallback', () => {
-    expect(routes[1]?.canMatch).toBeUndefined();
+    expect(routes[2]?.canMatch).toBeUndefined();
   });
 
   it('guards both branches, so the locale follows the URL in either direction', () => {
     expect(routes[0]?.canActivate).toHaveLength(1);
     expect(routes[1]?.canActivate).toHaveLength(1);
+    expect(routes[2]?.canActivate).toHaveLength(1);
   });
 
   it('re-runs its guards on every navigation, not only on the first', () => {
-    expect(routes[0]?.runGuardsAndResolvers).toBe('always');
     expect(routes[1]?.runGuardsAndResolvers).toBe('always');
+    expect(routes[2]?.runGuardsAndResolvers).toBe('always');
   });
 
   it('shares one page tree between the branches, so a page chunk is fetched once', () => {
     expect(routes[0]?.children).toBe(routes[1]?.children);
+    expect(routes[1]?.children).toBe(routes[2]?.children);
   });
 });
 
 describe('the prefixed locale guard', () => {
   it('loads and activates the locale the URL names before the page renders', async () => {
     const i18n = TestBed.inject(EtymaI18n);
-    const guard = routes[0]?.canActivate?.[0] as
+    const guard = routes[1]?.canActivate?.[0] as
       ((route: { paramMap: { get(name: string): string | null } }) => Promise<boolean>) | undefined;
 
     const allowed = await TestBed.runInInjectionContext(() =>
@@ -108,7 +116,7 @@ describe('the prefixed locale guard', () => {
     const i18n = TestBed.inject(EtymaI18n);
     await i18n.setLocale('uk');
 
-    const guard = routes[1]?.canActivate?.[0] as (() => Promise<boolean>) | undefined;
+    const guard = routes[2]?.canActivate?.[0] as (() => Promise<boolean>) | undefined;
     await TestBed.runInInjectionContext(() => guard?.());
 
     expect(i18n.locale()).toBe('en');

@@ -3,6 +3,7 @@
     "home": "Inicio",
     "docs": "Documentación",
     "button": "Botón",
+    "themes": "Temas",
     "language": "Idioma",
     "skipToContent": "Saltar al contenido"
   },
@@ -22,6 +23,11 @@
     "lede": "Una ruta localizada profunda, para demostrar que el prefijo sobrevive a más de un segmento.",
     "released": "Publicado el {$on :date style=long}",
     "status": ".input {$state :string}\n.match $state\nstable {{Estable}}\nbeta   {{Beta}}\n*      {{Experimental}}"
+  },
+  "themes": {
+    "title": "Temas",
+    "lede": "Una segunda ruta profunda de documentación, similar a un árbol de documentación como Volt.",
+    "tokenCount": ".input {$count :number}\n.match $count\none {{Hay {$count} token de diseño documentado.}}\n*   {{Hay {$count} tokens de diseño documentados.}}"
   },
   "footer": {
     "rights": "Licencia MIT. {$year :number useGrouping=never}"

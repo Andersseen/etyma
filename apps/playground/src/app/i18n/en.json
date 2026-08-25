@@ -3,6 +3,7 @@
     "home": "Home",
     "docs": "Docs",
     "button": "Button",
+    "themes": "Themes",
     "language": "Language",
     "skipToContent": "Skip to content"
   },
@@ -23,6 +24,11 @@
     "lede": "A deep localized route, to prove the prefix survives more than one segment.",
     "released": "Released {$on :date style=long}",
     "status": ".input {$state :string}\n.match $state\nstable {{Stable}}\nbeta   {{Beta}}\n*      {{Experimental}}"
+  },
+  "themes": {
+    "title": "Themes",
+    "lede": "A second deep docs route, matching a Volt-like documentation tree.",
+    "tokenCount": ".input {$count :number}\n.match $count\none {{{$count} design token is documented.}}\n*   {{{$count} design tokens are documented.}}"
   },
   "footer": {
     "rights": "MIT licensed. {$year :number useGrouping=never}"
