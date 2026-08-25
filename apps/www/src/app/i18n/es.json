@@ -1,0 +1,95 @@
+{
+  "layout": {
+    "status": "pre-release 0.0.1"
+  },
+  "nav": {
+    "home": "Inicio",
+    "docs": "Guía",
+    "button": "Angular",
+    "themes": "Analog",
+    "features": "Features",
+    "workflow": "Flujo",
+    "packages": "Paquetes",
+    "language": "Idioma",
+    "skipToContent": "Saltar al contenido"
+  },
+  "home": {
+    "eyebrow": "Web oficial de Etyma",
+    "title": "i18n tipado. SSR real. APIs limpias para Angular.",
+    "lede": "Etyma ofrece catálogos JSON tipados, MessageFormat 2, URLs localizadas, HTML traducido en SSR y carga lazy de idiomas segura para hidratación.",
+    "primaryCta": "Explorar el flujo",
+    "secondaryCta": "Ver paquetes",
+    "angular": "21 y 22",
+    "analog": "2.6 y 2.7",
+    "localesHeading": "Idiomas",
+    "codeTitle": "etyma.config.ts",
+    "codeNote": "El HTML localizado sale del servidor antes de iniciar hidratación.",
+    "whyEyebrow": "Por qué existe",
+    "whyTitle": "La capa i18n que una app Angular debería tener por defecto.",
+    "featureTypedTitle": "Claves tipadas",
+    "featureTypedBody": "El catálogo fuente define el contrato de claves. Los errores de escritura fallan en TypeScript en vez de convertirse en UI vacía.",
+    "featureSsrTitle": "SSR primero",
+    "featureSsrBody": "Una URL localizada renderiza HTML localizado en el servidor, transfiere el catálogo e hidrata sin cargar ese idioma otra vez.",
+    "featureCloudTitle": "Lista para edge",
+    "featureCloudBody": "La integración Analog se prueba con un build de Cloudflare Pages para validar el paquete y el runtime real.",
+    "workflowEyebrow": "Cómo funciona",
+    "workflowTitle": "Define una vez. Enruta por URL. Hidrata sin parpadeos.",
+    "workflowBody": "Etyma mantiene el catálogo fuente tipado, los catálogos secundarios lazy y la página visible alineada con la barra de direcciones.",
+    "stepCatalogTitle": "Escribe catálogos",
+    "stepCatalogBody": "JSON sigue siendo legible mientras TypeScript usa el idioma fuente como contrato.",
+    "stepRouteTitle": "Sirve URLs localizadas",
+    "stepRouteBody": "El idioma fuente queda limpio y los idiomas secundarios viven bajo prefijos estables.",
+    "stepHydrateTitle": "Transfiere el idioma activo",
+    "stepHydrateBody": "SSR envía el catálogo que usó la página, así la hidratación no lo vuelve a pedir ni muestra inglés.",
+    "packagesEyebrow": "Paquetes",
+    "packagesTitle": "Un core portable y dos adaptadores para Angular.",
+    "packagesBody": "@etyma/core gestiona catálogos y MessageFormat. @etyma/angular expone signals y transfer state. @etyma/analog conecta rutas, SSR y SEO."
+  },
+  "docs": {
+    "eyebrow": "Primeros pasos",
+    "title": "Define i18n una vez y deja que la URL elija el idioma.",
+    "lede": "El idioma fuente queda sin prefijo. Los idiomas secundarios viven bajo /es y /uk, y sus catálogos se cargan solo cuando alguien los pide.",
+    "setupTitle": "Define el catálogo una vez",
+    "setupBody": "Importa el catálogo fuente de forma estática para claves tipadas y fallback. Mantén los catálogos secundarios detrás de imports dinámicos para separarlos del primer bundle.",
+    "routingTitle": "Rutas localizadas",
+    "routingBody": "/docs es inglés, /es/docs es español y /uk/docs es ucraniano. Cambiar idioma conserva la página, la query y el fragmento.",
+    "fallbackTitle": "Fallback al fuente",
+    "messageTitle": "MessageFormat 2",
+    "componentCount": ".input {$count :number}\n.match $count\none {{Hay {$count} comportamiento de producción cubierto.}}\n*   {{Hay {$count} comportamientos de producción cubiertos.}}",
+    "angularLink": "Adaptador Angular",
+    "analogLink": "Adaptador Analog"
+  },
+  "button": {
+    "eyebrow": "@etyma/angular",
+    "title": "Bindings Angular con signals y sin ceremonia runtime.",
+    "lede": "Los componentes inyectan un único manejador i18n tipado. Las plantillas llaman a t(), los enlaces a path() y los cambios de idioma fluyen por signals.",
+    "signalsTitle": "Signals, no suscripciones",
+    "signalsBody": "locale(), direction() y ready() son signals. La función de traducción los lee dentro de las plantillas Angular y actualiza sin asumir Zone.js.",
+    "typesTitle": "Tipado por el catálogo fuente",
+    "typesBody": "Pasar la definición i18n a injectI18n mantiene claves tipadas entre paquetes sin generación de código.",
+    "mf2Title": "MessageFormat 2",
+    "released": "Build de referencia renderizado el {$on :date style=long}",
+    "status": ".input {$state :string}\n.match $state\nstable {{Estable y documentado}}\nbeta   {{Beta}}\n*      {{Experimental}}",
+    "back": "Volver a la guía"
+  },
+  "themes": {
+    "eyebrow": "@etyma/analog",
+    "title": "Rutas, SEO y SSR de AnalogJS alrededor de URLs localizadas.",
+    "lede": "Etyma se conecta a provideFileRouter(), carga el idioma de la ruta antes de renderizar y mantiene lang, dir, canonical y hreflang.",
+    "routingTitle": "La URL manda",
+    "routingBody": "No hay preferencia en localStorage que pueda pelear con la barra de direcciones. /es/docs siempre significa español.",
+    "seoTitle": "Head localizado",
+    "seoBody": "Cada navegación actualiza html lang, dir, canonical, todos los alternates hreflang y x-default con URLs absolutas.",
+    "cloudflareTitle": "Cloudflare Pages",
+    "tokenCount": ".input {$count :number}\n.match $count\none {{{$count} comprobación de release corre contra la salida de Cloudflare.}}\n*   {{{$count} comprobaciones de release corren contra la salida de Cloudflare.}}",
+    "back": "Volver a la guía"
+  },
+  "footer": {
+    "rights": "Licencia MIT. {$year :number useGrouping=never}",
+    "stack": "Construida con AnalogJS, Angular, Etyma y Lumen Icons."
+  },
+  "seo": {
+    "siteName": "Etyma",
+    "tagline": "Internacionalización tipada para Angular y AnalogJS"
+  }
+}

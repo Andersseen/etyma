@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist-spec",
+    "types": ["vite/client", "node"]
+  },
+  "include": ["src/**/*.ts", "vitest.setup.ts", "vite.config.ts"]
+}

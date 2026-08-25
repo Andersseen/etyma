@@ -20,7 +20,9 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "pnpm --filter @etyma/www run dev",
+    "dev:playground": "pnpm --filter @etyma/playground run dev",
+    "dev:workspace": "turbo run dev",
     "lint": "eslint .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
