@@ -1,0 +1,95 @@
+{
+  "layout": {
+    "status": "pre-release 0.0.1"
+  },
+  "nav": {
+    "home": "Головна",
+    "docs": "Гід",
+    "button": "Angular",
+    "themes": "Analog",
+    "features": "Можливості",
+    "workflow": "Процес",
+    "packages": "Пакети",
+    "language": "Мова",
+    "skipToContent": "Перейти до вмісту"
+  },
+  "home": {
+    "eyebrow": "Офіційний сайт Etyma",
+    "title": "Типізована i18n. Справжній SSR. Чисті Angular API.",
+    "lede": "Etyma дає типізовані JSON-каталоги, MessageFormat 2, локалізовані URL, перекладений SSR HTML і lazy-завантаження мов без проблем гідратації.",
+    "primaryCta": "Подивитись процес",
+    "secondaryCta": "Пакети",
+    "angular": "21 і 22",
+    "analog": "2.6 і 2.7",
+    "localesHeading": "Мови",
+    "codeTitle": "etyma.config.ts",
+    "codeNote": "Локалізований HTML виходить із сервера ще до старту гідратації.",
+    "whyEyebrow": "Навіщо це",
+    "whyTitle": "i18n-шар, який Angular apps мали б мати за замовчуванням.",
+    "featureTypedTitle": "Типізовані ключі",
+    "featureTypedBody": "Джерельний каталог визначає контракт ключів. Помилки в назвах падають під час перевірки TypeScript, а не стають порожнім UI.",
+    "featureSsrTitle": "SSR передусім",
+    "featureSsrBody": "Локалізована URL-адреса рендерить локалізований HTML на сервері, передає каталог і гідратується без повторного завантаження мови.",
+    "featureCloudTitle": "Готово для edge",
+    "featureCloudBody": "Інтеграція Analog перевіряється через build Cloudflare Pages, щоб пакет і runtime залишалися чесними.",
+    "workflowEyebrow": "Як це працює",
+    "workflowTitle": "Визнач один раз. Роуть через URL. Гідратуй без миготіння.",
+    "workflowBody": "Etyma тримає джерельний каталог типізованим, додаткові каталоги lazy, а сторінку синхронною з адресним рядком.",
+    "stepCatalogTitle": "Створи каталоги",
+    "stepCatalogBody": "JSON лишається читабельним, а TypeScript використовує джерельну мову як контракт.",
+    "stepRouteTitle": "Віддавай локалізовані URL",
+    "stepRouteBody": "Джерельна мова лишається чистою, а додаткові мови живуть під стабільними префіксами.",
+    "stepHydrateTitle": "Передай активну мову",
+    "stepHydrateBody": "SSR віддає каталог, який використала сторінка, тому гідратація не просить його знову й не показує англійську.",
+    "packagesEyebrow": "Пакети",
+    "packagesTitle": "Один portable core і два Angular-адаптери.",
+    "packagesBody": "@etyma/core відповідає за каталоги й MessageFormat. @etyma/angular дає signals і transfer state. @etyma/analog з'єднує маршрути, SSR і SEO."
+  },
+  "docs": {
+    "eyebrow": "Перші кроки",
+    "title": "Визнач i18n один раз і дай URL вибирати мову.",
+    "lede": "Джерельна мова лишається без префікса. Додаткові мови живуть під /es і /uk, а їхні каталоги завантажуються лише за потреби.",
+    "setupTitle": "Один раз визнач каталог",
+    "setupBody": "Імпортуй джерельний каталог статично для типізованих ключів і fallback. Додаткові каталоги тримай за dynamic imports, щоб вони були окремо від першого bundle.",
+    "routingTitle": "Локалізовані маршрути",
+    "routingBody": "/docs — англійська, /es/docs — іспанська, /uk/docs — українська. Перемикання мови зберігає сторінку, query і fragment.",
+    "fallbackTitle": "Fallback до джерела",
+    "messageTitle": "MessageFormat 2",
+    "componentCount": ".input {$count :number}\n.match $count\none  {{Покрито {$count} production-поведінку.}}\nfew  {{Покрито {$count} production-поведінки.}}\nmany {{Покрито {$count} production-поведінок.}}\n*    {{Покрито {$count} production-поведінки.}}",
+    "angularLink": "Angular-адаптер",
+    "analogLink": "Analog-адаптер"
+  },
+  "button": {
+    "eyebrow": "@etyma/angular",
+    "title": "Angular bindings на signals без runtime-церемонії.",
+    "lede": "Компоненти інжектять один типізований i18n-handle. Шаблони викликають t(), посилання — path(), а зміни мови проходять через signals.",
+    "signalsTitle": "Signals, не підписки",
+    "signalsBody": "locale(), direction() і ready() — це signals. Функція перекладу читає їх у Angular-шаблонах і оновлюється без припущень про Zone.js.",
+    "typesTitle": "Типи з джерельного каталогу",
+    "typesBody": "Передача i18n definition в injectI18n зберігає типізовані ключі між пакетами без code generation.",
+    "mf2Title": "MessageFormat 2",
+    "released": "Референсний build відрендерено {$on :date style=long}",
+    "status": ".input {$state :string}\n.match $state\nstable {{Стабільно й задокументовано}}\nbeta   {{Бета}}\n*      {{Експериментально}}",
+    "back": "Назад до гіда"
+  },
+  "themes": {
+    "eyebrow": "@etyma/analog",
+    "title": "Маршрути, SEO і SSR AnalogJS навколо локалізованих URL.",
+    "lede": "Etyma підключається до provideFileRouter(), завантажує мову маршруту до рендеру й підтримує lang, dir, canonical і hreflang.",
+    "routingTitle": "URL — джерело правди",
+    "routingBody": "Немає localStorage-переваги, яка може сперечатися з адресним рядком. /es/docs завжди означає іспанську.",
+    "seoTitle": "Локалізований head",
+    "seoBody": "Кожна навігація оновлює html lang, dir, canonical, усі hreflang alternates і x-default з absolute URL.",
+    "cloudflareTitle": "Cloudflare Pages",
+    "tokenCount": ".input {$count :number}\n.match $count\none  {{{$count} release-перевірка виконується проти Cloudflare output.}}\nfew  {{{$count} release-перевірки виконуються проти Cloudflare output.}}\nmany {{{$count} release-перевірок виконуються проти Cloudflare output.}}\n*    {{{$count} release-перевірки виконуються проти Cloudflare output.}}",
+    "back": "Назад до гіда"
+  },
+  "footer": {
+    "rights": "Ліцензія MIT. {$year :number useGrouping=never}",
+    "stack": "Збудовано з AnalogJS, Angular, Etyma і Lumen Icons."
+  },
+  "seo": {
+    "siteName": "Etyma",
+    "tagline": "Типізована інтернаціоналізація для Angular і AnalogJS"
+  }
+}

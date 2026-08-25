@@ -111,4 +111,18 @@ describe('createTranslator', () => {
       { type: 'text', value: 'nav.missing' },
     ]);
   });
+
+  it('returns markup-shaped translations as plain text', () => {
+    const safeText = '<img src=x onerror=alert(1)>';
+    const html = createTranslator({
+      locale: 'en',
+      catalog: new Map([['html', safeText]]),
+      sourceLocale: 'en',
+      sourceCatalog: new Map([['html', safeText]]),
+      formatter: createMessageFormatter(),
+    });
+
+    expect(html.translate('html')).toBe(safeText);
+    expect(html.translateToParts('html')).toEqual([{ type: 'text', value: safeText }]);
+  });
 });

@@ -45,6 +45,28 @@ describe('defineI18n', () => {
     );
   });
 
+  it('rejects a loader for an unknown locale', () => {
+    expect(() =>
+      defineI18n({
+        locales: ['en', 'es'],
+        sourceLocale: 'en',
+        source,
+        loaders: { es: () => source, uk: () => source } as never,
+      }),
+    ).toThrow(/loader configured for unknown locale "uk"/);
+  });
+
+  it('rejects a loader for the source locale', () => {
+    expect(() =>
+      defineI18n({
+        locales: ['en', 'es'],
+        sourceLocale: 'en',
+        source,
+        loaders: { en: () => source, es: () => source },
+      }),
+    ).toThrow(/source locale "en" must not have a loader/);
+  });
+
   it('does not require a loader for the source locale', () => {
     expect(() => defineI18n({ locales: ['en'], sourceLocale: 'en', source })).not.toThrow();
   });

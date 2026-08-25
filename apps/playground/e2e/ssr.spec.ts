@@ -32,6 +32,13 @@ test.describe('server-rendered HTML', () => {
     expect(html).toContain('Two pages, three languages');
   });
 
+  test('the source-locale prefix redirects to the unprefixed canonical URL', async ({ page }) => {
+    await page.goto('/en/docs?tab=api#example');
+
+    await expect(page).toHaveURL('/docs?tab=api#example');
+    await expect(page.getByTestId('title')).toHaveText('Documentation');
+  });
+
   test('the language attribute is on the html element in the response', async ({ request }) => {
     expect(await (await request.get('/es/docs')).text()).toMatch(/<html[^>]*lang="es"/);
     expect(await (await request.get('/uk/docs')).text()).toMatch(/<html[^>]*lang="uk"/);

@@ -49,6 +49,15 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
                 >{{ t('nav.button') }}</a
               >
             </li>
+            <li>
+              <a
+                [routerLink]="i18n.path('/docs/themes')"
+                routerLinkActive
+                ariaCurrentWhenActive="page"
+                data-testid="nav-themes"
+                >{{ t('nav.themes') }}</a
+              >
+            </li>
           </ul>
         </nav>
 

@@ -1,0 +1,41 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "experimentalDecorators": true,
+    "moduleResolution": "bundler",
+    "module": "ES2022",
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM"],
+    "isolatedModules": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "useDefineForClassFields": false,
+    "skipLibCheck": true,
+    "types": ["vite/client", "node"]
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "e2e/**/*.ts",
+    "vite.config.ts",
+    "vitest.setup.ts",
+    "playwright.config.ts"
+  ]
+}

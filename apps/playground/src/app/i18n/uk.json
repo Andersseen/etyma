@@ -3,6 +3,7 @@
     "home": "Головна",
     "docs": "Документація",
     "button": "Кнопка",
+    "themes": "Теми",
     "language": "Мова",
     "skipToContent": "Перейти до вмісту"
   },
@@ -22,6 +23,11 @@
     "lede": "Глибокий локалізований маршрут, щоб довести, що префікс переживає більше ніж один сегмент.",
     "released": "Випущено {$on :date style=long}",
     "status": ".input {$state :string}\n.match $state\nstable {{Стабільна}}\nbeta   {{Бета}}\n*      {{Експериментальна}}"
+  },
+  "themes": {
+    "title": "Теми",
+    "lede": "Другий глибокий маршрут документації, схожий на дерево документації Volt.",
+    "tokenCount": ".input {$count :number}\n.match $count\none  {{Задокументовано {$count} дизайн-токен.}}\nfew  {{Задокументовано {$count} дизайн-токени.}}\nmany {{Задокументовано {$count} дизайн-токенів.}}\n*    {{Задокументовано {$count} дизайн-токена.}}"
   },
   "footer": {
     "rights": "Ліцензія MIT. {$year :number useGrouping=never}"

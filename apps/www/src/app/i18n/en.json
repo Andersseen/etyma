@@ -1,0 +1,92 @@
+{
+  "layout": {
+    "status": "pre-release 0.0.1"
+  },
+  "nav": {
+    "home": "Home",
+    "docs": "Guide",
+    "button": "Angular",
+    "themes": "Analog",
+    "features": "Features",
+    "workflow": "Workflow",
+    "packages": "Packages",
+    "language": "Language",
+    "skipToContent": "Skip to content"
+  },
+  "home": {
+    "eyebrow": "Official Etyma site",
+    "title": "Typed i18n. Real SSR. Clean Angular APIs.",
+    "lede": "Etyma gives Angular teams typed JSON catalogs, MessageFormat 2, localized URLs, translated SSR HTML and hydration-safe lazy locale loading.",
+    "primaryCta": "Explore the flow",
+    "secondaryCta": "View packages",
+    "angular": "21 and 22",
+    "analog": "2.6 and 2.7",
+    "localesHeading": "Locales",
+    "codeTitle": "etyma.config.ts",
+    "codeNote": "Localized HTML ships from the server before hydration starts.",
+    "whyEyebrow": "Why it exists",
+    "whyTitle": "The i18n layer Angular apps should have by default.",
+    "featureTypedTitle": "Typed message keys",
+    "featureTypedBody": "The source catalog defines the key contract. Misspelled translation keys fail during TypeScript checks instead of becoming silent blank UI.",
+    "featureSsrTitle": "SSR first",
+    "featureSsrBody": "A localized URL renders localized HTML on the server, transfers the catalog, and hydrates without loading that locale again.",
+    "featureCloudTitle": "Edge-ready",
+    "featureCloudBody": "The Analog integration is tested through a Cloudflare Pages build so package output and runtime behavior stay honest.",
+    "workflowEyebrow": "How it works",
+    "workflowTitle": "Define once. Route by URL. Hydrate without flicker.",
+    "workflowBody": "Etyma keeps the source catalog typed, secondary catalogs lazy, and the visible page aligned with the address bar.",
+    "stepCatalogTitle": "Author catalogs",
+    "stepCatalogBody": "JSON stays readable while TypeScript keeps the source locale as the contract.",
+    "stepRouteTitle": "Serve localized URLs",
+    "stepRouteBody": "The source locale remains clean, while secondary locales live under stable prefixes.",
+    "stepHydrateTitle": "Transfer the active locale",
+    "stepHydrateBody": "SSR sends the catalog the page used, so hydration does not refetch it or flash English.",
+    "packagesEyebrow": "Packages",
+    "packagesTitle": "One portable core, two Angular-facing adapters.",
+    "packagesBody": "@etyma/core owns catalogs and MessageFormat. @etyma/angular exposes signals and transfer state. @etyma/analog connects URL routing, SSR and SEO."
+  },
+  "docs": {
+    "eyebrow": "Getting started",
+    "title": "Install one i18n definition and let the URL choose the locale.",
+    "lede": "The source locale stays unprefixed. Secondary locales live under /es and /uk, and their catalogs are loaded only when a visitor asks for them.",
+    "setupTitle": "Define the catalog once",
+    "setupBody": "Import the source catalog statically for typed keys and fallback. Keep secondary catalogs behind dynamic imports so they are split from the first bundle.",
+    "routingTitle": "Localized routes",
+    "routingBody": "/docs is English, /es/docs is Spanish and /uk/docs is Ukrainian. Switching language preserves the page, query string and fragment.",
+    "fallbackTitle": "Source fallback",
+    "messageTitle": "MessageFormat 2",
+    "componentCount": ".input {$count :number}\n.match $count\none {{{$count} production behavior is covered.}}\n*   {{{$count} production behaviors are covered.}}",
+    "sourceOnly": "This sentence exists only in the source catalog, so Spanish and Ukrainian fall back to it.",
+    "angularLink": "Angular adapter",
+    "analogLink": "Analog adapter"
+  },
+  "button": {
+    "eyebrow": "@etyma/angular",
+    "title": "Signal-native Angular bindings without runtime ceremony.",
+    "lede": "Components inject one typed i18n handle. Templates call t(), links call path(), and locale changes flow through Angular signals.",
+    "signalsTitle": "Signals, not subscriptions",
+    "signalsBody": "locale(), direction() and ready() are signals. The translation function reads them inside Angular templates and updates without Zone.js assumptions.",
+    "typesTitle": "Typed by the source catalog",
+    "typesBody": "Passing the i18n definition to injectI18n keeps keys typed across the package boundary without code generation.",
+    "mf2Title": "MessageFormat 2",
+    "released": "Reference build rendered {$on :date style=long}",
+    "status": ".input {$state :string}\n.match $state\nstable {{Stable and documented}}\nbeta   {{Beta}}\n*      {{Experimental}}",
+    "back": "Back to the guide"
+  },
+  "themes": {
+    "eyebrow": "@etyma/analog",
+    "title": "AnalogJS routing, SEO and SSR wired around localized URLs.",
+    "lede": "Etyma plugs into provideFileRouter(), loads the route locale before rendering, and maintains lang, dir, canonical and hreflang metadata.",
+    "routingTitle": "URL source of truth",
+    "routingBody": "There is no localStorage preference that can fight the address bar. /es/docs always means Spanish.",
+    "seoTitle": "Localized head",
+    "seoBody": "Each navigation updates html lang, dir, canonical, all hreflang alternates and x-default with absolute URLs.",
+    "cloudflareTitle": "Cloudflare Pages",
+    "tokenCount": ".input {$count :number}\n.match $count\none {{{$count} release check runs against Cloudflare output.}}\n*   {{{$count} release checks run against Cloudflare output.}}",
+    "back": "Back to the guide"
+  },
+  "footer": {
+    "rights": "MIT licensed. {$year :number useGrouping=never}",
+    "stack": "Built with AnalogJS, Angular, Etyma and Lumen Icons."
+  }
+}

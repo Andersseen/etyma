@@ -54,6 +54,14 @@ export type MessageKey<T> = T extends string
  * would otherwise produce the same flat key and one would silently win.
  */
 export function flattenMessages(source: MessageSource): MessageCatalog {
+  const root: unknown = source;
+
+  if (root === null || typeof root !== 'object' || Array.isArray(root)) {
+    throw new EtymaError(
+      `Invalid message catalog: root is ${describe(root)}; ` + 'expected an object of messages.',
+    );
+  }
+
   const catalog = new Map<string, string>();
 
   visit(source, '', catalog);

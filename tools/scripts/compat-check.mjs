@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 /**
- * Builds a clean Angular application against the packed tarballs, once per supported
- * Angular version.
+ * Builds clean Angular/Analog applications against the packed tarballs.
  *
  * Etyma is built with Angular 21 and published as Angular Package Format partial
  * declarations, which a consumer's own compiler links at application build time. Whether
  * that works on Angular 22 is not something the repository can answer about itself: it has
  * one Angular version installed and resolves `@etyma/*` through workspace symlinks. So the
  * fixtures live outside the workspace, install the real tarballs with npm, and run a real
- * `ng build`.
+ * `ng build`. The fixture names encode the version axis they exercise:
+ *
+ * - angular-21-analog-26: Angular 21, Analog 2.6.x
+ * - angular-21: Angular 21, Analog 2.7.x
+ * - angular-22: Angular 22, Analog 2.7.x
  *
  * Angular 22 also requires TypeScript 6, so this is the only place the published
  * declarations meet a compiler a major version newer than the one that wrote them.

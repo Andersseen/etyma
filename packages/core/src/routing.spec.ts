@@ -49,6 +49,12 @@ describe('createLocaleRouter', () => {
     expect(router.localeOf('/es/docs?tab=api')).toBe('es');
   });
 
+  it('treats an explicit source-locale prefix as the source path, not as a secondary locale', () => {
+    expect(router.localeOf('/en/docs')).toBe('en');
+    expect(router.strip('/en/docs')).toBe('/docs');
+    expect(router.localize('/en/docs', 'es')).toBe('/es/docs');
+  });
+
   it('normalises a path that does not start with a slash', () => {
     expect(router.localize('docs', 'es')).toBe('/es/docs');
   });

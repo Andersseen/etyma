@@ -105,6 +105,22 @@ describe('createMessageFormatter', () => {
     expect(onIssue).toHaveBeenCalledOnce();
   });
 
+  it('ignores unexpected parameters according to MessageFormat semantics', () => {
+    const onIssue = vi.fn();
+    const formatter = createMessageFormatter({ onIssue });
+
+    expect(formatter.format('en', 'plain', 'Hello', { unused: 'value' })).toBe('Hello');
+    expect(onIssue).not.toHaveBeenCalled();
+  });
+
+  it('formats non-Latin text without custom escaping', () => {
+    const formatter = createMessageFormatter();
+
+    expect(formatter.format('uk', 'welcome', 'Привіт, {$name}!', { name: 'Світ' })).toBe(
+      'Привіт, Світ!',
+    );
+  });
+
   it('returns the message as parts, so markup never has to come from a string', () => {
     const formatter = createMessageFormatter();
     const parts = formatter.formatToParts('en', 'welcome', 'Hello, {$name}!', { name: 'World' });
