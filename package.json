@@ -29,7 +29,7 @@
     "e2e": "turbo run e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm run format:check && pnpm run lint && turbo run typecheck test build",
+    "check": "pnpm run format:check && turbo run build --filter=./packages/* && pnpm run lint && turbo run typecheck test build",
     "package:check": "turbo run build --filter=./packages/* && node tools/scripts/package-check.mjs",
     "compat:check": "node tools/scripts/compat-check.mjs",
     "changeset": "changeset",
