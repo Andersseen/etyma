@@ -14,7 +14,7 @@
     "@angular/common": "21.2.21",
     "@angular/compiler": "21.2.21",
     "@angular/core": "21.2.21",
-    "@angular/platform-browser": "21.2.21",
+    "@angular/platform-browser": "21.2.22",
     "@angular/router": "21.2.21",
     "@etyma/core": "file:../.tarballs/etyma-core.tgz",
     "@etyma/angular": "file:../.tarballs/etyma-angular.tgz",
