@@ -91,8 +91,10 @@ function createLocaleSwitch(): (locale: Locale) => Promise<void> {
   // Resolved lazily: `EtymaI18n` asks for this token in its own constructor, so injecting
   // the service here directly would be a cycle.
   const injector = inject(Injector);
+  let switchVersion = 0;
 
   return async locale => {
+    const version = ++switchVersion;
     const i18n = injector.get(EtymaI18n);
     const router = injector.get(Router);
     const location = injector.get(Location);
@@ -105,6 +107,11 @@ function createLocaleSwitch(): (locale: Locale) => Promise<void> {
     const here = location.path(true);
 
     await i18n.load(locale);
+
+    if (version !== switchVersion) {
+      return;
+    }
+
     await router.navigateByUrl(definition.router.localize(here, locale));
   };
 }

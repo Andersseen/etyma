@@ -32,7 +32,7 @@ Etyma is a small toolkit for translating an Angular application: JSON catalogs, 
 message keys, MessageFormat 2 formatting, locale-prefixed routing, server-rendered
 translations, and the localized `<head>` that makes a translated page findable.
 
-> **Status: pre-release / targeting `0.0.1`.** The API is small on purpose and the release
+> **Status: pre-release / targeting `0.1.0`.** The API is small on purpose and the release
 > gates exercise packed packages, but nothing has been published yet. Read
 > [Non-goals](#non-goals) before adopting it.
 
@@ -105,11 +105,13 @@ The packages are built with Angular 21 as Angular Package Format partial declara
 Angular and Analog compatibility is verified by building clean applications against packed
 tarballs, not workspace symlinks.
 
-## Getting started
+## Install
 
 ```sh
 pnpm add @etyma/core @etyma/angular @etyma/analog
 ```
+
+## Define catalogs
 
 Define the catalog once. The source catalog is imported statically because its _type_ is
 where typed keys come from and its _value_ is what a half-translated page falls back to.
@@ -131,11 +133,36 @@ export const i18n = defineI18n({
 });
 ```
 
+## Minimal Angular setup
+
 Provide it:
 
 ```ts
 // src/app/app.config.ts
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideEtyma } from '@etyma/angular';
+import { i18n } from './i18n/i18n';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideZonelessChangeDetection(), provideEtyma(i18n)],
+};
+```
+
+For an Angular app that does not derive the locale from the URL, pass an initial locale:
+
+```ts
+provideEtyma(i18n, { initialLocale: 'es' });
+```
+
+## Minimal Analog setup
+
+Analog apps add localized file routes and request-driven locale activation:
+
+```ts
+// src/app/app.config.ts
 import { provideFileRouter } from '@analogjs/router';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { provideEtymaAnalog, withLocalizedRoutes } from '@etyma/analog';
 import { provideEtyma } from '@etyma/angular';
 import { i18n } from './i18n/i18n';
@@ -150,6 +177,12 @@ export const appConfig: ApplicationConfig = {
   ],
 };
 ```
+
+The recommended provider shape is explicit on purpose: Angular owns translations,
+Analog owns URL routing and localized head metadata, and `provideFileRouter()` stays where
+Analog users expect it.
+
+## Translate templates
 
 Use it. Passing the definition to `injectI18n` is what makes the keys typed:
 
@@ -167,6 +200,45 @@ export default class DocsPage {
   protected readonly t = this.i18n.t;
 }
 ```
+
+## Locale switching
+
+`i18n.setLocale('es')` means “make Spanish the active locale”. In a plain Angular app that
+loads the catalog and updates the locale signal. In an Analog app it navigates to the
+equivalent localized URL instead, so the address bar remains the source of truth. Query
+strings and fragments are preserved when Etyma localizes a path, including during Analog
+locale switches.
+
+Overlapping switches are last-call-wins: if `en -> es -> uk` starts quickly and the Spanish
+catalog resolves last, the app stays Ukrainian.
+
+## Fallback and error semantics
+
+- A missing key renders the key by default. Override `onMissingMessage` in `defineI18n()`
+  to render something else.
+- A key missing from a secondary locale falls back to the source catalog and is formatted
+  in the source locale.
+- A catalog that is still loading leaves `ready()` false and renders source-locale
+  fallbacks until the requested catalog arrives.
+- A lazy catalog load failure rejects `load()`, `activate()` or `setLocale()` and leaves the
+  previously active locale in place.
+- A malformed MessageFormat 2 pattern renders as its own source string. Development logs a
+  useful warning through Angular's dev-mode issue reporter; production renders safely
+  without console noise unless you pass `formatting.onIssue`.
+- An unsupported locale passed to `load()` or `setLocale()` rejects with `EtymaError`.
+  Locale tags are matched exactly as configured, so write canonical BCP 47 tags such as
+  `en`, `es`, `pt-BR` consistently.
+
+## SSR behavior
+
+In Analog, the request URL chooses the locale before the page renders. `GET /es/docs`
+therefore returns Spanish HTML from the server, not English HTML that hydration later
+replaces. The catalog used for SSR is written to `TransferState`; the browser adopts it
+instead of importing the same locale catalog again.
+
+`provideEtymaAnalog()` also keeps the locale-derived head current during SSR, hydration,
+client navigation and locale switching: `<html lang>`, `dir`, canonical, every `hreflang`
+alternate and `x-default`.
 
 A message is a MessageFormat 2 pattern:
 
@@ -229,9 +301,15 @@ catalogs behind dynamic imports in `loaders` so they stay lazy.
 - Portable core. The engine has no framework in it, so an adapter for something else is
   additive rather than a rewrite.
 
+## Package boundaries
+
+`@etyma/core` is framework agnostic. `@etyma/angular` depends on Angular and core, but not
+Analog. `@etyma/analog` is the only package that knows about Analog file routing, URL
+locale activation and localized SEO.
+
 ## Non-goals
 
-Not planned for `0.0.x`, and not partially implemented anywhere:
+Not planned for `0.x`, and not partially implemented anywhere:
 
 - Adapters for Astro, React, Vue or Svelte
 - A CMS integration, a translation management UI, or automatic machine translation
@@ -297,7 +375,7 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Release status
 
-Nothing has been published yet. `0.0.1` will be the first release, cut from the process in
+Nothing has been published yet. `0.1.0` will be the first release, cut from the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
 together.
 

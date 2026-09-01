@@ -45,11 +45,11 @@ published is what lives on npm forever.
 Inputs:
 
 - **use-oidc** — publish with npm Trusted Publishing instead of the bootstrap token. Leave
-  it off for `0.0.1`; turn it on once the setup below is done.
+  it off for `0.1.0`; turn it on once the setup below is done.
 - **dry-run** — run every gate and pack the tarballs without publishing. Useful for
   rehearsing the first release.
 
-## The first publish: bootstrapping `0.0.1`
+## The first publish: bootstrapping `0.1.0`
 
 npm Trusted Publishing has to be configured _on an existing package_, and none of the
 `@etyma` packages exist yet. So the first release uses a short-lived token, and the token is
@@ -70,18 +70,18 @@ The token lives in the environment, never in a file, never in a repository-level
 
 **Publishing**
 
-1. Merge the release pull request that sets the version to `0.0.1`.
+1. Merge the release pull request that sets the version to `0.1.0`.
 2. Run **Publish** with `use-oidc: false`. Optionally run it once with `dry-run: true`
    first.
 3. Approve the environment when prompted.
-4. Check the three packages on npm: version `0.0.1`, public, and each showing a provenance
+4. Check the three packages on npm: version `0.1.0`, public, and each showing a provenance
    attestation.
 
 Provenance works in this stage too — the workflow requests `id-token: write` and sets
 `NPM_CONFIG_PROVENANCE`, so the attestation is signed by the workflow even though the
 registry credential is still a token.
 
-## After `0.0.1`: switching to OIDC
+## After `0.1.0`: switching to OIDC
 
 Once the packages exist, move off the token. Do this immediately — the whole point of the
 bootstrap token is that it is temporary.

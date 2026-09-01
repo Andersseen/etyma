@@ -1,6 +1,6 @@
 {
   "name": "@etyma/analog",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "AnalogJS integration for Etyma: URL-driven locale routing, SSR-translated HTML, hydration without a locale refetch, and localized SEO metadata.",
   "keywords": [
     "analog",

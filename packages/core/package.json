@@ -1,6 +1,6 @@
 {
   "name": "@etyma/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Framework-agnostic internationalization engine for Etyma: JSON catalogs, MessageFormat 2 formatting, locale routing and lazy catalog loading.",
   "keywords": [
     "i18n",
@@ -34,6 +34,7 @@
   },
   "files": [
     "dist",
+    "CHANGELOG.md",
     "README.md",
     "LICENSE"
   ],
