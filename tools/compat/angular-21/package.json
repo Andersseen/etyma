@@ -11,7 +11,7 @@
   "dependencies": {
     "@analogjs/content": "2.7.0",
     "@analogjs/router": "2.7.0",
-    "@angular/common": "21.2.21",
+    "@angular/common": "21.2.22",
     "@angular/compiler": "21.2.21",
     "@angular/core": "21.2.21",
     "@angular/platform-browser": "21.2.21",
