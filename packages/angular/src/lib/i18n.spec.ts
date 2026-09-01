@@ -149,6 +149,38 @@ describe('EtymaI18n', () => {
     expect(es).toHaveBeenCalledOnce();
   });
 
+  it('keeps the most recent locale when overlapping switches finish out of order', async () => {
+    let releaseSpanish!: (catalog: typeof spanish) => void;
+    let releaseUkrainian!: (catalog: typeof ukrainian) => void;
+
+    const es = new Promise<typeof spanish>(resolve => {
+      releaseSpanish = resolve;
+    });
+    const uk = new Promise<typeof ukrainian>(resolve => {
+      releaseUkrainian = resolve;
+    });
+
+    TestBed.configureTestingModule({
+      providers: [provideEtyma(definition({ es: () => es, uk: () => uk }))],
+    });
+    const i18n = TestBed.inject(EtymaI18n);
+
+    const spanishSwitch = i18n.setLocale('es');
+    const ukrainianSwitch = i18n.setLocale('uk');
+
+    releaseUkrainian(ukrainian);
+    await ukrainianSwitch;
+
+    expect(i18n.locale()).toBe('uk');
+    expect(i18n.t('nav.docs')).toBe('Документація');
+
+    releaseSpanish(spanish);
+    await spanishSwitch;
+
+    expect(i18n.locale()).toBe('uk');
+    expect(i18n.t('nav.docs')).toBe('Документація');
+  });
+
   it('refuses a locale it was never configured with', async () => {
     TestBed.configureTestingModule({ providers: [provideEtyma(definition())] });
 

@@ -67,8 +67,8 @@ catalog and then moves the URL, so the address bar and the rendered language nev
 Nothing is read from or written to `localStorage`: a remembered preference that could
 override the path would mean `/es/docs` sometimes renders in English.
 
-The source locale is canonical only without a prefix. Etyma does not register a source
-locale prefix branch, so `/en/docs` is not treated as a duplicate of `/docs`.
+The source locale is canonical only without a prefix. Etyma catches a source-locale prefix
+such as `/en/docs` and redirects it to `/docs`, so it is not indexed as a duplicate page.
 
 ## SEO
 

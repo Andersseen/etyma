@@ -65,6 +65,7 @@ export class EtymaI18n<TKey extends string = string> {
   private readonly stateKey = makeStateKey<CatalogSnapshot>(`${this.definition.id}.catalogs`);
 
   private readonly activeLocale = signal<Locale>(this.definition.sourceLocale);
+  private activationVersion = 0;
 
   /**
    * Bumped whenever a catalog arrives.
@@ -196,7 +197,14 @@ export class EtymaI18n<TKey extends string = string> {
    * locale a page is. Applications call {@link setLocale} instead.
    */
   async activate(locale: Locale): Promise<void> {
+    const version = ++this.activationVersion;
+
     await this.load(locale);
+
+    if (version !== this.activationVersion) {
+      return;
+    }
+
     this.activeLocale.set(locale);
   }
 

@@ -1,11 +1,20 @@
 import { provideFileRouter } from '@analogjs/router';
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
-import { ROUTES, UrlSegment, type CanMatchFn, type Route, type Routes } from '@angular/router';
-import { EtymaI18n, provideEtyma } from '@etyma/angular';
-import { defineI18n } from '@etyma/core';
-import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  ROUTES,
+  Router,
+  UrlSegment,
+  type CanMatchFn,
+  type Route,
+  type Routes,
+} from '@angular/router';
+import { ETYMA_LOCALE_SWITCH, EtymaI18n, provideEtyma } from '@etyma/angular';
+import { defineI18n, type MessageLoader } from '@etyma/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ETYMA_LOCALE_PARAM, withLocalizedRoutes } from './routes.js';
+import { provideEtymaAnalog } from './provide.js';
 
 const definition = defineI18n({
   locales: ['en', 'es', 'uk'],
@@ -16,6 +25,18 @@ const definition = defineI18n({
     uk: () => ({ nav: { docs: 'Документація' } }),
   },
 });
+
+function definitionWith(loaders: { es?: MessageLoader; uk?: MessageLoader }) {
+  return defineI18n({
+    locales: ['en', 'es', 'uk'],
+    sourceLocale: 'en',
+    source: { nav: { docs: 'Docs' } },
+    loaders: {
+      es: loaders.es ?? (() => ({ nav: { docs: 'Documentación' } })),
+      uk: loaders.uk ?? (() => ({ nav: { docs: 'Документація' } })),
+    },
+  });
+}
 
 let routes: Routes;
 
@@ -121,5 +142,45 @@ describe('the prefixed locale guard', () => {
 
     expect(i18n.locale()).toBe('en');
     expect(i18n.t('nav.docs')).toBe('Docs');
+  });
+});
+
+describe('the Analog locale switch', () => {
+  it('lets the most recent switch win when catalog loads finish out of order', async () => {
+    let releaseSpanish!: (catalog: { nav: { docs: string } }) => void;
+    let releaseUkrainian!: (catalog: { nav: { docs: string } }) => void;
+
+    const es = new Promise<{ nav: { docs: string } }>(resolve => {
+      releaseSpanish = resolve;
+    });
+    const uk = new Promise<{ nav: { docs: string } }>(resolve => {
+      releaseUkrainian = resolve;
+    });
+    const navigateByUrl = vi.fn(() => Promise.resolve(true));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideEtyma(definitionWith({ es: () => es, uk: () => uk })),
+        provideEtymaAnalog({ seo: false }),
+        { provide: Location, useValue: { path: () => '/docs?tab=api#usage' } },
+        { provide: Router, useValue: { navigateByUrl } },
+      ],
+    });
+
+    const switchLocale = TestBed.inject(ETYMA_LOCALE_SWITCH);
+    const spanishSwitch = switchLocale('es');
+    const ukrainianSwitch = switchLocale('uk');
+
+    releaseUkrainian({ nav: { docs: 'Документація' } });
+    await ukrainianSwitch;
+
+    expect(navigateByUrl).toHaveBeenCalledOnce();
+    expect(navigateByUrl).toHaveBeenCalledWith('/uk/docs?tab=api#usage');
+
+    releaseSpanish({ nav: { docs: 'Documentación' } });
+    await spanishSwitch;
+
+    expect(navigateByUrl).toHaveBeenCalledOnce();
   });
 });
