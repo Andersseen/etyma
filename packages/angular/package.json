@@ -1,6 +1,6 @@
 {
   "name": "@etyma/angular",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Signal-native, zoneless-first Angular bindings for Etyma: typed translation keys, lazy locale catalogs and SSR transfer.",
   "keywords": [
     "angular",
