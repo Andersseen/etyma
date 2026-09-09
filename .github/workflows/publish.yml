@@ -7,11 +7,11 @@ name: Publish
 # on npm forever, and trusting a green run from an earlier commit is how a broken package
 # gets published.
 #
-# Authentication moves in two stages - see RELEASING.md:
-#   0.0.1  a granular NPM_TOKEN in the protected `npm-publish` environment, because npm
-#          Trusted Publishing cannot be configured for a package that does not exist yet.
-#   after  OIDC, with the token revoked. Set `use-oidc` to true once every @etyma package
-#          has this workflow registered as its trusted publisher.
+# Authentication moved in two stages - see RELEASING.md:
+#   0.1.0  used a granular NPM_TOKEN in the protected `npm-publish` environment, because
+#          npm Trusted Publishing cannot be configured for a package that does not exist.
+#   after  OIDC is preferred, with the token revoked once every @etyma package has this
+#          workflow registered as its trusted publisher.
 
 on:
   workflow_dispatch:
@@ -19,7 +19,7 @@ on:
       use-oidc:
         description: 'Publish with npm Trusted Publishing (OIDC) instead of NPM_TOKEN'
         type: boolean
-        default: false
+        default: true
       dry-run:
         description: 'Run every gate and pack the tarballs, but do not publish'
         type: boolean

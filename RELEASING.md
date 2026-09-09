@@ -33,9 +33,11 @@ titled **release: version packages**. That pull request:
 
 Review it like any other change. Merging it is the release decision.
 
-## 3. Publishing
+## 3. Publishing Current Releases
 
 Go to **Actions → Publish → Run workflow**, and run it against the merged release commit.
+For `0.1.1` and later, publish with **use-oidc: true** unless npm package settings prove
+Trusted Publishing has not been configured yet.
 
 It runs the full quality gates first — `pnpm check`, `pnpm package:check`,
 `pnpm compat:check` — then builds and publishes from the `npm-publish` environment. The
@@ -44,16 +46,31 @@ published is what lives on npm forever.
 
 Inputs:
 
-- **use-oidc** — publish with npm Trusted Publishing instead of the bootstrap token. Leave
-  it off for `0.1.0`; turn it on once the setup below is done.
+- **use-oidc** — publish with npm Trusted Publishing instead of `NPM_TOKEN`. This is the
+  default for current releases.
 - **dry-run** — run every gate and pack the tarballs without publishing. Useful for
-  rehearsing the first release.
+  rehearsing a release.
 
-## The first publish: bootstrapping `0.1.0`
+The repository side is already prepared for Trusted Publishing: `publish.yml` runs in the
+protected `npm-publish` environment, grants `id-token: write` to the publish job, upgrades
+npm before publishing, and sets provenance. The npm-side trusted publisher binding cannot
+be proven from this repository. Before publishing `0.1.1`, verify on npmjs.com that each
+package is bound to:
+
+- Organization or user: `Andersseen`
+- Repository: `etyma`
+- Workflow filename: `publish.yml`
+- Environment: `npm-publish`
+
+If any package is not bound yet, either configure it before publishing or run the workflow
+with **use-oidc: false** using the protected environment token, then immediately complete
+the OIDC setup and revoke the token.
+
+## Historical Bootstrap: `0.1.0`
 
 npm Trusted Publishing has to be configured _on an existing package_, and none of the
-`@etyma` packages exist yet. So the first release uses a short-lived token, and the token is
-revoked immediately afterwards.
+`@etyma` packages existed before `0.1.0`. That first release therefore used a short-lived
+token, with the token intended to be revoked immediately afterwards.
 
 **Before running the workflow**
 
@@ -81,7 +98,7 @@ Provenance works in this stage too — the workflow requests `id-token: write` a
 `NPM_CONFIG_PROVENANCE`, so the attestation is signed by the workflow even though the
 registry credential is still a token.
 
-## After `0.1.0`: switching to OIDC
+## Switching To OIDC
 
 Once the packages exist, move off the token. Do this immediately — the whole point of the
 bootstrap token is that it is temporary.

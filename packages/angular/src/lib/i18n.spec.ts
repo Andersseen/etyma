@@ -14,6 +14,11 @@ import { EtymaI18n } from './i18n.js';
 import { injectI18n, injectT } from './inject.js';
 import { provideEtyma } from './provide.js';
 
+interface EtymaHydrationState {
+  readonly locale: string;
+  readonly catalogs: CatalogSnapshot;
+}
+
 const source = {
   nav: { docs: 'Docs' },
   footer: { rights: 'MIT licensed. {$year :number useGrouping=never}' },
@@ -290,7 +295,7 @@ describe('injectI18n', () => {
 });
 
 describe('server rendering', () => {
-  it('puts the loaded catalogs into transfer state, and leaves the source catalog out', async () => {
+  it('puts the active locale and loaded catalogs into transfer state, and leaves the source catalog out', async () => {
     TestBed.configureTestingModule({
       providers: [provideEtyma(definition()), { provide: PLATFORM_ID, useValue: 'server' }],
     });
@@ -299,15 +304,17 @@ describe('server rendering', () => {
 
     const transferred = TestBed.inject(TransferState).toJson();
 
+    expect(transferred).toContain('"locale":"es"');
     expect(transferred).toContain('Documentación');
     expect(transferred).not.toContain('Only in the source catalog');
   });
 
-  it('hydrates from transfer state without running the loader again', async () => {
+  it('hydrates the active locale and catalog before the first client render', () => {
     const es = vi.fn(() => spanish);
     const transferState = new TransferState();
-    transferState.set(makeStateKey<CatalogSnapshot>('etyma.catalogs'), {
-      es: { 'nav.docs': 'Documentación' },
+    transferState.set(makeStateKey<EtymaHydrationState>('etyma.hydration'), {
+      locale: 'es',
+      catalogs: { es: { 'nav.docs': 'Documentación' } },
     });
 
     TestBed.configureTestingModule({
@@ -318,9 +325,24 @@ describe('server rendering', () => {
     });
     const i18n = TestBed.inject(EtymaI18n);
 
-    await i18n.setLocale('es');
-
+    expect(i18n.locale()).toBe('es');
     expect(i18n.t('nav.docs')).toBe('Documentación');
     expect(es).not.toHaveBeenCalled();
+  });
+
+  it('removes transferred hydration state after the browser adopts it', () => {
+    const transferState = new TransferState();
+    const stateKey = makeStateKey<EtymaHydrationState>('etyma.hydration');
+    transferState.set(stateKey, {
+      locale: 'uk',
+      catalogs: { uk: { 'nav.docs': 'Документація' } },
+    });
+
+    TestBed.configureTestingModule({
+      providers: [provideEtyma(definition()), { provide: TransferState, useValue: transferState }],
+    });
+    TestBed.inject(EtymaI18n);
+
+    expect(transferState.hasKey(stateKey)).toBe(false);
   });
 });

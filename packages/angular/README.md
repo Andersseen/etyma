@@ -67,9 +67,10 @@ The service is created per application injector, which on a server means per req
 piece of mutable state — the active locale, the catalogs loaded so far — lives on the
 instance, so two requests rendering two languages at once share nothing.
 
-Catalogs loaded while rendering are written to Angular's `TransferState`, so the browser
-hydrates from them instead of fetching the same catalog again. The source catalog is left
-out: it is already in the JavaScript bundle.
+The active locale and catalogs loaded while rendering are written to Angular's
+`TransferState`, so the browser's first i18n state matches the server-rendered HTML and it
+does not fetch the same catalog again. The source catalog is left out: it is already in the
+JavaScript bundle.
 
 For AnalogJS applications, [`@etyma/analog`](https://www.npmjs.com/package/@etyma/analog)
 adds locale-prefixed routing, request-scoped locale resolution and the localized `<head>`.

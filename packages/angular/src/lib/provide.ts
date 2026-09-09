@@ -15,7 +15,7 @@ export interface EtymaOptions {
    * A locale to load and activate before the application renders.
    *
    * For an application that decides its locale some other way than from the URL. Analog
-   * applications do not set this: `provideEtymaRouting()` from `@etyma/analog` derives the
+   * applications do not set this: `provideEtymaAnalog()` from `@etyma/analog` derives the
    * locale from the request instead, which is the only answer that is right on the server
    * as well as in the browser.
    */
