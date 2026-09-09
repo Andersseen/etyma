@@ -5,7 +5,13 @@ const localeChunk = (locale: string) => new RegExp(`/assets/etyma-locale-${local
 
 test.describe('hydration', () => {
   test('never renders the source language before the translation arrives', async ({ page }) => {
-    const englishSeen: string[] = [];
+    const problems: string[] = [];
+    page.on('console', message => {
+      if (message.type() === 'error' || message.type() === 'warning') {
+        problems.push(message.text());
+      }
+    });
+    page.on('pageerror', error => problems.push(error.message));
 
     // Sampled while the page loads rather than after it: a flash of the source language is
     // over long before `waitForLoadState` returns, which is exactly why it is easy to ship.
@@ -31,12 +37,12 @@ test.describe('hydration', () => {
     await page.goto('/es/docs');
     await expect(page.getByTestId('title')).toHaveText('Documentación');
 
-    englishSeen.push(
-      ...(await page.evaluate(() => (window as unknown as { __etymaSeen: string[] }).__etymaSeen)),
+    const seen = await page.evaluate(
+      () => (window as unknown as { __etymaSeen: string[] }).__etymaSeen,
     );
 
-    expect(englishSeen).not.toContain('Documentation');
-    expect(englishSeen).toEqual(['Documentación']);
+    expect(seen).toEqual(['Documentación']);
+    expect(problems.filter(text => /NG0500|NG050[0-9]|hydration/i.test(text))).toEqual([]);
   });
 
   test('does not fetch a catalog the server already sent', async ({ page }) => {

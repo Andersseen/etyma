@@ -33,7 +33,12 @@ export type TranslateFn<TKey extends string = string> = (
   params?: MessageParams,
 ) => string;
 
-const NO_TRANSFERRED_CATALOGS: CatalogSnapshot = {};
+interface EtymaHydrationState {
+  readonly locale: Locale;
+  readonly catalogs: CatalogSnapshot;
+}
+
+const NO_TRANSFERRED_HYDRATION_STATE: EtymaHydrationState | null = null;
 
 /**
  * Etyma's translation state, as signals.
@@ -62,9 +67,12 @@ export class EtymaI18n<TKey extends string = string> {
   private readonly isServer = isPlatformServer(inject(PLATFORM_ID));
   private readonly switchLocale = inject(ETYMA_LOCALE_SWITCH, { optional: true });
 
-  private readonly stateKey = makeStateKey<CatalogSnapshot>(`${this.definition.id}.catalogs`);
+  private readonly stateKey = makeStateKey<EtymaHydrationState>(`${this.definition.id}.hydration`);
+  private readonly transferredState = this.readTransferredState();
 
-  private readonly activeLocale = signal<Locale>(this.definition.sourceLocale);
+  private readonly activeLocale = signal<Locale>(
+    this.transferredState?.locale ?? this.definition.sourceLocale,
+  );
   private activationVersion = 0;
 
   /**
@@ -105,14 +113,14 @@ export class EtymaI18n<TKey extends string = string> {
     // Held locally as well as on `this`, because the change handler runs once during
     // construction when a server snapshot is adopted - before the field is assigned.
     const registry = createCatalogRegistry(this.definition, {
-      snapshot: this.transferState.get(this.stateKey, NO_TRANSFERRED_CATALOGS),
+      snapshot: this.transferredState?.catalogs,
       onChange: () => {
         this.revision.update(n => n + 1);
 
         // The server serialises transfer state after rendering finishes, so rewriting the
         // whole snapshot on every change leaves the last write complete.
         if (this.isServer) {
-          this.transferState.set(this.stateKey, registry.dehydrate());
+          this.writeHydrationState(registry);
         }
       },
     });
@@ -206,6 +214,10 @@ export class EtymaI18n<TKey extends string = string> {
     }
 
     this.activeLocale.set(locale);
+
+    if (this.isServer) {
+      this.writeHydrationState(this.registry);
+    }
   }
 
   /**
@@ -232,6 +244,28 @@ export class EtymaI18n<TKey extends string = string> {
         `Unknown locale "${locale}". Configured locales: ${this.definition.locales.join(', ')}.`,
       );
     }
+  }
+
+  private readTransferredState(): EtymaHydrationState | undefined {
+    if (this.isServer) {
+      return undefined;
+    }
+
+    const state = this.transferState.get(this.stateKey, NO_TRANSFERRED_HYDRATION_STATE);
+    this.transferState.remove(this.stateKey);
+
+    if (state === null || !this.definition.router.isLocale(state.locale)) {
+      return undefined;
+    }
+
+    return state;
+  }
+
+  private writeHydrationState(registry: CatalogRegistry): void {
+    this.transferState.set(this.stateKey, {
+      locale: this.activeLocale(),
+      catalogs: registry.dehydrate(),
+    });
   }
 }
 

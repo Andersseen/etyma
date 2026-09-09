@@ -137,11 +137,34 @@ describe('the prefixed locale guard', () => {
     const i18n = TestBed.inject(EtymaI18n);
     await i18n.setLocale('uk');
 
-    const guard = routes[2]?.canActivate?.[0] as (() => Promise<boolean>) | undefined;
-    await TestBed.runInInjectionContext(() => guard?.());
+    const guard = routes[2]?.canActivate?.[0] as
+      ((_route: unknown, state: { url: string }) => Promise<boolean>) | undefined;
+    await TestBed.runInInjectionContext(() => guard?.({}, { url: '/docs' }));
 
     expect(i18n.locale()).toBe('en');
     expect(i18n.t('nav.docs')).toBe('Docs');
+  });
+
+  it('does not let a stale source-branch activation override a prefixed request URL', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideEtyma(definition),
+        provideFileRouter(withLocalizedRoutes()),
+        { provide: Location, useValue: { path: () => '/es/docs' } },
+      ],
+    });
+
+    const localRoutes = TestBed.inject(ROUTES).flat();
+    const i18n = TestBed.inject(EtymaI18n);
+    await i18n.activate('es');
+
+    const guard = localRoutes[2]?.canActivate?.[0] as
+      ((_route: unknown, state: { url: string }) => Promise<boolean>) | undefined;
+    await TestBed.runInInjectionContext(() => guard?.({}, { url: '/docs' }));
+
+    expect(i18n.locale()).toBe('es');
+    expect(i18n.t('nav.docs')).toBe('Documentación');
   });
 });
 

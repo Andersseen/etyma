@@ -112,6 +112,14 @@ function createLocaleSwitch(): (locale: Locale) => Promise<void> {
       return;
     }
 
+    if (locale === definition.sourceLocale) {
+      await i18n.activate(locale);
+
+      if (version !== switchVersion) {
+        return;
+      }
+    }
+
     await router.navigateByUrl(definition.router.localize(here, locale));
   };
 }

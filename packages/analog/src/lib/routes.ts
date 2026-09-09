@@ -69,10 +69,21 @@ const activatePrefixedLocale: CanActivateFn = route => {
 };
 
 /** Restores the source locale when a URL has no prefix. */
-const activateSourceLocale: CanActivateFn = () => {
+const activateSourceLocale: CanActivateFn = (_route, state) => {
   const i18n = inject(EtymaI18n);
+  const definition = inject(ETYMA_DEFINITION);
+  const location = inject(Location);
 
-  return i18n.activate(i18n.sourceLocale).then(() => true);
+  const targetLocale = definition.router.localeOf(state.url);
+  const currentLocale = definition.router.localeOf(location.path());
+  const locale =
+    targetLocale === definition.sourceLocale &&
+    currentLocale !== definition.sourceLocale &&
+    i18n.locale() === currentLocale
+      ? currentLocale
+      : targetLocale;
+
+  return i18n.activate(locale).then(() => true);
 };
 
 /**

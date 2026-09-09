@@ -32,9 +32,9 @@ Etyma is a small toolkit for translating an Angular application: JSON catalogs, 
 message keys, MessageFormat 2 formatting, locale-prefixed routing, server-rendered
 translations, and the localized `<head>` that makes a translated page findable.
 
-> **Status: pre-release / targeting `0.1.0`.** The API is small on purpose and the release
-> gates exercise packed packages, but nothing has been published yet. Read
-> [Non-goals](#non-goals) before adopting it.
+> **Status: published and early.** `0.1.0` is on npm and is being used by Volt UI, but
+> Etyma is still pre-1.0. The API is small on purpose and the release gates exercise
+> packed packages; read [Non-goals](#non-goals) before adopting it.
 
 ## Why Etyma exists
 
@@ -233,8 +233,9 @@ catalog resolves last, the app stays Ukrainian.
 
 In Analog, the request URL chooses the locale before the page renders. `GET /es/docs`
 therefore returns Spanish HTML from the server, not English HTML that hydration later
-replaces. The catalog used for SSR is written to `TransferState`; the browser adopts it
-instead of importing the same locale catalog again.
+replaces. The active locale and catalog state used for SSR are written to `TransferState`;
+the browser adopts them as its first i18n state instead of importing the same locale
+catalog again.
 
 `provideEtymaAnalog()` also keeps the locale-derived head current during SSR, hydration,
 client navigation and locale switching: `<html lang>`, `dir`, canonical, every `hreflang`
@@ -361,8 +362,8 @@ tell you whether the _response_ was translated or only the page.
   validation, compatibility fixtures and Cloudflare-backed e2e tests.
 - **Release PR** is driven by Changesets. It opens or updates the version/changelog pull
   request; publishing is a separate manual decision.
-- **Publish** is manual and protected. The first release uses `NPM_TOKEN`; later releases
-  can move to npm Trusted Publishing.
+- **Publish** is manual and protected. Now that `0.1.0` exists, patch releases should use
+  npm Trusted Publishing once the npm package settings have been verified.
 - **Deploy sites** publishes the official website and playground to Cloudflare Pages after a
   green `main`, creating GitHub Deployments for the repo sidebar.
 
@@ -373,9 +374,10 @@ told the API is wrong while it is still cheap to change.
 
 By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Release status
+## Release Status
 
-Nothing has been published yet. `0.1.0` will be the first release, cut from the process in
+`@etyma/core`, `@etyma/angular` and `@etyma/analog` are published at `0.1.0`. The next
+reliability release is expected to be `0.1.1`, cut through the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
 together.
 
