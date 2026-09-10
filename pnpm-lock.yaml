@@ -409,6 +409,19 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
 
+  packages/tooling:
+    dependencies:
+      '@etyma/core':
+        specifier: workspace:^
+        version: link:../core
+      messageformat:
+        specifier: 4.0.0
+        version: 4.0.0
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+
 packages:
 
   '@ampproject/remapping@2.3.0':

@@ -1,0 +1,60 @@
+{
+  "name": "@etyma/tooling",
+  "version": "0.0.0",
+  "description": "Static validation for Etyma message catalogs: key parity, MessageFormat 2 syntax and external variable contracts, as structured diagnostics.",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "messageformat",
+    "mf2",
+    "validation",
+    "linting"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andersseen/etyma.git",
+    "directory": "packages/tooling"
+  },
+  "homepage": "https://github.com/Andersseen/etyma/tree/main/packages/tooling#readme",
+  "bugs": {
+    "url": "https://github.com/Andersseen/etyma/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.lib.json",
+    "dev": "tsc --project tsconfig.lib.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@etyma/core": "workspace:^",
+    "messageformat": "4.0.0"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

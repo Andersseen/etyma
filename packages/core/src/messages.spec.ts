@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { EtymaError } from './errors.js';
-import { defineMessages, flattenMessages } from './messages.js';
+import {
+  defineMessages,
+  flattenMessages,
+  type MessageSourceLeaf,
+  type MessageSourceProblem,
+  walkMessageSource,
+} from './messages.js';
 
 describe('flattenMessages', () => {
   it('addresses a nested catalog by dotted key', () => {
@@ -47,6 +53,65 @@ describe('flattenMessages', () => {
 
   it('rejects an empty key', () => {
     expect(() => flattenMessages({ '': 'nameless' })).toThrow(/empty key/);
+  });
+});
+
+describe('walkMessageSource', () => {
+  function walk(source: unknown): {
+    leaves: MessageSourceLeaf[];
+    problems: MessageSourceProblem[];
+  } {
+    const leaves: MessageSourceLeaf[] = [];
+    const problems: MessageSourceProblem[] = [];
+
+    walkMessageSource(
+      source,
+      leaf => leaves.push(leaf),
+      problem => problems.push(problem),
+    );
+
+    return { leaves, problems };
+  }
+
+  it('reports every leaf, in traversal order', () => {
+    const { leaves, problems } = walk({ nav: { docs: 'Docs' }, welcome: 'Hello' });
+
+    expect(leaves).toEqual([
+      { path: 'nav.docs', value: 'Docs' },
+      { path: 'welcome', value: 'Hello' },
+    ]);
+    expect(problems).toEqual([]);
+  });
+
+  it('does not stop at the first problem', () => {
+    const { leaves, problems } = walk({
+      ok: 'fine',
+      count: 3,
+      'nav.docs': 'Docs',
+      also: 'fine too',
+    });
+
+    expect(leaves).toEqual([
+      { path: 'ok', value: 'fine' },
+      { path: 'also', value: 'fine too' },
+    ]);
+    expect(problems).toEqual([
+      { path: 'count', kind: 'invalid-leaf', value: 3 },
+      { path: 'nav.docs', kind: 'dotted-key' },
+    ]);
+  });
+
+  it('reports an invalid root without throwing', () => {
+    const { leaves, problems } = walk(null);
+
+    expect(leaves).toEqual([]);
+    expect(problems).toEqual([{ path: '', kind: 'invalid-root', value: null }]);
+  });
+
+  it('reports an empty key with its parent path', () => {
+    const { problems } = walk({ nav: { '': 'nameless' } });
+
+    expect(problems).toEqual([{ path: 'nav.', kind: 'empty-key' }]);
   });
 });
 

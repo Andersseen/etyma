@@ -27,6 +27,12 @@ const layerBoundaries = [
             'other framework - only standards (Intl, MessageFormat 2).',
         },
         {
+          group: ['@etyma/tooling'],
+          message:
+            '@etyma/core must never depend on @etyma/tooling. Tooling is built on top of ' +
+            'core, never the other way around.',
+        },
+        {
           group: ['node:*', 'fs', 'path', 'url', 'crypto'],
           message:
             '@etyma/core runs in browsers and in edge runtimes such as Cloudflare Workers, ' +
@@ -45,6 +51,45 @@ const layerBoundaries = [
             '@etyma/angular must work in any Angular application. Analog-specific behaviour ' +
             'belongs in @etyma/analog, which depends on this package and not the other way ' +
             'around.',
+        },
+        {
+          group: ['@etyma/tooling'],
+          message:
+            '@etyma/angular must never depend on @etyma/tooling. Tooling is a development-time ' +
+            'package and must not become part of a runtime dependency graph.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['packages/analog/src/**/*.ts'],
+    restricted: {
+      patterns: [
+        {
+          group: ['@etyma/tooling'],
+          message:
+            '@etyma/analog must never depend on @etyma/tooling. Tooling is a development-time ' +
+            'package and must not become part of a runtime dependency graph.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['packages/tooling/src/**/*.ts'],
+    restricted: {
+      patterns: [
+        {
+          group: ['@angular/*', '@analogjs/*', '@etyma/angular', '@etyma/analog', 'rxjs*'],
+          message:
+            '@etyma/tooling is framework agnostic development tooling. It may not import ' +
+            'Angular, Analog or any other framework - only standards and @etyma/core.',
+        },
+        {
+          group: ['node:*', 'fs', 'path', 'url', 'crypto'],
+          message:
+            '@etyma/tooling validates already-loaded catalog objects and must run in a ' +
+            'browser or edge runtime too - a future CMS or MCP integration - so it may not ' +
+            'import Node built-ins. Filesystem access belongs in a future CLI adapter.',
         },
       ],
     },

@@ -74,14 +74,16 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 
 ## Packages
 
-| Package                              | What it is                                                                                                             | Depends on                      |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins. | `messageformat`                 |
-| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                           | `@etyma/core`, Angular 21 or 22 |
-| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                              | `@etyma/angular`, Analog 2.x    |
+| Package                              | What it is                                                                                                                                      | Depends on                      |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                          | `messageformat`                 |
+| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                    | `@etyma/core`, Angular 21 or 22 |
+| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                       | `@etyma/angular`, Analog 2.x    |
+| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Not a runtime dependency. | `@etyma/core`                   |
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
-`core` knows nothing about Angular, and `angular` knows nothing about Analog.
+`core` knows nothing about Angular, `angular` knows nothing about Analog, and nothing in the
+runtime trio depends on `tooling` — it depends on `core`, never the other way around.
 
 ## Apps
 
@@ -292,6 +294,25 @@ patterns:
 Keep the source locale catalog imported statically in the `source` option. Move secondary
 catalogs behind dynamic imports in `loaders` so they stay lazy.
 
+## Validating catalogs
+
+[`@etyma/tooling`](packages/tooling) checks a catalog set against its source locale's
+contract — missing keys, extra keys, invalid MessageFormat 2, and variables a translation
+dropped or invented — as structured diagnostics rather than a pass/fail:
+
+```ts
+import { validateCatalogs } from '@etyma/tooling';
+import en from './i18n/en.json';
+import es from './i18n/es.json';
+import uk from './i18n/uk.json';
+
+const result = validateCatalogs({ sourceLocale: 'en', catalogs: { en, es, uk } });
+```
+
+It is a dev dependency, not something an application installs to run: see the
+[`@etyma/tooling` README](packages/tooling#readme) for the full diagnostic contract and what
+this first release deliberately does not do yet (no CLI, no source-code scanning).
+
 ## Goals
 
 - Standards over invention. CLDR plural rules, `Intl` formatting, MessageFormat 2 syntax.
@@ -306,7 +327,8 @@ catalogs behind dynamic imports in `loaders` so they stay lazy.
 
 `@etyma/core` is framework agnostic. `@etyma/angular` depends on Angular and core, but not
 Analog. `@etyma/analog` is the only package that knows about Analog file routing, URL
-locale activation and localized SEO.
+locale activation and localized SEO. `@etyma/tooling` depends on core and is development
+tooling, not a runtime dependency — no package in the runtime trio depends on it.
 
 ## Non-goals
 
@@ -327,6 +349,7 @@ apps/playground      A real Analog 2 application that consumes Etyma like an ext
 packages/core        @etyma/core
 packages/angular     @etyma/angular
 packages/analog      @etyma/analog
+packages/tooling     @etyma/tooling - development-time catalog validation
 tools/compat         Clean Angular 21 and 22 consumers, built against packed tarballs
 tools/scripts        Package validation and compatibility runners
 ```
@@ -376,10 +399,10 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Release Status
 
-`@etyma/core`, `@etyma/angular` and `@etyma/analog` are published at `0.1.0`. The next
-reliability release is expected to be `0.1.1`, cut through the process in
+`@etyma/core`, `@etyma/angular` and `@etyma/analog` are at `0.1.1`, cut through the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
-together.
+together. `@etyma/tooling` is a new, separate package that versions independently — a
+`0.1.0` first release is expected once it has shipped through the same process.
 
 ## Licence
 

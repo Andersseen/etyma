@@ -1,6 +1,9 @@
 name: Publish
 
-# Publishes @etyma/core, @etyma/angular and @etyma/analog to npm.
+# Publishes every @etyma package with a pending version bump to npm - the runtime trio
+# (@etyma/core, @etyma/angular, @etyma/analog), released together, and @etyma/tooling, which
+# versions independently. `changeset publish` only publishes packages a merged changeset
+# actually bumped, so a runtime-only release does not touch tooling and vice versa.
 #
 # Runs only when a human dispatches it against a tag, so a merged release pull request does
 # not publish on its own. It re-runs the full quality gates first: the tag is what will be
