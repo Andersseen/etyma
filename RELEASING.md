@@ -3,6 +3,23 @@
 Three packages — `@etyma/core`, `@etyma/angular`, `@etyma/analog` — share one version and
 are released together. A changeset for any of them releases all three.
 
+`@etyma/tooling` is not in that group. It is development tooling — a catalog validator today,
+with a CLI, an MCP server and CMS integrations planned on top of it — and it will evolve at
+its own pace: a new diagnostic code or a stricter check is a real change worth releasing, but
+it has nothing to do with the runtime engine, and a runtime-only consumer installing
+`@etyma/core` should not see an unrelated version bump because tooling shipped a release. It
+is therefore versioned independently in `.changeset/config.json` (simply by being absent from
+`fixed` and `linked`, which is what makes a package independent under Changesets — no
+extra configuration was needed). A changeset touching only `@etyma/tooling` releases only
+`@etyma/tooling`; the runtime trio only moves when a changeset actually names one of them.
+`tools/scripts/pack.mjs` and `package-check.mjs` check the runtime trio's shared version and
+`@etyma/tooling`'s package boundary as two separate assertions for the same reason.
+
+`@etyma/tooling` has never been published, so its first release hits the same bootstrap
+problem `0.1.0` did (below): npm Trusted Publishing cannot be configured for a package that
+does not exist yet. Its first release needs the same short-lived-token dance, scoped to
+_only_ `@etyma/tooling`, followed by switching it to OIDC once the package exists.
+
 The process is deliberately in three separable parts, so no single opaque workflow both
 decides a version and pushes it to a registry:
 

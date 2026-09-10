@@ -5,8 +5,20 @@ import { fileURLToPath } from 'node:url';
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
-/** The packages that are published, in dependency order. */
-export const publishedPackages = ['core', 'angular', 'analog'];
+/**
+ * The runtime packages, in dependency order. Released together as one version - see
+ * `.changeset/config.json`'s `fixed` group.
+ */
+export const runtimePackages = ['core', 'angular', 'analog'];
+
+/**
+ * Every published package, runtime and tooling alike, in dependency order.
+ *
+ * `@etyma/tooling` is published but versions independently of the runtime trio: it is
+ * development tooling that evolves at its own pace, and a runtime consumer should not see a
+ * release whenever a catalog-validation check changes. See RELEASING.md.
+ */
+export const publishedPackages = [...runtimePackages, 'tooling'];
 
 /**
  * Packs every published package exactly as `pnpm publish` would.

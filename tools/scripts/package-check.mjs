@@ -12,7 +12,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { contentsOf, manifestOf, packAll, repoRoot } from './pack.mjs';
+import { contentsOf, manifestOf, packAll, repoRoot, runtimePackages } from './pack.mjs';
 
 const failures = [];
 
@@ -130,6 +130,7 @@ try {
   }
 
   const core = packages.find(pkg => pkg.name === '@etyma/core');
+  const tooling = packages.find(pkg => pkg.name === '@etyma/tooling');
 
   console.log('\ncross-package');
 
@@ -146,11 +147,35 @@ try {
     );
   });
 
-  check('the three packages agree on one version', () => {
-    const versions = new Set(packages.map(pkg => manifestOf(pkg.tarball).version));
+  check('the runtime trio agree on one version', () => {
+    const runtime = packages.filter(pkg =>
+      runtimePackages.some(name => pkg.name === `@etyma/${name}`),
+    );
+    const versions = new Set(runtime.map(pkg => manifestOf(pkg.tarball).version));
 
     assert(versions.size === 1, `fixed versioning is broken: ${[...versions].join(', ')}`);
   });
+
+  check(
+    '@etyma/tooling depends on nothing from a framework, and only @etyma/core among Etyma packages',
+    () => {
+      const manifest = manifestOf(tooling.tarball);
+
+      assert(
+        Object.keys(manifest.peerDependencies ?? {}).length === 0,
+        'a development tooling package should need no peers at all',
+      );
+
+      const dependencies = Object.keys(manifest.dependencies ?? {});
+      const etymaDependencies = dependencies.filter(name => name.startsWith('@etyma/'));
+
+      assert(
+        etymaDependencies.length === 1 && etymaDependencies[0] === '@etyma/core',
+        `@etyma/tooling must depend on exactly @etyma/core among Etyma packages, not: ` +
+          `${etymaDependencies.join(', ') || '(none)'}`,
+      );
+    },
+  );
 } finally {
   rmSync(workspace, { recursive: true, force: true });
 }

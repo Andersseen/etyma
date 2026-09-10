@@ -22,10 +22,13 @@ export {
 export {
   defineMessages,
   flattenMessages,
+  walkMessageSource,
   type MessageCatalog,
   type MessageKey,
   type MessageParams,
   type MessageSource,
+  type MessageSourceLeaf,
+  type MessageSourceProblem,
 } from './messages.js';
 
 export { createLocaleRouter, type LocaleRouter, type LocaleRouterOptions } from './routing.js';
