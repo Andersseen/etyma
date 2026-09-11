@@ -20,8 +20,8 @@
     "clean": "rimraf dist .turbo .nitro .wrangler test-results playwright-report"
   },
   "dependencies": {
-    "@analogjs/content": "2.7.0",
-    "@analogjs/router": "2.7.0",
+    "@analogjs/content": "2.7.1",
+    "@analogjs/router": "2.7.1",
     "@angular/cdk": "21.2.14",
     "@angular/common": "21.2.21",
     "@angular/compiler": "21.2.21",
@@ -47,8 +47,8 @@
     "tslib": "2.8.1"
   },
   "devDependencies": {
-    "@analogjs/platform": "2.7.0",
-    "@analogjs/vite-plugin-angular": "2.7.0",
+    "@analogjs/platform": "2.7.1",
+    "@analogjs/vite-plugin-angular": "2.7.1",
     "@angular/build": "21.2.21",
     "@angular/compiler-cli": "21.2.21",
     "@playwright/test": "1.62.1",
