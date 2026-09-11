@@ -20,13 +20,18 @@ problem `0.1.0` did (below): npm Trusted Publishing cannot be configured for a p
 does not exist yet. Its first release needs the same short-lived-token dance, scoped to
 _only_ `@etyma/tooling`, followed by switching it to OIDC once the package exists.
 
-The process is deliberately in three separable parts, so no single opaque workflow both
-decides a version and pushes it to a registry:
+The process is deliberately in three separable steps, even though only the first two need a
+human:
 
 1. **Describe** — a changeset in the pull request that made the change.
 2. **Version** — `release.yml` opens a pull request that applies the pending changesets.
    Merging it is the decision to release.
-3. **Publish** — `publish.yml`, dispatched by a human, re-runs every gate and publishes.
+3. **Publish** — `release.yml` triggers `publish.yml` automatically, the moment it finds
+   nothing left to version - which is exactly the state right after step 2's pull request is
+   merged. It re-runs every gate and publishes. No separate dispatch needed for a normal
+   release; `publish.yml` stays manually dispatchable for a dry run or for the one thing
+   automation cannot do on its own - see [Historical Bootstrap](#historical-bootstrap-010)
+   and [First release of a new package](#first-release-of-a-new-package) below.
 
 ## 1. Describing a change
 
@@ -50,28 +55,36 @@ titled **release: version packages**. That pull request:
 
 Review it like any other change. Merging it is the release decision.
 
-## 3. Publishing Current Releases
+## 3. Publishing
 
-Go to **Actions → Publish → Run workflow**, and run it against the merged release commit.
-For `0.1.1` and later, publish with **use-oidc: true** unless npm package settings prove
-Trusted Publishing has not been configured yet.
-
-It runs the full quality gates first — `pnpm check`, `pnpm package:check`,
-`pnpm compat:check` — then builds and publishes from the `npm-publish` environment. The
-gates are re-run rather than inherited from an earlier green run, because the commit being
-published is what lives on npm forever.
-
-Inputs:
-
-- **use-oidc** — publish with npm Trusted Publishing instead of `NPM_TOKEN`. This is the
-  default for current releases.
-- **dry-run** — run every gate and pack the tarballs without publishing. Useful for
-  rehearsing a release.
+Nothing to do. The moment the release pull request from step 2 is merged, `release.yml`'s
+`version` job runs again on that merge commit, finds no changesets left, and its `publish`
+job calls `publish.yml` - `use-oidc: true`, the current default - which re-runs every gate
+and publishes from the `npm-publish` environment.
 
 The repository side is already prepared for Trusted Publishing: `publish.yml` runs in the
 protected `npm-publish` environment, grants `id-token: write` to the publish job, upgrades
 npm before publishing, and sets provenance. The npm-side trusted publisher binding cannot
-be proven from this repository. Before publishing `0.1.1`, verify on npmjs.com that each
+be proven from this repository; if a package is not bound yet, either configure it on
+npmjs.com or use the manual dispatch below with `use-oidc: false`.
+
+### Manual dispatch
+
+`publish.yml` still takes `workflow_dispatch` directly - **Actions → Publish → Run
+workflow** - for the two cases automation cannot handle on its own:
+
+- **A dry run.** `dry-run: true` runs every gate and packs the tarballs without publishing,
+  for rehearsing a release.
+- **A package's first-ever publish**, or any run needing `use-oidc: false` - see
+  [Historical Bootstrap](#historical-bootstrap-010) and
+  [First release of a new package](#first-release-of-a-new-package).
+
+Inputs:
+
+- **use-oidc** — publish with npm Trusted Publishing instead of `NPM_TOKEN`. Default `true`.
+- **dry-run** — run every gate and pack the tarballs without publishing. Default `false`.
+
+Before relying on the automatic path for `0.1.1` and later, verify on npmjs.com that each
 package is bound to:
 
 - Organization or user: `Andersseen`
@@ -79,9 +92,31 @@ package is bound to:
 - Workflow filename: `publish.yml`
 - Environment: `npm-publish`
 
-If any package is not bound yet, either configure it before publishing or run the workflow
-with **use-oidc: false** using the protected environment token, then immediately complete
-the OIDC setup and revoke the token.
+Binding is keyed to the **called** workflow's own filename, not whatever triggered it - a
+publish that `release.yml` sets off still authenticates as `publish.yml`, so the existing
+binding for `@etyma/core`, `@etyma/angular` and `@etyma/analog` needs no change.
+
+## First release of a new package
+
+`changeset publish` computes one plan across every package in the workspace before
+publishing any of them, by asking the registry for each package's current versions. A
+package that has never been published gets a normal "not found in the registry" result and
+is planned like any other - this works cleanly when every package in that run is new, which
+is how `0.1.0` bootstrapped the runtime trio together (see below).
+
+A batch that **mixes** an established package with a brand-new one has, in practice, hit a
+crash while computing that plan (`@changesets/cli@3.0.1`, pnpm's registry-info path -
+`TypeError: Cannot read properties of undefined (reading 'includes')` in
+`getPublishPlan.mjs`). It did not reproduce running the identical plan computation locally
+against the same commit, which points at a transient registry hiccup during one of the
+concurrent `pnpm info` calls rather than a deterministic bug - nothing was published either
+way. If this happens:
+
+1. **Retry first** - dispatch `publish.yml` again (or push an empty commit so `release.yml`
+   re-evaluates). A transient registry response does not usually repeat.
+2. If it repeats, publish the new package's first version on its own via manual dispatch
+   with `use-oidc: false` (its Trusted Publisher cannot be configured until the package
+   exists - same bootstrap problem as `0.1.0`), then let a normal run publish the rest.
 
 ## Historical Bootstrap: `0.1.0`
 
