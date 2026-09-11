@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createCatalogRegistry } from './catalog-registry.js';
 import { defineI18n } from './define-i18n.js';
 import type { MessageLoader } from './loader.js';
+import { defineMessageContract } from './messages.js';
+import { defineRemoteI18n } from './remote-i18n.js';
 
 const source = { nav: { docs: 'Docs' } };
 
@@ -132,5 +134,145 @@ describe('createCatalogRegistry', () => {
     expect(first.has('es')).toBe(true);
     expect(second.has('es')).toBe(false);
     expect(second.loaded).toEqual(['en']);
+  });
+
+  it('never reports contract drift, since the source catalog is the contract', async () => {
+    const onContractDrift = vi.fn();
+    const registry = createCatalogRegistry(
+      definitionWith({ es: () => spanish, uk: () => ukrainian }),
+      { onContractDrift },
+    );
+
+    await registry.load('es');
+
+    expect(onContractDrift).not.toHaveBeenCalled();
+  });
+});
+
+const english = { nav: { docs: 'Docs' } };
+
+function remoteDefinitionWith(overrides: Partial<Record<'en' | 'es' | 'uk', MessageLoader>>) {
+  return defineRemoteI18n({
+    locales: ['en', 'es', 'uk'],
+    sourceLocale: 'en',
+    contract: defineMessageContract(['nav.docs']),
+    loaders: {
+      en: () => english,
+      es: () => spanish,
+      uk: () => ukrainian,
+      ...overrides,
+    },
+  });
+}
+
+describe('createCatalogRegistry, remote mode', () => {
+  it('starts with nothing loaded, unlike static mode', () => {
+    const registry = createCatalogRegistry(remoteDefinitionWith({}));
+
+    expect(registry.loaded).toEqual([]);
+    expect(registry.has('en')).toBe(false);
+  });
+
+  it('loading a target locale also loads the source locale, concurrently', async () => {
+    const en = vi.fn(() => english);
+    const es = vi.fn(() => spanish);
+    const registry = createCatalogRegistry(remoteDefinitionWith({ en, es }));
+
+    await registry.load('es');
+
+    expect(en).toHaveBeenCalledOnce();
+    expect(es).toHaveBeenCalledOnce();
+    expect(registry.get('en')?.get('nav.docs')).toBe('Docs');
+    expect(registry.get('es')?.get('nav.docs')).toBe('Documentación');
+  });
+
+  it('does not reload the source locale once it is in memory', async () => {
+    const en = vi.fn(() => english);
+    const registry = createCatalogRegistry(remoteDefinitionWith({ en }));
+
+    await registry.load('es');
+    await registry.load('uk');
+
+    expect(en).toHaveBeenCalledOnce();
+  });
+
+  it('loading the source locale directly does not touch any target locale', async () => {
+    const en = vi.fn(() => english);
+    const es = vi.fn(() => spanish);
+    const registry = createCatalogRegistry(remoteDefinitionWith({ en, es }));
+
+    await registry.load('en');
+
+    expect(en).toHaveBeenCalledOnce();
+    expect(es).not.toHaveBeenCalled();
+  });
+
+  it('propagates a source-locale failure to a concurrent target load', async () => {
+    const registry = createCatalogRegistry(
+      remoteDefinitionWith({
+        en: () => {
+          throw new Error('source down');
+        },
+      }),
+    );
+
+    await expect(registry.load('es')).rejects.toThrow('source down');
+  });
+
+  it('includes the source catalog in the transfer payload, unlike static mode', async () => {
+    const registry = createCatalogRegistry(remoteDefinitionWith({}));
+
+    await registry.load('en');
+
+    expect(registry.dehydrate()).toEqual({ en: { 'nav.docs': 'Docs' } });
+  });
+
+  it('adopts a transferred source-locale snapshot instead of fetching it again', async () => {
+    const en = vi.fn(() => english);
+    const registry = createCatalogRegistry(remoteDefinitionWith({ en }), {
+      snapshot: { en: { 'nav.docs': 'Docs' } },
+    });
+
+    expect(registry.has('en')).toBe(true);
+
+    await registry.load('en');
+
+    expect(en).not.toHaveBeenCalled();
+  });
+
+  it('reports contract drift exactly once, with the missing and extra keys', async () => {
+    const onContractDrift = vi.fn();
+    const registry = createCatalogRegistry(
+      remoteDefinitionWith({ en: () => ({ nav: { docs: 'Docs' }, extra: { key: 'Surprise' } }) }),
+      { onContractDrift },
+    );
+
+    await registry.load('en');
+
+    expect(onContractDrift).toHaveBeenCalledOnce();
+    expect(onContractDrift).toHaveBeenCalledWith({
+      locale: 'en',
+      missing: [],
+      extra: ['extra.key'],
+    });
+  });
+
+  it('does not report drift a second time once the source has already been checked', async () => {
+    const onContractDrift = vi.fn();
+    const registry = createCatalogRegistry(remoteDefinitionWith({}), { onContractDrift });
+
+    await registry.load('en');
+    await registry.load('es');
+
+    expect(onContractDrift).not.toHaveBeenCalled();
+  });
+
+  it('does not report drift when the loaded catalog matches the contract', async () => {
+    const onContractDrift = vi.fn();
+    const registry = createCatalogRegistry(remoteDefinitionWith({}), { onContractDrift });
+
+    await registry.load('en');
+
+    expect(onContractDrift).not.toHaveBeenCalled();
   });
 });

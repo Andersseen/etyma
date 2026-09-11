@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EtymaError } from './errors.js';
-import { loadMessageCatalog, toMessageSource } from './loader.js';
+import { createHttpMessageLoader, loadMessageCatalog, toMessageSource } from './loader.js';
 
 describe('toMessageSource', () => {
   it('accepts a plain catalog', () => {
@@ -67,5 +67,82 @@ describe('loadMessageCatalog', () => {
     });
 
     expect(seen).toEqual(['uk']);
+  });
+});
+
+describe('createHttpMessageLoader', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(
+    response: Partial<Response> & { readonly ok: boolean },
+  ): ReturnType<typeof vi.fn> {
+    const fetch = vi.fn(() => Promise.resolve(response as Response));
+
+    vi.stubGlobal('fetch', fetch);
+
+    return fetch;
+  }
+
+  it('resolves to the parsed body on a successful response', async () => {
+    stubFetch({ ok: true, json: () => Promise.resolve({ nav: { docs: 'Docs' } }) });
+
+    const catalog = await loadMessageCatalog(
+      'en',
+      createHttpMessageLoader('https://cdn.example.com/en.json'),
+    );
+
+    expect(catalog.get('nav.docs')).toBe('Docs');
+  });
+
+  it('accepts a per-locale URL function', async () => {
+    const fetch = stubFetch({ ok: true, json: () => Promise.resolve({ a: 'x' }) });
+
+    await loadMessageCatalog(
+      'uk',
+      createHttpMessageLoader(locale => `https://cdn.example.com/${locale}.json`),
+    );
+
+    expect(fetch).toHaveBeenCalledWith('https://cdn.example.com/uk.json', undefined);
+  });
+
+  it('passes init through to fetch', async () => {
+    const fetch = stubFetch({ ok: true, json: () => Promise.resolve({ a: 'x' }) });
+    const init = { headers: { Authorization: 'Bearer token' } };
+
+    await loadMessageCatalog(
+      'en',
+      createHttpMessageLoader('https://cdn.example.com/en.json', init),
+    );
+
+    expect(fetch).toHaveBeenCalledWith('https://cdn.example.com/en.json', init);
+  });
+
+  it('rejects with an EtymaError naming the locale, URL and status on a non-OK response', async () => {
+    stubFetch({ ok: false, status: 404, statusText: 'Not Found' });
+
+    await expect(
+      loadMessageCatalog('es', createHttpMessageLoader('https://cdn.example.com/es.json')),
+    ).rejects.toThrow(/"es".*https:\/\/cdn\.example\.com\/es\.json.*HTTP 404/s);
+  });
+
+  it('rejects with an EtymaError on a fetch failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('network down'))),
+    );
+
+    await expect(
+      loadMessageCatalog('en', createHttpMessageLoader('https://cdn.example.com/en.json')),
+    ).rejects.toThrow(EtymaError);
+  });
+
+  it('rejects with an EtymaError on invalid JSON', async () => {
+    stubFetch({ ok: true, json: () => Promise.reject(new SyntaxError('Unexpected token')) });
+
+    await expect(
+      loadMessageCatalog('en', createHttpMessageLoader('https://cdn.example.com/en.json')),
+    ).rejects.toThrow(/not valid JSON/);
   });
 });

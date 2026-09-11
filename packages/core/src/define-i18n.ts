@@ -16,7 +16,7 @@ import {
 import { createLocaleRouter, type LocaleRouter } from './routing.js';
 import { returnMessageKey, type MissingMessageHandler } from './translator.js';
 
-type LocaleTuple = readonly [Locale, ...Locale[]];
+export type LocaleTuple = readonly [Locale, ...Locale[]];
 
 export interface I18nOptions<TSource extends MessageSource, TLocales extends LocaleTuple> {
   /** Every locale the application publishes, as BCP 47 tags. */
@@ -76,15 +76,31 @@ export interface I18nDefinition<TKey extends string = string> {
   readonly locales: readonly Locale[];
   readonly sourceLocale: Locale;
 
-  /** Every message key in the source catalog, sorted. Also carries the key type. */
+  /**
+   * Every message key the definition's contract carries, sorted. Also carries the key type.
+   *
+   * From the source catalog's own shape for `defineI18n`; from an explicit
+   * `MessageContract` for `defineRemoteI18n`, which has no static catalog to read a shape
+   * from.
+   */
   readonly keys: readonly TKey[];
 
-  readonly sourceCatalog: MessageCatalog;
+  /**
+   * The source catalog, or `undefined` when the source locale is itself loaded remotely -
+   * see `defineRemoteI18n`. `defineI18n` always sets this; its own return type narrows it
+   * back to non-optional, since a static source is always present by construction.
+   */
+  readonly sourceCatalog: MessageCatalog | undefined;
   readonly router: LocaleRouter;
   readonly formatting: MessageFormatterOptions;
   readonly onMissingMessage: MissingMessageHandler;
 
-  /** The loader for `locale`, or `undefined` for the source locale, which needs none. */
+  /**
+   * The loader for `locale`.
+   *
+   * `undefined` only for the source locale of a `defineI18n` definition, which needs none.
+   * `defineRemoteI18n` configures one for every locale, including the source.
+   */
   loaderFor(locale: Locale): MessageLoader | undefined;
 
   /** The text direction to render `locale` in. */
@@ -101,33 +117,16 @@ export interface I18nDefinition<TKey extends string = string> {
  */
 export function defineI18n<const TSource extends MessageSource, const TLocales extends LocaleTuple>(
   options: I18nOptions<TSource, TLocales>,
-): I18nDefinition<MessageKey<TSource>> {
+): I18nDefinition<MessageKey<TSource>> & { readonly sourceCatalog: MessageCatalog } {
   const locales: readonly Locale[] = [...options.locales];
 
-  if (locales.length === 0) {
-    throw new EtymaError('defineI18n: `locales` must list at least one locale.');
-  }
-
-  const seen = new Set<Locale>();
-
-  for (const locale of locales) {
-    assertWellFormedLocale(locale, 'defineI18n: `locales`');
-
-    if (seen.has(locale)) {
-      throw new EtymaError(`defineI18n: locale "${locale}" is listed twice.`);
-    }
-
-    seen.add(locale);
-  }
+  validateLocales('defineI18n', locales);
 
   const { sourceLocale } = options;
 
-  if (!seen.has(sourceLocale)) {
-    throw new EtymaError(
-      `defineI18n: sourceLocale "${sourceLocale}" is not in locales [${locales.join(', ')}].`,
-    );
-  }
+  validateSourceLocale('defineI18n', locales, sourceLocale);
 
+  const seen = new Set(locales);
   const loaders = new Map<Locale, MessageLoader>();
   const configuredLoaders = Object.entries(options.loaders ?? {});
 
@@ -184,7 +183,9 @@ export function defineI18n<const TSource extends MessageSource, const TLocales e
     ),
   );
 
-  const definition: I18nDefinition<MessageKey<TSource>> = {
+  const definition: I18nDefinition<MessageKey<TSource>> & {
+    readonly sourceCatalog: MessageCatalog;
+  } = {
     id: options.id ?? 'etyma',
     locales,
     sourceLocale,
@@ -198,4 +199,41 @@ export function defineI18n<const TSource extends MessageSource, const TLocales e
   };
 
   return Object.freeze(definition);
+}
+
+/**
+ * Validates a locale list: non-empty, every tag well-formed, no duplicates.
+ *
+ * Shared between `defineI18n` and `defineRemoteI18n`, since a locale list means the same
+ * thing in both - `context` is only which one's error message this becomes.
+ */
+export function validateLocales(context: string, locales: readonly Locale[]): void {
+  if (locales.length === 0) {
+    throw new EtymaError(`${context}: \`locales\` must list at least one locale.`);
+  }
+
+  const seen = new Set<Locale>();
+
+  for (const locale of locales) {
+    assertWellFormedLocale(locale, `${context}: \`locales\``);
+
+    if (seen.has(locale)) {
+      throw new EtymaError(`${context}: locale "${locale}" is listed twice.`);
+    }
+
+    seen.add(locale);
+  }
+}
+
+/** Validates that `sourceLocale` is one of `locales`. `locales` must already be de-duplicated. */
+export function validateSourceLocale(
+  context: string,
+  locales: readonly Locale[],
+  sourceLocale: Locale,
+): void {
+  if (!locales.includes(sourceLocale)) {
+    throw new EtymaError(
+      `${context}: sourceLocale "${sourceLocale}" is not in locales [${locales.join(', ')}].`,
+    );
+  }
 }

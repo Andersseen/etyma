@@ -25,7 +25,8 @@ export interface TranslatorInput {
   /** The catalog for `locale`, or `undefined` while it is still loading. */
   readonly catalog: MessageCatalog | undefined;
   readonly sourceLocale: Locale;
-  readonly sourceCatalog: MessageCatalog;
+  /** The source locale's catalog, or `undefined` while it is still loading, in remote mode. */
+  readonly sourceCatalog: MessageCatalog | undefined;
   readonly formatter: MessageFormatter;
   readonly onMissingMessage?: MissingMessageHandler;
 }
@@ -76,7 +77,7 @@ export function createTranslator<TKey extends string = string>(
       return { source: own, locale };
     }
 
-    const fallback = sourceCatalog.get(key);
+    const fallback = sourceCatalog?.get(key);
 
     return fallback === undefined ? undefined : { source: fallback, locale: sourceLocale };
   };

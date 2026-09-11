@@ -1,7 +1,13 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
 import { defineI18n } from './define-i18n.js';
-import { defineMessages, type MessageKey } from './messages.js';
+import {
+  defineMessageContract,
+  defineMessages,
+  type MessageContract,
+  type MessageKey,
+} from './messages.js';
+import { defineRemoteI18n } from './remote-i18n.js';
 
 const source = defineMessages({
   nav: { docs: 'Docs', components: 'Components' },
@@ -44,5 +50,47 @@ describe('typed message keys', () => {
     });
 
     expectTypeOf(definition.keys).toEqualTypeOf<readonly ('nav.docs' | 'seo.siteName')[]>();
+  });
+
+  it('narrows sourceCatalog to non-optional for a static definition', () => {
+    const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source });
+
+    expectTypeOf(definition.sourceCatalog).not.toBeNullable();
+  });
+});
+
+describe('MessageContract', () => {
+  it('carries the exact key union defineMessageContract was given', () => {
+    const contract = defineMessageContract(['nav.docs', 'welcome']);
+
+    expectTypeOf(contract.keys).toEqualTypeOf<readonly ('nav.docs' | 'welcome')[]>();
+  });
+
+  it('reaches defineRemoteI18n, which has no static source to read a shape from', () => {
+    const contract = defineMessageContract(['nav.docs', 'welcome']);
+    const definition = defineRemoteI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      contract,
+      loaders: { en: () => ({ nav: { docs: 'Docs' }, welcome: 'Hello' }) },
+    });
+
+    expectTypeOf(definition.keys).toEqualTypeOf<readonly ('nav.docs' | 'welcome')[]>();
+  });
+
+  it('rejects a key the contract does not define', () => {
+    expectTypeOf<'nav.missing'>().not.toExtend<MessageContract<'nav.docs'>['keys'][number]>();
+  });
+
+  it('requires a loader for every locale, including the source, unlike defineI18n', () => {
+    const contract = defineMessageContract(['nav.docs']);
+
+    defineRemoteI18n({
+      locales: ['en', 'es'],
+      sourceLocale: 'en',
+      contract,
+      // @ts-expect-error - `es` has no loader; unlike `defineI18n` there is no static source.
+      loaders: { en: () => ({ nav: { docs: 'Docs' } }) },
+    });
   });
 });

@@ -17,6 +17,7 @@ import {
   EtymaError,
   type CatalogRegistry,
   type CatalogSnapshot,
+  type ContractDriftInfo,
   type Locale,
   type MessageFormatIssue,
   type MessageFormatter,
@@ -96,7 +97,7 @@ export class EtymaI18n<TKey extends string = string> {
       locale,
       catalog: this.registry.get(locale),
       sourceLocale: this.definition.sourceLocale,
-      sourceCatalog: this.definition.sourceCatalog,
+      sourceCatalog: this.registry.get(this.definition.sourceLocale),
       formatter: this.formatter,
       onMissingMessage: this.definition.onMissingMessage,
     });
@@ -123,6 +124,7 @@ export class EtymaI18n<TKey extends string = string> {
           this.writeHydrationState(registry);
         }
       },
+      onContractDrift: developmentContractDriftReporter(),
     });
 
     this.registry = registry;
@@ -282,5 +284,25 @@ function developmentIssueReporter(): ((issue: MessageFormatIssue) => void) | und
 
   return issue => {
     console.warn(`[etyma] message "${issue.key}" (${issue.locale}) failed to format:`, issue.error);
+  };
+}
+
+/**
+ * Surfaces a remote source catalog that has drifted from its build-time contract.
+ *
+ * Production stays silent, same reasoning as {@link developmentIssueReporter}: the app's
+ * type contract naturally corresponds to the source as seen at the last generation, and a
+ * key added or removed since then is not a reason to fail a live page.
+ */
+function developmentContractDriftReporter(): ((info: ContractDriftInfo) => void) | undefined {
+  if (!isDevMode()) {
+    return undefined;
+  }
+
+  return info => {
+    console.warn(
+      `[etyma] the remote source catalog for "${info.locale}" does not match its contract.`,
+      info,
+    );
   };
 }

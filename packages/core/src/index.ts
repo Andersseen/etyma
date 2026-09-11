@@ -20,10 +20,12 @@ export {
 } from './locale.js';
 
 export {
+  defineMessageContract,
   defineMessages,
   flattenMessages,
   walkMessageSource,
   type MessageCatalog,
+  type MessageContract,
   type MessageKey,
   type MessageParams,
   type MessageSource,
@@ -43,8 +45,10 @@ export {
 } from './format.js';
 
 export {
+  createHttpMessageLoader,
   loadMessageCatalog,
   toMessageSource,
+  type HttpLoaderInit,
   type MessageLoader,
   type MessageLoaderResult,
   type MessageModule,
@@ -61,9 +65,12 @@ export {
 
 export { defineI18n, type I18nDefinition, type I18nOptions } from './define-i18n.js';
 
+export { defineRemoteI18n, type RemoteI18nOptions } from './remote-i18n.js';
+
 export {
   createCatalogRegistry,
   type CatalogRegistry,
   type CatalogRegistryOptions,
   type CatalogSnapshot,
+  type ContractDriftInfo,
 } from './catalog-registry.js';

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { EtymaError } from './errors.js';
 import {
+  defineMessageContract,
   defineMessages,
   flattenMessages,
   type MessageSourceLeaf,
@@ -121,5 +122,26 @@ describe('defineMessages', () => {
     const parsed: unknown = JSON.parse('{"nav":{"docs":"Docs"}}');
 
     expect(flattenMessages(authored)).toEqual(flattenMessages(parsed as typeof authored));
+  });
+});
+
+describe('defineMessageContract', () => {
+  it('sorts keys regardless of the order they were given in', () => {
+    expect(defineMessageContract(['welcome', 'nav.docs']).keys).toEqual(['nav.docs', 'welcome']);
+  });
+
+  it('freezes the returned keys', () => {
+    expect(Object.isFrozen(defineMessageContract(['a']).keys)).toBe(true);
+  });
+
+  it('rejects an empty list', () => {
+    expect(() => defineMessageContract([])).toThrow(EtymaError);
+    expect(() => defineMessageContract([])).toThrow(/must list at least one key/);
+  });
+
+  it('rejects a duplicate key', () => {
+    expect(() => defineMessageContract(['nav.docs', 'nav.docs'])).toThrow(
+      /key "nav.docs" is listed twice/,
+    );
   });
 });

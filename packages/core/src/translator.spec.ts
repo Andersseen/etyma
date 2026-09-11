@@ -112,6 +112,31 @@ describe('createTranslator', () => {
     ]);
   });
 
+  it('resolves a key from its own catalog when the source catalog is still loading remotely', () => {
+    const remote = createTranslator({
+      locale: 'es',
+      catalog: SPANISH,
+      sourceLocale: 'en',
+      sourceCatalog: undefined,
+      formatter: createMessageFormatter(),
+    });
+
+    expect(remote.translate('nav.docs')).toBe('Documentación');
+  });
+
+  it('falls through to the missing-message handler, not a crash, when both are absent', () => {
+    const remote = createTranslator({
+      locale: 'es',
+      catalog: SPANISH,
+      sourceLocale: 'en',
+      sourceCatalog: undefined,
+      formatter: createMessageFormatter(),
+    });
+
+    expect(remote.translate('nav.missing')).toBe('nav.missing');
+    expect(remote.has('nav.missing')).toBe(false);
+  });
+
   it('returns markup-shaped translations as plain text', () => {
     const safeText = '<img src=x onerror=alert(1)>';
     const html = createTranslator({

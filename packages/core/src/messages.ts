@@ -48,6 +48,46 @@ export type MessageKey<T> = T extends string
     }[keyof T & string];
 
 /**
+ * A message-key contract, independent of any translation values.
+ *
+ * `defineI18n`'s type-level contract comes from the shape of a static `source` object; this
+ * is the alternative for a definition whose source catalog is itself only available at
+ * runtime - see `defineRemoteI18n`. It carries `TKey` at the type level and, at runtime,
+ * only the sorted list of keys, never a message.
+ */
+export interface MessageContract<TKey extends string = string> {
+  readonly keys: readonly TKey[];
+}
+
+/**
+ * Builds a {@link MessageContract} from a literal list of keys.
+ *
+ * Typically not written by hand: `@etyma/tooling`'s Vite plugin generates the call this
+ * wraps from a remote catalog's shape, so the list is deterministic and sorted the same way
+ * `defineI18n`'s own `keys` are. Written by hand it works the same way, for a definition
+ * that would rather list its keys directly than derive them from an object shape.
+ */
+export function defineMessageContract<const TKeys extends readonly string[]>(
+  keys: TKeys,
+): MessageContract<TKeys[number]> {
+  if (keys.length === 0) {
+    throw new EtymaError('defineMessageContract: `keys` must list at least one key.');
+  }
+
+  const seen = new Set<string>();
+
+  for (const key of keys) {
+    if (seen.has(key)) {
+      throw new EtymaError(`defineMessageContract: key "${key}" is listed twice.`);
+    }
+
+    seen.add(key);
+  }
+
+  return { keys: Object.freeze([...keys].sort()) };
+}
+
+/**
  * Flattens a nested catalog into dotted keys.
  *
  * Rejects a key that already contains a dot, because `{"a.b": "x"}` and `{"a": {"b": "x"}}`

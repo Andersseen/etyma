@@ -1,4 +1,5 @@
 import analog from '@analogjs/platform';
+import { etymaRemoteContract } from '@etyma/tooling/vite';
 import { defineConfig } from 'vite';
 
 /**
@@ -41,6 +42,13 @@ export default defineConfig(({ isSsrBuild }) => ({
     mainFields: ['module'],
   },
   plugins: [
+    // Regenerates the remote-mode demo's typed key contract from its fixture catalog's
+    // shape before dev or build ever needs it - see src/app/i18n/remote/remote-i18n.ts.
+    // The generated file is committed, so this is a refresh, not a first-time requirement.
+    etymaRemoteContract({
+      load: () => import('./src/app/i18n/remote/fixture-source.js').then(m => m.default),
+      output: 'src/app/i18n/remote/contract.generated.ts',
+    }),
     analog({
       ssr: true,
       ...cloudflareOutput,
