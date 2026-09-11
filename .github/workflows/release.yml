@@ -73,12 +73,19 @@ jobs:
     # The effective permission ceiling for a called reusable workflow is the intersection of
     # what it asks for and what the calling job grants - the top-level `contents: read`
     # above would otherwise cap it, and publish.yml's own `publish` job needs `id-token:
-    # write` for OIDC.
+    # write` for OIDC (harmless to grant even on the token path below).
     permissions:
       contents: read
       id-token: write
     uses: ./.github/workflows/publish.yml
     with:
-      use-oidc: true
+      # OIDC failed with ENEEDAUTH on the first automatic run - most likely because no
+      # package has an npm Trusted Publisher bound yet (unprovable from this repo; see
+      # RELEASING.md). Using the bootstrap NPM_TOKEN instead needs no npmjs.com
+      # configuration, so the automatic path - the whole point of this workflow - works
+      # today rather than blocking on an account setting only npmjs.com can confirm. Once
+      # Trusted Publisher is bound for every package this releases, flip this back to
+      # `true` and the token can be revoked, per RELEASING.md's "Switching to OIDC".
+      use-oidc: false
       dry-run: false
     secrets: inherit
