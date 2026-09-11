@@ -119,6 +119,37 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build --filter='./packages/*'
 
+      # Temporary: changeset publish crashes computing its plan (getPublishPlan.mjs:613,
+      # TypeError reading .versions off an undefined info result) in this job specifically -
+      # never reproduced locally, reproduced with and without @etyma/tooling in the batch,
+      # and stripping the OIDC auth token line (previous fix attempt) did not change it
+      # either. This dumps exactly what `pnpm info` actually returns here, so the next
+      # failure shows real data instead of another guess. Remove once this is resolved.
+      - name: Debug - raw pnpm info output
+        run: |
+          echo "--- resolved .npmrc ---"
+          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          cat "$npmrc" || echo "(no npmrc at $npmrc)"
+          echo "--- npm/pnpm/node versions ---"
+          npm --version
+          pnpm --version
+          node --version
+          echo "--- pnpm info per package ---"
+          set +e
+          for pkg in @etyma/core @etyma/angular @etyma/analog @etyma/tooling; do
+            echo "=== $pkg ==="
+            pnpm info "$pkg" --json >/tmp/info-out.json 2>/tmp/info-err.txt
+            echo "exit code: $?"
+            echo "--- stdout ---"
+            cat /tmp/info-out.json
+            echo "--- stderr ---"
+            cat /tmp/info-err.txt
+            echo
+          done
+          set -e
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.use-oidc && '' || secrets.NPM_TOKEN }}
+
       - name: Publish
         if: ${{ !inputs.dry-run }}
         run: pnpm run release
