@@ -159,6 +159,29 @@ export default tseslint.config(
   })),
 
   {
+    // The one file in @etyma/tooling that runs exclusively under Node, for Vite's own build
+    // pipeline - contract generation has to fetch a remote catalog and write a file, neither
+    // of which is possible from the browser-and-edge-safe rest of this package. Everything
+    // else in `layerBoundaries` above still applies except the Node built-in restriction.
+    files: ['packages/tooling/src/vite.ts', 'packages/tooling/src/vite.spec.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@angular/*', '@analogjs/*', '@etyma/angular', '@etyma/analog', 'rxjs*'],
+              message:
+                '@etyma/tooling is framework agnostic development tooling. It may not import ' +
+                'Angular, Analog or any other framework - only standards and @etyma/core.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
     files: ['packages/{angular,analog}/**/*.ts', 'apps/playground/src/**/*.ts'],
     languageOptions: { globals: { ...globals.browser } },
     plugins: { '@angular-eslint': angular },

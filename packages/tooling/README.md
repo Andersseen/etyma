@@ -183,14 +183,70 @@ directly — the comparison is skipped for that variable in that message rather 
 which annotation is "the" type. Correct narrow validation beats confident wrong validation;
 see [Limitations](#limitations).
 
+## Generating a remote message contract
+
+`defineRemoteI18n` (in `@etyma/core`) lets every locale, including the source locale, load
+asynchronously — but TypeScript cannot infer literal translation keys from JSON fetched only
+at runtime. `@etyma/tooling` closes that gap with two pure functions, exported from the main
+entry point, plus a Vite plugin that automates running them.
+
+```ts
+import { extractContractKeys, renderContractModule } from '@etyma/tooling';
+
+const keys = extractContractKeys(sourceCatalog); // sorted dotted keys, nothing else
+const moduleSource = renderContractModule(keys); // a `defineMessageContract([...])` module
+```
+
+`extractContractKeys` reuses `@etyma/core`'s own `flattenMessages` rather than a second
+catalog walker, so a malformed remote catalog is rejected exactly the same way a malformed
+local one is. `renderContractModule` is byte-stable for a given key set — no timestamp, no
+random id, no machine-specific path — so the file it produces is safe to commit and diffs
+only when the remote catalog's keys actually change.
+
+### `@etyma/tooling/vite`
+
+A separate subpath, not part of the main entry point: it is the one place in this package
+that touches the filesystem or the network, so it stays out of the browser-and-edge-safe rest
+of `@etyma/tooling` and out of any bundle that only imports `@etyma/tooling` itself.
+
+```ts
+// vite.config.ts
+import { etymaRemoteContract } from '@etyma/tooling/vite';
+
+export default defineConfig({
+  plugins: [
+    etymaRemoteContract({
+      source: 'https://cdn.example.com/i18n/en.json',
+      output: 'src/app/i18n/contract.generated.ts',
+    }),
+  ],
+});
+```
+
+Runs once per `vite dev` server start and once per `vite build`, before anything else needs
+the generated file. If the source is unreachable and `output` does not already exist, it
+throws — a build should fail loudly, not silently widen every translation key to `string`. If
+`output` already holds a previously generated contract, a failed fetch falls back to it with a
+`console.warn` instead of failing the build: the file already in the branch is, by
+construction, the last one known to work.
+
+`source` accepts a URL, fetched with the platform `fetch`; `load` accepts a function instead,
+for a catalog that isn't behind a plain HTTP GET. Either way, **commit the generated file.**
+The TypeScript and Angular language services resolve types from disk when an editor opens a
+project, before any dev server has run — a gitignored contract means a fresh checkout shows
+broken types until someone remembers to run `vite dev` once. Since generation is
+deterministic, committing it costs nothing but a reviewable diff on the rare change, and
+buys a working editor on the first checkout.
+
 ## Limitations
 
 Deliberately not implemented in this first release:
 
-- **No CLI.** No `etyma-tooling` binary, no `etyma.config.ts`, no filesystem or `glob()`
-  access. This package operates only on catalog objects already in memory. A future
-  `@etyma/cli` (and a Vite plugin, and MCP, and Forge CMS) will build on this engine rather
-  than duplicate it.
+- **No CLI.** No `etyma-tooling` binary, no `etyma.config.ts`, no `glob()` access. The main
+  entry point operates only on catalog objects already in memory; `@etyma/tooling/vite` is
+  the one deliberate, scoped exception that reads and writes exactly one file. A future
+  `@etyma/cli` (and MCP, and Forge CMS) will build on the same engine rather than duplicate
+  it.
 - **No source-message extraction, template scanning, or hardcoded-copy detection.**
   Determining whether a key is used, or whether a template has untranslated copy, requires
   reading application source code, which this package does not do. That is a later tooling

@@ -7,7 +7,13 @@ import {
   TransferState,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { defineI18n, type CatalogSnapshot, type MessageLoader } from '@etyma/core';
+import {
+  defineI18n,
+  defineMessageContract,
+  defineRemoteI18n,
+  type CatalogSnapshot,
+  type MessageLoader,
+} from '@etyma/core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { EtymaI18n } from './i18n.js';
@@ -40,6 +46,25 @@ function definition(loaders?: { es?: MessageLoader; uk?: MessageLoader }) {
     sourceLocale: 'en',
     source,
     loaders: {
+      es: loaders?.es ?? (() => spanish),
+      uk: loaders?.uk ?? (() => ukrainian),
+    },
+  });
+}
+
+const remoteContract = defineMessageContract(['nav.docs', 'footer.rights', 'onlyEnglish']);
+
+function remoteDefinition(loaders?: {
+  en?: MessageLoader;
+  es?: MessageLoader;
+  uk?: MessageLoader;
+}) {
+  return defineRemoteI18n({
+    locales: ['en', 'es', 'uk'],
+    sourceLocale: 'en',
+    contract: remoteContract,
+    loaders: {
+      en: loaders?.en ?? (() => source),
       es: loaders?.es ?? (() => spanish),
       uk: loaders?.uk ?? (() => ukrainian),
     },
@@ -344,5 +369,131 @@ describe('server rendering', () => {
     TestBed.inject(EtymaI18n);
 
     expect(transferState.hasKey(stateKey)).toBe(false);
+  });
+});
+
+describe('EtymaI18n, remote source catalog', () => {
+  it('starts in the source locale, but not ready until the remote source loads', () => {
+    TestBed.configureTestingModule({ providers: [provideEtyma(remoteDefinition())] });
+    const i18n = TestBed.inject(EtymaI18n);
+
+    expect(i18n.locale()).toBe('en');
+    expect(i18n.ready()).toBe(false);
+  });
+
+  it('becomes ready, and translates for real, once the remote source loads', async () => {
+    TestBed.configureTestingModule({ providers: [provideEtyma(remoteDefinition())] });
+    const i18n = TestBed.inject(EtymaI18n);
+
+    await i18n.setLocale('en');
+
+    expect(i18n.ready()).toBe(true);
+    expect(i18n.t('nav.docs')).toBe('Docs');
+  });
+
+  it('loads the remote source alongside a target locale, so fallback works immediately', async () => {
+    TestBed.configureTestingModule({ providers: [provideEtyma(remoteDefinition())] });
+    const i18n = TestBed.inject(EtymaI18n);
+
+    await i18n.setLocale('es');
+
+    expect(i18n.isLoaded('en')).toBe(true);
+    expect(i18n.isLoaded('es')).toBe(true);
+    expect(i18n.t('nav.docs')).toBe('Documentación');
+    expect(i18n.t('onlyEnglish')).toBe('Only in the source catalog');
+  });
+
+  it('warns once, in development, when the loaded remote source drifts from its contract', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      TestBed.configureTestingModule({
+        providers: [
+          provideEtyma(
+            defineRemoteI18n({
+              locales: ['en'],
+              sourceLocale: 'en',
+              contract: defineMessageContract(['nav.docs', 'nav.missing']),
+              loaders: { en: () => ({ nav: { docs: 'Docs' }, extra: 'Surprise' }) },
+            }),
+          ),
+        ],
+      });
+
+      await TestBed.inject(EtymaI18n).setLocale('en');
+
+      const driftWarnings = warn.mock.calls.filter(
+        ([message]) =>
+          typeof message === 'string' && message.includes('does not match its contract'),
+      );
+
+      expect(driftWarnings).toHaveLength(1);
+      expect(driftWarnings[0]?.[1]).toEqual({
+        locale: 'en',
+        missing: ['nav.missing'],
+        extra: ['extra'],
+      });
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('never warns when the loaded remote source matches its contract', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      TestBed.configureTestingModule({ providers: [provideEtyma(remoteDefinition())] });
+
+      await TestBed.inject(EtymaI18n).setLocale('en');
+
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
+
+describe('server rendering, remote source catalog', () => {
+  it('includes the remote source catalog in the transfer payload, unlike static mode', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideEtyma(remoteDefinition()), { provide: PLATFORM_ID, useValue: 'server' }],
+    });
+
+    await TestBed.inject(EtymaI18n).setLocale('es');
+
+    const transferred = TestBed.inject(TransferState).toJson();
+
+    expect(transferred).toContain('"locale":"es"');
+    expect(transferred).toContain('Documentación');
+    expect(transferred).toContain('Docs');
+  });
+
+  it('hydrates a transferred remote source catalog without refetching it', () => {
+    const en = vi.fn(() => source);
+    const transferState = new TransferState();
+    transferState.set(makeStateKey<EtymaHydrationState>('etyma.hydration'), {
+      locale: 'es',
+      catalogs: {
+        en: {
+          'nav.docs': 'Docs',
+          'footer.rights': 'MIT licensed. {$year :number useGrouping=never}',
+          onlyEnglish: 'Only in the source catalog',
+        },
+        es: { 'nav.docs': 'Documentación' },
+      },
+    });
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideEtyma(remoteDefinition({ en })),
+        { provide: TransferState, useValue: transferState },
+      ],
+    });
+    const i18n = TestBed.inject(EtymaI18n);
+
+    expect(i18n.locale()).toBe('es');
+    expect(i18n.ready()).toBe(true);
+    expect(i18n.t('nav.docs')).toBe('Documentación');
+    expect(en).not.toHaveBeenCalled();
   });
 });

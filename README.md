@@ -313,6 +313,69 @@ It is a dev dependency, not something an application installs to run: see the
 [`@etyma/tooling` README](packages/tooling#readme) for the full diagnostic contract and what
 this first release deliberately does not do yet (no CLI, no source-code scanning).
 
+## Remote catalogs
+
+Everything above assumes a source catalog imported statically — the recommended default for
+most applications, and unchanged by what follows. Some applications keep their translation
+content in a CDN, a headless CMS or a custom HTTP endpoint instead, including the source
+locale. `defineRemoteI18n` is Etyma's second, opt-in mode for exactly that:
+
+```ts
+// src/app/i18n/i18n.ts
+import { createHttpMessageLoader, defineRemoteI18n } from '@etyma/core';
+import { contract } from './contract.generated';
+
+const base = 'https://cdn.example.com/i18n';
+
+export const i18n = defineRemoteI18n({
+  locales: ['en', 'es', 'uk'],
+  sourceLocale: 'en',
+  contract,
+  loaders: {
+    en: createHttpMessageLoader(`${base}/en.json`),
+    es: createHttpMessageLoader(`${base}/es.json`),
+    uk: createHttpMessageLoader(`${base}/uk.json`),
+  },
+});
+```
+
+Every locale needs a loader, including the source locale — the inverse of `defineI18n`, where
+the source locale must not have one. `provideEtyma(i18n)`, `injectI18n`, `t()`, SSR, hydration
+and locale switching all work exactly as they do in static mode: the whole runtime reads the
+same `I18nDefinition` shape regardless of how it was built.
+
+**Why `contract` exists:** TypeScript cannot infer literal translation keys from JSON fetched
+only at runtime — there is no static object for `MessageKey` to read a shape from. Etyma
+therefore separates the two concerns `defineI18n` used to merge into one static import:
+
+```
+remote catalog        = the content authority — the actual messages, always
+generated contract    = a build-time type artifact — keys only, never messages
+```
+
+`@etyma/tooling/vite` generates that contract automatically, from the remote catalog's shape,
+as part of `vite dev` and `vite build`:
+
+```ts
+// vite.config.ts
+import { etymaRemoteContract } from '@etyma/tooling/vite';
+
+export default defineConfig({
+  plugins: [
+    etymaRemoteContract({
+      source: 'https://cdn.example.com/i18n/en.json',
+      output: 'src/app/i18n/contract.generated.ts',
+    }),
+  ],
+});
+```
+
+The generated file is not hand-maintained, and not translation content — commit it anyway.
+The TypeScript and Angular language services read types from disk when an editor opens the
+project, before any dev server has run, so a fresh checkout needs the file already there to
+show correct types immediately. See the [`@etyma/tooling` README](packages/tooling#readme)
+for the full generation, error and fallback behavior.
+
 ## Goals
 
 - Standards over invention. CLDR plural rules, `Intl` formatting, MessageFormat 2 syntax.
@@ -337,8 +400,11 @@ Not planned for `0.x`, and not partially implemented anywhere:
 - Adapters for Astro, React, Vue or Svelte
 - A CMS integration, a translation management UI, or automatic machine translation
 - Source-message extraction, hardcoded-copy scanning or unused-key scanning
-- A compiler or code-generation pipeline — including per-key MessageFormat parameter types,
-  which need one
+- A general compiler or code-generation pipeline for message content — no per-key
+  MessageFormat parameter types, no source-code scanning. `@etyma/tooling/vite` generates one
+  narrow artifact from a remote catalog's shape — a sorted list of message keys, for the one
+  case where no local source file can supply that type information at all — and generates
+  nothing from message content itself; see [Remote catalogs](#remote-catalogs)
 - CommonJS output, NgModule APIs, an RxJS-first API, or Angular 20 and below
 
 ## Repository layout
