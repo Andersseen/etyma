@@ -49,7 +49,7 @@
     "@angular/compiler-cli": "21.2.21",
     "@angular/core": "21.2.21",
     "@angular/platform-browser": "21.2.21",
-    "@types/node": "26.4.0",
+    "@types/node": "26.5.0",
     "jsdom": "30.0.1",
     "ng-packagr": "21.2.7",
     "rxjs": "7.8.2",

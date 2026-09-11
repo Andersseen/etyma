@@ -119,13 +119,13 @@ importers:
     devDependencies:
       '@analogjs/platform':
         specifier: 2.7.0
-        version: 2.7.0(@angular/build@21.2.21(71c46cab81b4bd84d9a1d94e2590e776))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+        version: 2.7.0(@angular/build@21.2.21(7e2120b21d4394ef673bcec154f0206a))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       '@analogjs/vite-plugin-angular':
         specifier: 2.7.0
-        version: 2.7.0(@angular/build@21.2.21(71c46cab81b4bd84d9a1d94e2590e776))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+        version: 2.7.0(@angular/build@21.2.21(7e2120b21d4394ef673bcec154f0206a))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       '@angular/build':
         specifier: 21.2.21
-        version: 21.2.21(71c46cab81b4bd84d9a1d94e2590e776)
+        version: 21.2.21(7e2120b21d4394ef673bcec154f0206a)
       '@angular/compiler-cli':
         specifier: 21.2.21
         version: 21.2.21(@angular/compiler@21.2.21)(typescript@5.9.3)
@@ -136,8 +136,8 @@ importers:
         specifier: 1.62.1
         version: 1.62.1
       '@types/node':
-        specifier: 26.4.0
-        version: 26.4.0
+        specifier: 26.5.0
+        version: 26.5.0
       jsdom:
         specifier: 30.0.1
         version: 30.0.1
@@ -146,10 +146,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: 7.3.6
-        version: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+        version: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       wrangler:
         specifier: 4.125.0
         version: 4.125.0
@@ -194,7 +194,7 @@ importers:
         version: link:../../packages/core
       '@tailwindcss/vite':
         specifier: 4.3.3
-        version: 4.3.3(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.3.3(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       '@voltui/components':
         specifier: 1.0.1
         version: 1.0.1(@angular/cdk@21.2.14(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(@angular/platform-browser@21.2.21(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(@angular/forms@21.2.21(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(@angular/platform-browser@21.2.21(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2)))(rxjs@7.8.2))(rxjs@7.8.2)(typescript@5.9.3)
@@ -234,13 +234,13 @@ importers:
     devDependencies:
       '@analogjs/platform':
         specifier: 2.7.0
-        version: 2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       '@analogjs/vite-plugin-angular':
         specifier: 2.7.0
-        version: 2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       '@angular/build':
         specifier: 21.2.21
-        version: 21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f)
+        version: 21.2.21(38dec89fb7c44fa73ae43b1eb95dd339)
       '@angular/compiler-cli':
         specifier: 21.2.21
         version: 21.2.21(@angular/compiler@21.2.21)(typescript@5.9.3)
@@ -248,8 +248,8 @@ importers:
         specifier: 1.62.1
         version: 1.62.1
       '@types/node':
-        specifier: 26.4.0
-        version: 26.4.0
+        specifier: 26.5.0
+        version: 26.5.0
       jsdom:
         specifier: 30.0.1
         version: 30.0.1
@@ -258,10 +258,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: 7.3.6
-        version: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+        version: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       wrangler:
         specifier: 4.125.0
         version: 4.125.0
@@ -283,10 +283,10 @@ importers:
         version: 2.7.0(1cd4c14f6a241e72d7dc0b44b0ea9cd1)
       '@analogjs/vite-plugin-angular':
         specifier: 2.7.0
-        version: 2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       '@angular/build':
         specifier: 21.2.21
-        version: 21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f)
+        version: 21.2.21(38dec89fb7c44fa73ae43b1eb95dd339)
       '@angular/common':
         specifier: 21.2.21
         version: 21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -309,8 +309,8 @@ importers:
         specifier: workspace:^
         version: link:../angular/dist
       '@types/node':
-        specifier: 26.4.0
-        version: 26.4.0
+        specifier: 26.5.0
+        version: 26.5.0
       front-matter:
         specifier: 4.0.2
         version: 4.0.2
@@ -343,10 +343,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: 7.3.6
-        version: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+        version: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
     publishDirectory: dist
 
   packages/angular:
@@ -360,10 +360,10 @@ importers:
     devDependencies:
       '@analogjs/vite-plugin-angular':
         specifier: 2.7.0
-        version: 2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       '@angular/build':
         specifier: 21.2.21
-        version: 21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f)
+        version: 21.2.21(38dec89fb7c44fa73ae43b1eb95dd339)
       '@angular/common':
         specifier: 21.2.21
         version: 21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -380,8 +380,8 @@ importers:
         specifier: 21.2.21
         version: 21.2.21(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))
       '@types/node':
-        specifier: 26.4.0
-        version: 26.4.0
+        specifier: 26.5.0
+        version: 26.5.0
       jsdom:
         specifier: 30.0.1
         version: 30.0.1
@@ -396,10 +396,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: 7.3.6
-        version: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+        version: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
     publishDirectory: dist
 
   packages/core:
@@ -410,7 +410,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
 
   packages/tooling:
     dependencies:
@@ -422,11 +422,11 @@ importers:
         version: 4.0.0
     devDependencies:
       '@types/node':
-        specifier: 26.4.0
-        version: 26.4.0
+        specifier: 26.5.0
+        version: 26.5.0
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
 
 packages:
 
@@ -2707,8 +2707,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@26.4.0':
-    resolution: {integrity: sha512-faiGnoIrLH/V8cibOMEAZ8pMw6oXqSukl29ra4mN8GdaB2ZewzeaLj+INpV5N+Z1eKWzY+IzaIZH2EIR6YZRNQ==}
+  '@types/node@26.5.0':
+    resolution: {integrity: sha512-dVSGpriSoCgz8WnDNTuSSuSv1PC/ALXihO4ulRZt7Md8k9mlbdin3lGOcDE8SnWOgf513ByWlXd7BK4azmyg/A==}
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -5045,8 +5045,8 @@ packages:
   unctx@2.5.0:
     resolution: {integrity: sha512-p+Rz9x0R7X+CYDkT+Xg8/GhpcShTlU8n+cf9OtOEf7zEQsNcCZO1dPKNRDqvUTaq+P32PMMkxWHwfrxkqfqAYg==}
 
-  undici-types@8.3.0:
-    resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
+  undici-types@8.9.0:
+    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
   undici@7.29.0:
     resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
@@ -5492,17 +5492,17 @@ snapshots:
       rxjs: 7.8.2
       tslib: 2.8.1
 
-  '@analogjs/platform@2.7.0(@angular/build@21.2.21(71c46cab81b4bd84d9a1d94e2590e776))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
+  '@analogjs/platform@2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
-      '@analogjs/vite-plugin-angular': 2.7.0(@angular/build@21.2.21(71c46cab81b4bd84d9a1d94e2590e776))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
-      '@analogjs/vite-plugin-nitro': 2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      '@analogjs/vite-plugin-angular': 2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      '@analogjs/vite-plugin-nitro': 2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       marked: 15.0.12
       marked-gfm-heading-id: 4.1.4(marked@15.0.12)
       marked-mangle: 1.1.13(marked@15.0.12)
-      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
-      vitefu: 1.1.3(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vitefu: 1.1.3(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
     optionalDependencies:
       marked-highlight: 2.2.4(marked@15.0.12)
       prismjs: 1.30.0
@@ -5549,17 +5549,17 @@ snapshots:
       - webpack
       - xml2js
 
-  '@analogjs/platform@2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
+  '@analogjs/platform@2.7.0(@angular/build@21.2.21(7e2120b21d4394ef673bcec154f0206a))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(marked-gfm-heading-id@4.1.4(marked@15.0.12))(marked-highlight@2.2.4(marked@15.0.12))(marked-mangle@1.1.13(marked@15.0.12))(marked@15.0.12)(prismjs@1.30.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
-      '@analogjs/vite-plugin-angular': 2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
-      '@analogjs/vite-plugin-nitro': 2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      '@analogjs/vite-plugin-angular': 2.7.0(@angular/build@21.2.21(7e2120b21d4394ef673bcec154f0206a))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      '@analogjs/vite-plugin-nitro': 2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       marked: 15.0.12
       marked-gfm-heading-id: 4.1.4(marked@15.0.12)
       marked-mangle: 1.1.13(marked@15.0.12)
-      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
-      vitefu: 1.1.3(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vitefu: 1.1.3(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
     optionalDependencies:
       marked-highlight: 2.2.4(marked@15.0.12)
       prismjs: 1.30.0
@@ -5613,38 +5613,38 @@ snapshots:
       '@angular/router': 21.2.21(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(@angular/platform-browser@21.2.21(@angular/common@21.2.21(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2)))(rxjs@7.8.2)
       tslib: 2.8.1
 
-  '@analogjs/vite-plugin-angular@2.7.0(@angular/build@21.2.21(71c46cab81b4bd84d9a1d94e2590e776))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
+  '@analogjs/vite-plugin-angular@2.7.0(@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       magic-string: 0.30.21
       obug: 2.1.4
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@angular/build': 21.2.21(71c46cab81b4bd84d9a1d94e2590e776)
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      '@angular/build': 21.2.21(38dec89fb7c44fa73ae43b1eb95dd339)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  '@analogjs/vite-plugin-angular@2.7.0(@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
+  '@analogjs/vite-plugin-angular@2.7.0(@angular/build@21.2.21(7e2120b21d4394ef673bcec154f0206a))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       magic-string: 0.30.21
       obug: 2.1.4
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@angular/build': 21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f)
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      '@angular/build': 21.2.21(7e2120b21d4394ef673bcec154f0206a)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  '@analogjs/vite-plugin-nitro@2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
+  '@analogjs/vite-plugin-nitro@2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       defu: 6.1.7
       esbuild: 0.27.7
       magic-string: 0.30.21
-      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       radix3: 1.1.2
       xmlbuilder2: 4.0.3
@@ -5690,12 +5690,12 @@ snapshots:
       - webpack
       - xml2js
 
-  '@analogjs/vite-plugin-nitro@2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
+  '@analogjs/vite-plugin-nitro@2.7.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@parcel/watcher@2.6.0)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       defu: 6.1.7
       esbuild: 0.27.7
       magic-string: 0.30.21
-      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      nitropack: 2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       radix3: 1.1.2
       xmlbuilder2: 4.0.3
@@ -5798,7 +5798,7 @@ snapshots:
       eslint: 9.39.5(jiti@2.7.0)
       typescript: 5.9.3
 
-  '@angular/build@21.2.21(71c46cab81b4bd84d9a1d94e2590e776)':
+  '@angular/build@21.2.21(38dec89fb7c44fa73ae43b1eb95dd339)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.21(chokidar@5.0.0)
@@ -5807,8 +5807,8 @@ snapshots:
       '@babel/core': 7.29.7
       '@babel/helper-annotate-as-pure': 7.27.3
       '@babel/helper-split-export-declaration': 7.24.7
-      '@inquirer/confirm': 5.1.21(@types/node@26.4.0)
-      '@vitejs/plugin-basic-ssl': 2.1.4(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      '@inquirer/confirm': 5.1.21(@types/node@26.5.0)
+      '@vitejs/plugin-basic-ssl': 2.1.4(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       beasties: 0.4.1
       browserslist: 4.28.8
       esbuild: 0.28.1
@@ -5829,7 +5829,7 @@ snapshots:
       tslib: 2.8.1
       typescript: 5.9.3
       undici: 7.29.0
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
       watchpack: 2.5.1
     optionalDependencies:
       '@angular/core': 21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2)
@@ -5840,7 +5840,7 @@ snapshots:
       ng-packagr: 21.2.7(@angular/compiler-cli@21.2.21(@angular/compiler@21.2.21)(typescript@5.9.3))(tailwindcss@4.3.3)(tslib@2.8.1)(typescript@5.9.3)
       postcss: 8.5.26
       tailwindcss: 4.3.3
-      vitest: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -5856,7 +5856,7 @@ snapshots:
       - tsx
       - yaml
 
-  '@angular/build@21.2.21(8707f2ac8c0e0365ec9df7a23f78e89f)':
+  '@angular/build@21.2.21(7e2120b21d4394ef673bcec154f0206a)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.21(chokidar@5.0.0)
@@ -5865,8 +5865,8 @@ snapshots:
       '@babel/core': 7.29.7
       '@babel/helper-annotate-as-pure': 7.27.3
       '@babel/helper-split-export-declaration': 7.24.7
-      '@inquirer/confirm': 5.1.21(@types/node@26.4.0)
-      '@vitejs/plugin-basic-ssl': 2.1.4(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      '@inquirer/confirm': 5.1.21(@types/node@26.5.0)
+      '@vitejs/plugin-basic-ssl': 2.1.4(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       beasties: 0.4.1
       browserslist: 4.28.8
       esbuild: 0.28.1
@@ -5887,7 +5887,7 @@ snapshots:
       tslib: 2.8.1
       typescript: 5.9.3
       undici: 7.29.0
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
       watchpack: 2.5.1
     optionalDependencies:
       '@angular/core': 21.2.21(@angular/compiler@21.2.21)(rxjs@7.8.2)
@@ -5898,7 +5898,7 @@ snapshots:
       ng-packagr: 21.2.7(@angular/compiler-cli@21.2.21(@angular/compiler@21.2.21)(typescript@5.9.3))(tailwindcss@4.3.3)(tslib@2.8.1)(typescript@5.9.3)
       postcss: 8.5.26
       tailwindcss: 4.3.3
-      vitest: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -6756,31 +6756,31 @@ snapshots:
 
   '@inquirer/ansi@1.0.2': {}
 
-  '@inquirer/confirm@5.1.21(@types/node@26.4.0)':
+  '@inquirer/confirm@5.1.21(@types/node@26.5.0)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@26.4.0)
-      '@inquirer/type': 3.0.10(@types/node@26.4.0)
+      '@inquirer/core': 10.3.2(@types/node@26.5.0)
+      '@inquirer/type': 3.0.10(@types/node@26.5.0)
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
 
-  '@inquirer/core@10.3.2(@types/node@26.4.0)':
+  '@inquirer/core@10.3.2(@types/node@26.5.0)':
     dependencies:
       '@inquirer/ansi': 1.0.2
       '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@26.4.0)
+      '@inquirer/type': 3.0.10(@types/node@26.5.0)
       cli-width: 4.1.0
       mute-stream: 2.0.0
       signal-exit: 4.1.0
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
 
   '@inquirer/figures@1.0.15': {}
 
-  '@inquirer/type@3.0.10(@types/node@26.4.0)':
+  '@inquirer/type@3.0.10(@types/node@26.5.0)':
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
 
   '@ioredis/commands@1.10.0': {}
 
@@ -7440,12 +7440,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
+  '@tailwindcss/vite@4.3.3(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
 
   '@turbo/darwin-64@2.10.11':
     optional: true
@@ -7487,9 +7487,9 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@26.4.0':
+  '@types/node@26.5.0':
     dependencies:
-      undici-types: 8.3.0
+      undici-types: 8.9.0
 
   '@types/resolve@1.20.2': {}
 
@@ -7603,13 +7603,13 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vitejs/plugin-basic-ssl@2.1.4(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitejs/plugin-basic-ssl@2.1.4(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
 
-  '@vitejs/plugin-basic-ssl@2.1.4(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitejs/plugin-basic-ssl@2.1.4(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -7620,21 +7620,21 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
-  '@vitest/mocker@4.1.11(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.11(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
 
-  '@vitest/mocker@4.1.11(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.11(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -9162,7 +9162,7 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  nitropack@2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
+  nitropack@2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.62.5)
@@ -9227,7 +9227,7 @@ snapshots:
       uncrypto: 0.1.3
       unctx: 2.5.0
       unenv: 2.0.0-rc.24
-      unimport: 6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      unimport: 6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       unplugin-utils: 0.3.2
       unstorage: 1.17.5(db0@0.3.4)(ioredis@5.11.1)
       untyped: 2.0.0
@@ -9274,7 +9274,7 @@ snapshots:
       - vite
       - webpack
 
-  nitropack@2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
+  nitropack@2.13.4(@parcel/watcher@2.6.0)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.62.5)
@@ -9339,7 +9339,7 @@ snapshots:
       uncrypto: 0.1.3
       unctx: 2.5.0
       unenv: 2.0.0-rc.24
-      unimport: 6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      unimport: 6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       unplugin-utils: 0.3.2
       unstorage: 1.17.5(db0@0.3.4)(ioredis@5.11.1)
       untyped: 2.0.0
@@ -10207,7 +10207,7 @@ snapshots:
       magic-string: 0.30.21
       unplugin: 2.3.11
 
-  undici-types@8.3.0: {}
+  undici-types@8.9.0: {}
 
   undici@7.29.0: {}
 
@@ -10221,7 +10221,7 @@ snapshots:
 
   unicorn-magic@0.4.0: {}
 
-  unimport@6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
+  unimport@6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       acorn: 8.18.0
       escape-string-regexp: 5.0.0
@@ -10235,7 +10235,7 @@ snapshots:
       scule: 1.3.0
       strip-literal: 4.0.0
       tinyglobby: 0.2.17
-      unplugin: 3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      unplugin: 3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       unplugin-utils: 0.3.2
     optionalDependencies:
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
@@ -10249,7 +10249,7 @@ snapshots:
       - vite
       - webpack
 
-  unimport@6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
+  unimport@6.4.0(esbuild@0.28.2)(oxc-parser@0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       acorn: 8.18.0
       escape-string-regexp: 5.0.0
@@ -10263,7 +10263,7 @@ snapshots:
       scule: 1.3.0
       strip-literal: 4.0.0
       tinyglobby: 0.2.17
-      unplugin: 3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      unplugin: 3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       unplugin-utils: 0.3.2
     optionalDependencies:
       oxc-parser: 0.121.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
@@ -10289,7 +10289,7 @@ snapshots:
       picomatch: 4.0.5
       webpack-virtual-modules: 0.6.2
 
-  unplugin@3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
+  unplugin@3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       picomatch: 4.0.5
@@ -10297,9 +10297,9 @@ snapshots:
     optionalDependencies:
       esbuild: 0.28.2
       rollup: 4.62.5
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
 
-  unplugin@3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
+  unplugin@3.3.0(esbuild@0.28.2)(rollup@4.62.5)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       picomatch: 4.0.5
@@ -10307,7 +10307,7 @@ snapshots:
     optionalDependencies:
       esbuild: 0.28.2
       rollup: 4.62.5
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
 
   unstorage@1.17.5(db0@0.3.4)(ioredis@5.11.1):
     dependencies:
@@ -10358,7 +10358,7 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0):
+  vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0):
     dependencies:
       esbuild: 0.28.2
       fdir: 6.5.0(picomatch@4.0.5)
@@ -10367,7 +10367,7 @@ snapshots:
       rollup: 4.62.5
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
       fsevents: 2.3.3
       jiti: 2.7.0
       less: 4.9.0
@@ -10376,7 +10376,7 @@ snapshots:
       terser: 5.50.0
       yaml: 2.9.0
 
-  vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0):
+  vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0):
     dependencies:
       esbuild: 0.28.2
       fdir: 6.5.0(picomatch@4.0.5)
@@ -10385,7 +10385,7 @@ snapshots:
       rollup: 4.62.5
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
       fsevents: 2.3.3
       jiti: 2.7.0
       less: 4.9.0
@@ -10394,18 +10394,18 @@ snapshots:
       terser: 5.50.0
       yaml: 2.9.0
 
-  vitefu@1.1.3(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
+  vitefu@1.1.3(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
     optionalDependencies:
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
 
-  vitefu@1.1.3(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
+  vitefu@1.1.3(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
     optionalDependencies:
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
 
-  vitest@4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
+  vitest@4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.11(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -10422,18 +10422,18 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.103.1)(terser@5.50.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
       jsdom: 30.0.1
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
+  vitest@4.1.11(@types/node@26.5.0)(jsdom@30.0.1)(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.11(vite@7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -10450,10 +10450,10 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 7.3.6(@types/node@26.4.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@26.5.0)(jiti@2.7.0)(less@4.9.0)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.50.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.5.0
       jsdom: 30.0.1
     transitivePeerDependencies:
       - msw
