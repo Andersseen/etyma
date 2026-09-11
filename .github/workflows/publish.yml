@@ -16,7 +16,9 @@ name: Publish
 #
 # Either way it re-runs the full quality gates first: the commit being published is what
 # will be on npm forever, and trusting a green run from an earlier commit is how a broken
-# package gets published.
+# package gets published. A successful publish also pushes the git tag(s) `changeset
+# publish` creates and opens a GitHub Release per tag, so every npm version has a matching,
+# reviewable record in the repo - not just on the registry.
 #
 # Authentication moved in two stages - see RELEASING.md:
 #   0.1.0  used a granular NPM_TOKEN in the protected `npm-publish` environment, because
@@ -84,7 +86,10 @@ jobs:
     # required reviewer. Both stages run through it.
     environment: npm-publish
     permissions:
-      contents: read
+      # Write, not read: this job also pushes the git tags `changeset publish` creates and
+      # opens a GitHub Release per tag - a release with nothing to show for it in the repo
+      # itself is real on npm but invisible everywhere else.
+      contents: write
       # Provenance attestations are signed with this even when the registry credential is
       # still a token, so 0.0.1 is provenance-backed too.
       id-token: write
@@ -134,6 +139,24 @@ jobs:
           # the workflow's identity, which is what Trusted Publishing checks.
           NODE_AUTH_TOKEN: ${{ inputs.use-oidc && '' || secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
+
+      # `changeset publish` (above) tags each package it actually published, locally, on
+      # this checkout - `--git-tag`, on by default - but never pushes those tags anywhere,
+      # and nothing here runs `changesets/action` itself (see release.yml for why: keeping
+      # the real `npm publish` in this file, under its own name, is what OIDC's Trusted
+      # Publishing binding needs), so its own automatic GitHub Release creation never fires
+      # either. Without this step a release is real on npm and invisible everywhere else -
+      # `git tag --points-at HEAD` finds exactly the tags this run just created, since an
+      # older tag such as `v0.1.0` points at a different, unfetched commit in this checkout.
+      - name: Push tags and open a GitHub Release for each
+        if: ${{ !inputs.dry-run }}
+        run: |
+          git push --tags
+          for tag in $(git tag --points-at HEAD); do
+            gh release create "$tag" --title "$tag" --generate-notes
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dry run
         if: ${{ inputs.dry-run }}

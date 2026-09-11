@@ -72,10 +72,11 @@ jobs:
     if: needs.version.outputs.has-changesets == 'false'
     # The effective permission ceiling for a called reusable workflow is the intersection of
     # what it asks for and what the calling job grants - the top-level `contents: read`
-    # above would otherwise cap it, and publish.yml's own `publish` job needs `id-token:
-    # write` for OIDC (harmless to grant even on the token path below).
+    # above would otherwise cap it. publish.yml's own `publish` job needs `contents: write`
+    # to push tags and open GitHub Releases, and `id-token: write` for OIDC (harmless to
+    # grant even on the token path below).
     permissions:
-      contents: read
+      contents: write
       id-token: write
     uses: ./.github/workflows/publish.yml
     with:
