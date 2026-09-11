@@ -1,6 +1,6 @@
 {
   "name": "@etyma/tooling",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Static validation for Etyma message catalogs: key parity, MessageFormat 2 syntax and external variable contracts, as structured diagnostics.",
   "keywords": [
     "i18n",
