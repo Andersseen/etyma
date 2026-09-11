@@ -102,6 +102,20 @@ jobs:
       - name: Use an npm that understands trusted publishing
         run: npm install --global npm@latest
 
+      # `registry-url` above always writes `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`
+      # to .npmrc, even when NODE_AUTH_TOKEN is deliberately empty for OIDC - see
+      # https://github.com/actions/setup-node/issues/1551. `npm publish` itself is OIDC-aware
+      # enough to fall through to Trusted Publishing regardless, but plain read commands - the
+      # registry lookups `changeset publish` runs first to compute what needs publishing - are
+      # not, and sending an empty bearer token on those reads produces a response Changesets'
+      # parsing does not expect (a `TypeError` while planning, before anything is published).
+      # Stripping the line for the OIDC path only removes the ambiguity for both.
+      - name: Remove the empty auth token line so OIDC actually triggers
+        if: ${{ inputs.use-oidc }}
+        run: |
+          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          sed -i '/_authToken/d' "$npmrc"
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build --filter='./packages/*'
 
