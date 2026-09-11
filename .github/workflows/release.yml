@@ -1,20 +1,25 @@
-name: Release PR
+name: Release
 
-# Version bumps and changelogs only. This workflow never publishes: it opens (or updates) a
-# pull request that applies the pending changesets, so the version bump is reviewed like
-# any other change and the tag it eventually produces is not a surprise.
+# Fully automated Changesets flow: every push to `main` either opens or updates the
+# "release: version packages" pull request (when there are pending changesets) or publishes
+# to npm (when there is nothing left to version, which is exactly the state right after that
+# pull request gets merged). Merging the version pull request is still the release decision -
+# that review is the whole point of Changesets - but nothing after the merge needs a separate
+# manual dispatch.
 #
-# Publishing is `publish.yml`, and it runs from the tag this pull request creates.
-#
-# Manual until the repository setting "Allow GitHub Actions to create and approve pull
-# requests" is enabled, or a dedicated token is wired in. With the default setting, running
-# this on every push leaves `main` red even when CI and deployments are healthy.
+# Two jobs, not one, so the actual `npm publish` keeps living in publish.yml under its own
+# name: npm's Trusted Publishing binding for @etyma/core, @etyma/angular and @etyma/analog is
+# keyed to that exact workflow filename, and a called reusable workflow's OIDC token still
+# identifies itself by the *called* file - so this can trigger a publish without anyone
+# touching npmjs.com to re-bind it to a different filename.
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: release-pr
+  group: release
   cancel-in-progress: false
 
 permissions:
@@ -28,6 +33,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      has-changesets: ${{ steps.changesets.outputs.has-changesets }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -43,12 +50,35 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Changesets
+        id: changesets
         uses: changesets/action@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
         with:
           version-script: pnpm run version-packages
           pr-title: 'release: version packages'
           commit-message: 'release: version packages'
-          # No `publish` input on purpose. Merging the pull request this opens is the
-          # decision to release; `publish.yml` acts on the tag that follows.
+          # No `publish` input here on purpose - see the `publish` job below.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish the version already on main
+    needs: version
+    # `has-changesets` is "false" exactly when there was nothing to open or update a version
+    # pull request for - either main has no pending changesets and nothing to publish either
+    # (a normal commit), or the version pull request was just merged and its bump is sitting
+    # on main unpublished. `pnpm run release` (called inside publish.yml) is a no-op for the
+    # former case, so this only needs to skip when there *are* pending changesets to review
+    # first.
+    if: needs.version.outputs.has-changesets == 'false'
+    # The effective permission ceiling for a called reusable workflow is the intersection of
+    # what it asks for and what the calling job grants - the top-level `contents: read`
+    # above would otherwise cap it, and publish.yml's own `publish` job needs `id-token:
+    # write` for OIDC.
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish.yml
+    with:
+      use-oidc: true
+      dry-run: false
+    secrets: inherit

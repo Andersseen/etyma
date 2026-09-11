@@ -5,10 +5,18 @@ name: Publish
 # versions independently. `changeset publish` only publishes packages a merged changeset
 # actually bumped, so a runtime-only release does not touch tooling and vice versa.
 #
-# Runs only when a human dispatches it against a tag, so a merged release pull request does
-# not publish on its own. It re-runs the full quality gates first: the tag is what will be
-# on npm forever, and trusting a green run from an earlier commit is how a broken package
-# gets published.
+# Runs two ways:
+#   - Called automatically by release.yml, right after it finds nothing left to version -
+#     which is exactly the state right after a "release: version packages" pull request gets
+#     merged. Merging that pull request is the release decision; nothing after it needs a
+#     separate click.
+#   - Dispatched manually, for a dry run or for the one case automation cannot do on its
+#     own: a package publishing for the very first time, which needs `use-oidc: false` and a
+#     bootstrap token - see RELEASING.md.
+#
+# Either way it re-runs the full quality gates first: the commit being published is what
+# will be on npm forever, and trusting a green run from an earlier commit is how a broken
+# package gets published.
 #
 # Authentication moved in two stages - see RELEASING.md:
 #   0.1.0  used a granular NPM_TOKEN in the protected `npm-publish` environment, because
@@ -25,6 +33,20 @@ on:
         default: true
       dry-run:
         description: 'Run every gate and pack the tarballs, but do not publish'
+        type: boolean
+        default: false
+  # Called by release.yml right after it finds nothing left to version - i.e. right after a
+  # "release: version packages" pull request has been merged. Kept as its own file, not
+  # inlined into release.yml, because npm's Trusted Publishing binding is keyed to this exact
+  # workflow filename: a called reusable workflow's OIDC token still identifies itself as
+  # `publish.yml`, so the existing binding for @etyma/core, @etyma/angular and @etyma/analog
+  # keeps working without anyone touching npmjs.com.
+  workflow_call:
+    inputs:
+      use-oidc:
+        type: boolean
+        default: true
+      dry-run:
         type: boolean
         default: false
 
