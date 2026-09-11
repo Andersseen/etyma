@@ -1,5 +1,13 @@
 # @etyma/analog
 
+## 0.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`bc323da`](https://github.com/Andersseen/etyma/commit/bc323da957475af6a22654715907f174a6a19ee6), [`219a7dd`](https://github.com/Andersseen/etyma/commit/219a7ddd08a724f998e9453659c66eda732f046e)]:
+  - @etyma/core@0.2.0
+  - @etyma/angular@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
