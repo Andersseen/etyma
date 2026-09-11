@@ -47,7 +47,7 @@
     "@angular/compiler-cli": "21.2.21",
     "@etyma/tooling": "workspace:^",
     "@playwright/test": "1.62.1",
-    "@types/node": "26.4.0",
+    "@types/node": "26.5.0",
     "jsdom": "30.0.1",
     "typescript": "5.9.3",
     "vite": "7.3.6",
