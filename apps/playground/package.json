@@ -32,7 +32,7 @@
     "@etyma/angular": "workspace:^",
     "@etyma/core": "workspace:^",
     "front-matter": "4.0.2",
-    "marked": "15.0.12",
+    "marked": "18.0.11",
     "marked-gfm-heading-id": "4.1.4",
     "marked-highlight": "2.2.4",
     "marked-mangle": "1.1.13",
