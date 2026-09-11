@@ -31,7 +31,8 @@ human:
    merged. It re-runs every gate and publishes. No separate dispatch needed for a normal
    release; `publish.yml` stays manually dispatchable for a dry run or for the one thing
    automation cannot do on its own - see [Historical Bootstrap](#historical-bootstrap-010)
-   and [First release of a new package](#first-release-of-a-new-package) below.
+   below. If it crashes computing its plan before publishing anything, see
+   [Troubleshooting a changeset publish crash](#troubleshooting-a-changeset-publish-crash).
 
 ## 1. Describing a change
 
@@ -76,8 +77,7 @@ workflow** - for the two cases automation cannot handle on its own:
 - **A dry run.** `dry-run: true` runs every gate and packs the tarballs without publishing,
   for rehearsing a release.
 - **A package's first-ever publish**, or any run needing `use-oidc: false` - see
-  [Historical Bootstrap](#historical-bootstrap-010) and
-  [First release of a new package](#first-release-of-a-new-package).
+  [Historical Bootstrap](#historical-bootstrap-010).
 
 Inputs:
 
@@ -96,27 +96,32 @@ Binding is keyed to the **called** workflow's own filename, not whatever trigger
 publish that `release.yml` sets off still authenticates as `publish.yml`, so the existing
 binding for `@etyma/core`, `@etyma/angular` and `@etyma/analog` needs no change.
 
-## First release of a new package
+## Troubleshooting a `changeset publish` crash
 
 `changeset publish` computes one plan across every package in the workspace before
-publishing any of them, by asking the registry for each package's current versions. A
-package that has never been published gets a normal "not found in the registry" result and
-is planned like any other - this works cleanly when every package in that run is new, which
-is how `0.1.0` bootstrapped the runtime trio together (see below).
+publishing any of them, by asking the registry for each package's current versions via
+`pnpm info`. Diagnosed here because it took several wrong guesses to actually find: if
+`publish.yml`'s "Publish" step throws `TypeError: Cannot read properties of undefined
+(reading 'includes')` in `getPublishPlan.mjs`, before anything is published, it is this bug,
+not a new one.
 
-A batch that **mixes** an established package with a brand-new one has, in practice, hit a
-crash while computing that plan (`@changesets/cli@3.0.1`, pnpm's registry-info path -
-`TypeError: Cannot read properties of undefined (reading 'includes')` in
-`getPublishPlan.mjs`). It did not reproduce running the identical plan computation locally
-against the same commit, which points at a transient registry hiccup during one of the
-concurrent `pnpm info` calls rather than a deterministic bug - nothing was published either
-way. If this happens:
+**Real cause:** pnpm 10's `pnpm info <pkg> --json` shells out to the system `npm` for the
+registry lookup. npm 12 changed `npm view`/`npm info --json`'s output to always wrap the
+result in an array, even for one exact match - `@changesets/cli@3.0.1` still assumes the
+older, unwrapped object shape, reads `.versions` off an array (`undefined`), and crashes
+calling `.includes()` on it. `publish.yml`'s own `npm install --global npm@11` (not
+`npm@latest`) is what avoids this - Trusted Publishing needs npm >= 11.5.1, and 11.x does
+not have npm 12's array-wrapping change. Confirmed by reproducing the exact crash locally
+with `npx npm@latest`, and confirming `npx npm@11` does not have it.
 
-1. **Retry first** - dispatch `publish.yml` again (or push an empty commit so `release.yml`
-   re-evaluates). A transient registry response does not usually repeat.
-2. If it repeats, publish the new package's first version on its own via manual dispatch
-   with `use-oidc: false` (its Trusted Publisher cannot be configured until the package
-   exists - same bootstrap problem as `0.1.0`), then let a normal run publish the rest.
+It never reproduced running the identical `pnpm run release` locally against the same
+commit with the _default_ npm - which is what made this take three attempts to actually
+find: the plan computation only breaks once the runner's npm has been upgraded past 11.x,
+something a local run does not do unless told to.
+
+If this crash reappears, the most likely cause is `publish.yml` having been changed back to
+`npm@latest` (or some other unpinned "get whatever is newest" upgrade) rather than a new
+bug - check that first.
 
 ## Historical Bootstrap: `0.1.0`
 
@@ -162,7 +167,10 @@ bootstrap token is that it is temporary.
    - Workflow filename: `publish.yml`
    - Environment: `npm-publish`
 2. Confirm the workflow already has `id-token: write` (it does) and that it upgrades npm to
-   the latest (it does — Trusted Publishing needs npm >= 11.5.1).
+   the 11.x line (it does — Trusted Publishing needs npm >= 11.5.1, but not npm 12: npm 12
+   changed `npm view --json`'s output to always wrap the result in an array, which crashes
+   `changeset publish`'s own registry-info lookup before anything gets published - see the
+   comment in `publish.yml`).
 3. Run **Publish** with `use-oidc: true` for the next release and confirm it succeeds.
 4. **Revoke `NPM_TOKEN`** on npmjs.com, and delete the `NPM_TOKEN` secret from the
    `npm-publish` environment.

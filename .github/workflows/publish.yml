@@ -98,9 +98,16 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # Trusted Publishing needs npm >= 11.5.1, which is newer than the npm bundled with
-      # Node 22. Upgrading unconditionally keeps both paths on one CLI.
+      # Node 22 - but not literally `latest`. npm 12 changed `npm view`/`npm info --json`'s
+      # output shape to always wrap the result in an array, even for a single exact match.
+      # pnpm 10's own `pnpm info` (which `changeset publish` calls to compute what needs
+      # publishing) shells out to the system npm for this and assumes the older, unwrapped
+      # shape - under npm 12 it reads `.versions` off an array and crashes before publishing
+      # anything (`TypeError` in `getPublishPlan.mjs`, confirmed by reproducing it locally
+      # with `npx npm@latest`, and confirming `npx npm@11` does not have the problem).
+      # Pinning to the 11.x line keeps Trusted Publishing working without npm 12's regression.
       - name: Use an npm that understands trusted publishing
-        run: npm install --global npm@latest
+        run: npm install --global npm@11
 
       # `registry-url` above always writes `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`
       # to .npmrc, even when NODE_AUTH_TOKEN is deliberately empty for OIDC - see
@@ -118,37 +125,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build --filter='./packages/*'
-
-      # Temporary: changeset publish crashes computing its plan (getPublishPlan.mjs:613,
-      # TypeError reading .versions off an undefined info result) in this job specifically -
-      # never reproduced locally, reproduced with and without @etyma/tooling in the batch,
-      # and stripping the OIDC auth token line (previous fix attempt) did not change it
-      # either. This dumps exactly what `pnpm info` actually returns here, so the next
-      # failure shows real data instead of another guess. Remove once this is resolved.
-      - name: Debug - raw pnpm info output
-        run: |
-          echo "--- resolved .npmrc ---"
-          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
-          cat "$npmrc" || echo "(no npmrc at $npmrc)"
-          echo "--- npm/pnpm/node versions ---"
-          npm --version
-          pnpm --version
-          node --version
-          echo "--- pnpm info per package ---"
-          set +e
-          for pkg in @etyma/core @etyma/angular @etyma/analog @etyma/tooling; do
-            echo "=== $pkg ==="
-            pnpm info "$pkg" --json >/tmp/info-out.json 2>/tmp/info-err.txt
-            echo "exit code: $?"
-            echo "--- stdout ---"
-            cat /tmp/info-out.json
-            echo "--- stderr ---"
-            cat /tmp/info-err.txt
-            echo
-          done
-          set -e
-        env:
-          NODE_AUTH_TOKEN: ${{ inputs.use-oidc && '' || secrets.NPM_TOKEN }}
 
       - name: Publish
         if: ${{ !inputs.dry-run }}
