@@ -27,10 +27,10 @@ const layerBoundaries = [
             'other framework - only standards (Intl, MessageFormat 2).',
         },
         {
-          group: ['@etyma/tooling'],
+          group: ['@etyma/tooling', '@etyma/cli'],
           message:
-            '@etyma/core must never depend on @etyma/tooling. Tooling is built on top of ' +
-            'core, never the other way around.',
+            '@etyma/core must never depend on @etyma/tooling or @etyma/cli. Both are built ' +
+            'on top of core, never the other way around.',
         },
         {
           group: ['node:*', 'fs', 'path', 'url', 'crypto'],
@@ -53,10 +53,10 @@ const layerBoundaries = [
             'around.',
         },
         {
-          group: ['@etyma/tooling'],
+          group: ['@etyma/tooling', '@etyma/cli'],
           message:
-            '@etyma/angular must never depend on @etyma/tooling. Tooling is a development-time ' +
-            'package and must not become part of a runtime dependency graph.',
+            '@etyma/angular must never depend on @etyma/tooling or @etyma/cli. Both are ' +
+            'development-time packages and must not become part of a runtime dependency graph.',
         },
       ],
     },
@@ -66,10 +66,10 @@ const layerBoundaries = [
     restricted: {
       patterns: [
         {
-          group: ['@etyma/tooling'],
+          group: ['@etyma/tooling', '@etyma/cli'],
           message:
-            '@etyma/analog must never depend on @etyma/tooling. Tooling is a development-time ' +
-            'package and must not become part of a runtime dependency graph.',
+            '@etyma/analog must never depend on @etyma/tooling or @etyma/cli. Both are ' +
+            'development-time packages and must not become part of a runtime dependency graph.',
         },
       ],
     },
@@ -85,11 +85,40 @@ const layerBoundaries = [
             'Angular, Analog or any other framework - only standards and @etyma/core.',
         },
         {
+          group: ['@etyma/cli'],
+          message:
+            '@etyma/tooling must never depend on @etyma/cli. The CLI is built on top of ' +
+            'tooling, never the other way around.',
+        },
+        {
           group: ['node:*', 'fs', 'path', 'url', 'crypto'],
           message:
             '@etyma/tooling validates already-loaded catalog objects and must run in a ' +
             'browser or edge runtime too - a future CMS or MCP integration - so it may not ' +
             'import Node built-ins. Filesystem access belongs in a future CLI adapter.',
+        },
+      ],
+    },
+  },
+  {
+    // @etyma/cli is Node-only development tooling - the one package here allowed to import
+    // Node built-ins freely (unlike @etyma/core and @etyma/tooling above). It is an adapter
+    // around @etyma/tooling, not a second place catalog semantics live, so it may not reach
+    // past tooling to @etyma/core directly - see the package README's dependency graph.
+    files: ['packages/cli/src/**/*.ts'],
+    restricted: {
+      patterns: [
+        {
+          group: ['@angular/*', '@analogjs/*', '@etyma/angular', '@etyma/analog', 'rxjs*'],
+          message:
+            '@etyma/cli is Node-only development tooling. It may not import Angular, Analog ' +
+            'or any other framework - only standards, Node built-ins and @etyma/tooling.',
+        },
+        {
+          group: ['@etyma/core'],
+          message:
+            '@etyma/cli must depend on @etyma/tooling, not @etyma/core directly. Catalog ' +
+            'semantics live in tooling; the CLI is only an adapter around it.',
         },
       ],
     },

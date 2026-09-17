@@ -131,6 +131,7 @@ try {
 
   const core = packages.find(pkg => pkg.name === '@etyma/core');
   const tooling = packages.find(pkg => pkg.name === '@etyma/tooling');
+  const cli = packages.find(pkg => pkg.name === '@etyma/cli');
 
   console.log('\ncross-package');
 
@@ -176,6 +177,41 @@ try {
       );
     },
   );
+
+  check(
+    '@etyma/cli depends on nothing from a framework, and only @etyma/tooling among Etyma packages',
+    () => {
+      const manifest = manifestOf(cli.tarball);
+
+      assert(
+        Object.keys(manifest.peerDependencies ?? {}).length === 0,
+        'CLI development tooling should need no peers at all',
+      );
+
+      const dependencies = Object.keys(manifest.dependencies ?? {});
+      const etymaDependencies = dependencies.filter(name => name.startsWith('@etyma/'));
+
+      assert(
+        etymaDependencies.length === 1 && etymaDependencies[0] === '@etyma/tooling',
+        `@etyma/cli must depend on exactly @etyma/tooling among Etyma packages, not: ` +
+          `${etymaDependencies.join(', ') || '(none)'} - catalog semantics must not be ` +
+          `duplicated, and @etyma/core should only be reached through tooling`,
+      );
+    },
+  );
+
+  check('@etyma/cli ships a working `etyma` binary entry', () => {
+    const manifest = manifestOf(cli.tarball);
+    const files = contentsOf(cli.tarball);
+
+    assert(manifest.bin?.etyma !== undefined, 'no "etyma" entry in the "bin" map');
+
+    const binPath = manifest.bin.etyma.replace(/^\.\//, '');
+    assert(
+      files.includes(binPath),
+      `"bin.etyma" points at "${binPath}", which is not in the tarball`,
+    );
+  });
 } finally {
   rmSync(workspace, { recursive: true, force: true });
 }

@@ -10,7 +10,7 @@ changeset for any one of them releases all three at the same version. That is de
 `@etyma/angular`, and a matrix of independent versions would be a support burden long before
 it was a convenience.
 
-`@etyma/tooling` is published too, but is not in that group — it is development tooling that
-evolves at its own pace, so it versions independently. A changeset naming only
-`@etyma/tooling` releases only `@etyma/tooling`. See [RELEASING.md](../RELEASING.md) for the
-reasoning and for what happens after a changeset is merged.
+`@etyma/tooling` and `@etyma/cli` are published too, but are not in that group — they are
+development tooling that evolves at its own pace, so each versions independently. A changeset
+naming only `@etyma/cli` releases only `@etyma/cli`. See [RELEASING.md](../RELEASING.md) for
+the reasoning and for what happens after a changeset is merged.

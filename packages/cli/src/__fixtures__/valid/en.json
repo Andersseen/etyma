@@ -1,0 +1,8 @@
+{
+  "nav": {
+    "docs": "Docs"
+  },
+  "footer": {
+    "rights": "© {$year :number useGrouping=never}"
+  }
+}

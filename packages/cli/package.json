@@ -1,0 +1,63 @@
+{
+  "name": "@etyma/cli",
+  "version": "0.0.0",
+  "description": "Command-line validation for Etyma message catalogs. `etyma validate` runs @etyma/tooling's catalog checks against local JSON catalogs, for CI and local use.",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "cli",
+    "messageformat",
+    "mf2",
+    "validation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andersseen/etyma.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/Andersseen/etyma/tree/main/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/Andersseen/etyma/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "bin": {
+    "etyma": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.lib.json && node -e \"require('node:fs').chmodSync('dist/bin.js', 0o755)\"",
+    "dev": "tsc --project tsconfig.lib.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@etyma/tooling": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.0",
+    "vitest": "4.1.11"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

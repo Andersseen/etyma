@@ -14,11 +14,12 @@ export const runtimePackages = ['core', 'angular', 'analog'];
 /**
  * Every published package, runtime and tooling alike, in dependency order.
  *
- * `@etyma/tooling` is published but versions independently of the runtime trio: it is
- * development tooling that evolves at its own pace, and a runtime consumer should not see a
- * release whenever a catalog-validation check changes. See RELEASING.md.
+ * `@etyma/tooling` and `@etyma/cli` are published but version independently of the runtime
+ * trio: they are development tooling that evolves at its own pace, and a runtime consumer
+ * should not see a release whenever a catalog-validation check or the CLI changes. See
+ * RELEASING.md.
  */
-export const publishedPackages = [...runtimePackages, 'tooling'];
+export const publishedPackages = [...runtimePackages, 'tooling', 'cli'];
 
 /**
  * Packs every published package exactly as `pnpm publish` would.

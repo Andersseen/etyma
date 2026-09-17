@@ -3,22 +3,24 @@
 Three packages — `@etyma/core`, `@etyma/angular`, `@etyma/analog` — share one version and
 are released together. A changeset for any of them releases all three.
 
-`@etyma/tooling` is not in that group. It is development tooling — a catalog validator today,
-with a CLI, an MCP server and CMS integrations planned on top of it — and it will evolve at
-its own pace: a new diagnostic code or a stricter check is a real change worth releasing, but
-it has nothing to do with the runtime engine, and a runtime-only consumer installing
-`@etyma/core` should not see an unrelated version bump because tooling shipped a release. It
-is therefore versioned independently in `.changeset/config.json` (simply by being absent from
-`fixed` and `linked`, which is what makes a package independent under Changesets — no
-extra configuration was needed). A changeset touching only `@etyma/tooling` releases only
-`@etyma/tooling`; the runtime trio only moves when a changeset actually names one of them.
+Neither `@etyma/tooling` nor `@etyma/cli` is in that group. `@etyma/tooling` is a catalog
+validator; `@etyma/cli` is the `etyma` binary built on top of it, an MCP server and CMS
+integrations may follow — and each evolves at its own pace: a new diagnostic code, a stricter
+check, or a new CLI command is a real change worth releasing, but none of it has anything to do
+with the runtime engine, and a runtime-only consumer installing `@etyma/core` should not see an
+unrelated version bump because tooling or the CLI shipped a release. Both are therefore
+versioned independently in `.changeset/config.json` (simply by being absent from `fixed` and
+`linked`, which is what makes a package independent under Changesets — no extra configuration
+was needed). A changeset touching only `@etyma/cli` releases only `@etyma/cli`; the runtime
+trio and `@etyma/tooling` only move when a changeset actually names one of them.
 `tools/scripts/pack.mjs` and `package-check.mjs` check the runtime trio's shared version and
-`@etyma/tooling`'s package boundary as two separate assertions for the same reason.
+each independent package's own boundary as separate assertions for the same reason.
 
-`@etyma/tooling` has never been published, so its first release hits the same bootstrap
-problem `0.1.0` did (below): npm Trusted Publishing cannot be configured for a package that
-does not exist yet. Its first release needs the same short-lived-token dance, scoped to
-_only_ `@etyma/tooling`, followed by switching it to OIDC once the package exists.
+Each independently-versioned package's _first_ release hits the same bootstrap problem `0.1.0`
+did (below): npm Trusted Publishing cannot be configured for a package that does not exist
+yet. `@etyma/tooling`'s first release already went through this. `@etyma/cli`, new in this
+release, has not — its first publish needs the same short-lived-token dance, scoped to _only_
+`@etyma/cli`, followed by switching it to OIDC once the package exists on npm.
 
 The process is deliberately in three separable steps, even though only the first two need a
 human:
