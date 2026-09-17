@@ -1,6 +1,6 @@
 {
   "name": "@etyma/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Command-line validation for Etyma message catalogs. `etyma validate` runs @etyma/tooling's catalog checks against local JSON catalogs, for CI and local use.",
   "keywords": [
     "i18n",
