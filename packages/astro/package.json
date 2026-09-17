@@ -1,0 +1,63 @@
+{
+  "name": "@etyma/astro",
+  "version": "0.0.0",
+  "description": "Astro bindings for Etyma: typed translation keys, MessageFormat 2 and lazy catalogs on top of Astro's own i18n routing.",
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "i18n",
+    "internationalization",
+    "localization",
+    "messageformat",
+    "mf2"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andersseen/etyma.git",
+    "directory": "packages/astro"
+  },
+  "homepage": "https://github.com/Andersseen/etyma/tree/main/packages/astro#readme",
+  "bugs": {
+    "url": "https://github.com/Andersseen/etyma/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.lib.json",
+    "dev": "tsc --project tsconfig.lib.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist .turbo"
+  },
+  "peerDependencies": {
+    "astro": "^6.0.0"
+  },
+  "dependencies": {
+    "@etyma/core": "workspace:^"
+  },
+  "devDependencies": {
+    "astro": "6.4.8",
+    "vitest": "4.1.11"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  Typed i18n for Angular and AnalogJS apps: JSON catalogs, MessageFormat 2,
+  Typed i18n for Angular, AnalogJS and Astro apps: JSON catalogs, MessageFormat 2,
   localized routes, SSR-translated HTML and hydration-safe lazy locale loading.
 </p>
 
@@ -18,6 +18,8 @@
   ·
   <a href="packages/analog">AnalogJS</a>
   ·
+  <a href="packages/astro">Astro</a>
+  ·
   <a href="packages/cli">CLI</a>
 </p>
 
@@ -30,14 +32,14 @@
 
 ## Overview
 
-Etyma is a small toolkit for translating an Angular application: JSON catalogs, typed
-message keys, MessageFormat 2 formatting, locale-prefixed routing, server-rendered
-translations, and the localized `<head>` that makes a translated page findable.
+Etyma is a small toolkit for translating Angular, AnalogJS and Astro applications: JSON
+catalogs, typed message keys, MessageFormat 2 formatting, locale-aware routing, server- and
+build-time translations, and the localized `<head>` that makes a translated page findable.
 
 > **Status: published and early.** The runtime trio is at `0.2.0` on npm and is being used by
-> Volt UI, `@etyma/tooling` is at `0.1.0`, and `@etyma/cli` is new and not yet published.
-> Etyma is still pre-1.0. The API is small on purpose and the release gates exercise packed
-> packages; read [Non-goals](#non-goals) before adopting it.
+> Volt UI, `@etyma/tooling` is at `0.1.0`, and `@etyma/astro` and `@etyma/cli` are new and
+> not yet published. Etyma is still pre-1.0. The API is small on purpose and the release
+> gates exercise packed packages; read [Non-goals](#non-goals) before adopting it.
 
 ## Why Etyma exists
 
@@ -82,14 +84,23 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 | [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                           | `messageformat`                 |
 | [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                     | `@etyma/core`, Angular 21 or 22 |
 | [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                        | `@etyma/angular`, Analog 2.x    |
+| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.      | `@etyma/core`, Astro 6.x        |
 | [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Not a runtime dependency.  | `@etyma/core`                   |
 | [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` runs `@etyma/tooling`'s checks against local JSON catalogs, for CI and local use. Not a runtime dependency. | `@etyma/tooling`                |
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
-`core` knows nothing about Angular, `angular` knows nothing about Analog, nothing in the
-runtime trio depends on `tooling` — it depends on `core`, never the other way around — and
-`cli` depends on `tooling`, never the other way around, and never reaches past it to `core`
-directly.
+`core` knows nothing about Angular or Astro, `angular` knows nothing about Analog, `astro`
+depends only on `core` and Astro itself, nothing in the runtime trio depends on `tooling` —
+it depends on `core`, never the other way around — and `cli` depends on `tooling`, never the
+other way around, and never reaches past it to `core` directly.
+
+```
+                         @etyma/core
+                        /           \
+              @etyma/angular       @etyma/astro
+                    |
+              @etyma/analog
+```
 
 ## Apps
 
@@ -104,19 +115,31 @@ directly.
 | --------------- | -------------------------------------------------------------- |
 | Angular         | 21 (build baseline) and 22 (verified consumer)                 |
 | AnalogJS        | 2.6.x and 2.7.x with Angular 21; 2.7.x with Angular 22         |
+| Astro           | 6.x                                                            |
 | Node            | >= 22.22                                                       |
 | Package manager | pnpm 10.x                                                      |
 | Module format   | ESM only — there is no CommonJS build                          |
 | Runtimes        | Browsers, Node, and edge runtimes including Cloudflare Workers |
 
-The packages are built with Angular 21 as Angular Package Format partial declarations.
-Angular and Analog compatibility is verified by building clean applications against packed
-tarballs, not workspace symlinks.
+The Angular/Analog packages are built with Angular 21 as Angular Package Format partial
+declarations. `@etyma/astro` is a plain ESM package built with `tsc`, like `@etyma/core`.
+Angular, Analog and Astro compatibility are all verified by building clean applications
+against packed tarballs, not workspace symlinks - see
+[`packages/astro`](packages/astro#readme) for the Astro-specific setup, including the
+`{ path, codes }` locale form.
 
 ## Install
 
+For Angular and AnalogJS:
+
 ```sh
 pnpm add @etyma/core @etyma/angular @etyma/analog
+```
+
+For Astro:
+
+```sh
+pnpm add @etyma/core @etyma/astro
 ```
 
 ## Define catalogs
@@ -189,6 +212,33 @@ export const appConfig: ApplicationConfig = {
 The recommended provider shape is explicit on purpose: Angular owns translations,
 Analog owns URL routing and localized head metadata, and `provideFileRouter()` stays where
 Analog users expect it.
+
+## Astro setup
+
+`@etyma/astro` is a separate, independent adapter - no Angular, no Analog. Astro's own
+`i18n` config in `astro.config.mjs` owns routing; Etyma owns messages:
+
+```astro
+---
+// src/pages/blog.astro
+import { createAstroI18n } from '@etyma/astro';
+import { i18n } from '../i18n';
+
+const etyma = await createAstroI18n(Astro, i18n);
+---
+
+<html lang={etyma.locale} dir={etyma.direction}>
+  <body>
+    <h1>{etyma.t('blog.title')}</h1>
+  </body>
+</html>
+```
+
+`createAstroI18n` reads the locale Astro already resolved (`Astro.currentLocale`) and
+localizes paths through `astro:i18n`'s own helpers - including a route path that is not a
+language code, such as a `uk` locale served at `/ua`. See the
+[`@etyma/astro` README](packages/astro#readme) for the full setup, the SEO helper and that
+exact `/ua` → `uk` example.
 
 ## Translate templates
 
@@ -403,18 +453,25 @@ for the full generation, error and fallback behavior.
 
 ## Package boundaries
 
-`@etyma/core` is framework agnostic. `@etyma/angular` depends on Angular and core, but not
-Analog. `@etyma/analog` is the only package that knows about Analog file routing, URL
-locale activation and localized SEO. `@etyma/tooling` depends on core and is development
-tooling, not a runtime dependency — no package in the runtime trio depends on it. `@etyma/cli`
-depends on `@etyma/tooling` only and is also development tooling, not a runtime dependency —
-no other Etyma package depends on it.
+`@etyma/core` is framework agnostic — it knows about neither Angular nor Astro. `@etyma/angular`
+depends on Angular and core, but not Analog. `@etyma/analog` is the only package that knows
+about Analog file routing, URL locale activation and localized SEO. `@etyma/astro` is a
+second, independent adapter next to that pair: it depends on core and Astro, never on
+`@etyma/angular` or `@etyma/analog`, and reimplements no routing of its own — it reads the
+locale Astro already resolved and localizes paths through `astro:i18n`'s own helpers.
+`@etyma/tooling` depends on core and is development tooling, not a runtime dependency — no
+package in the runtime trio depends on it. `@etyma/cli` depends on `@etyma/tooling` only and
+is also development tooling, not a runtime dependency — no other Etyma package depends on it.
 
 ## Non-goals
 
 Not planned for `0.x`, and not partially implemented anywhere:
 
-- Adapters for Astro, React, Vue or Svelte
+- Adapters for React, Vue or Svelte
+- A client-side locale store, `localStorage` or cookie-based locale persistence, or an
+  Astro integration plugin — `@etyma/astro` works through `createAstroI18n()` and Astro's
+  own public APIs; see [its README](packages/astro#readme) for why no `integrations: [...]`
+  entry was added
 - A CMS integration, a translation management UI, or automatic machine translation
 - Source-message extraction, hardcoded-copy scanning or unused-key scanning
 - A general compiler or code-generation pipeline for message content — no per-key
@@ -435,9 +492,10 @@ apps/playground      A real Analog 2 application that consumes Etyma like an ext
 packages/core        @etyma/core
 packages/angular     @etyma/angular
 packages/analog      @etyma/analog
+packages/astro       @etyma/astro - the Astro integration, independent of the runtime trio
 packages/tooling     @etyma/tooling - development-time catalog validation
 packages/cli         @etyma/cli - the `etyma` binary, built on @etyma/tooling
-tools/compat         Clean Angular 21 and 22 consumers, built against packed tarballs
+tools/compat         Clean Angular, Analog and Astro consumers, built against packed tarballs
 tools/scripts        Package validation and compatibility runners
 ```
 
@@ -457,7 +515,7 @@ pnpm test             # Vitest unit and type tests
 pnpm e2e              # Playwright, against the Cloudflare build under Wrangler
 pnpm check            # formatting, lint, typecheck, tests and build
 pnpm package:check    # publint, are-the-types-wrong and tarball assertions
-pnpm compat:check     # builds the Angular 21 and 22 fixtures against packed tarballs
+pnpm compat:check     # builds the Angular, Analog and Astro fixtures against packed tarballs
 pnpm changeset        # describe a change for the changelog
 ```
 
@@ -493,10 +551,11 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 `@etyma/core`, `@etyma/angular` and `@etyma/analog` are at `0.2.0`, cut through the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
-together. `@etyma/tooling` is at `0.1.0` and versions independently. `@etyma/cli` is a new,
-separate package that also versions independently — a `0.1.0` first release is expected once
-it has shipped through the same process; see [RELEASING.md](RELEASING.md) for why development
-tooling is not in the runtime trio's fixed version group.
+together. `@etyma/tooling` is at `0.1.0` and versions independently. `@etyma/astro` and
+`@etyma/cli` are new, separate packages that also version independently — a `0.1.0` first
+release is expected for each once they have shipped through the same process; see
+[RELEASING.md](RELEASING.md) for why an Astro adapter and development tooling are not in the
+runtime trio's fixed version group.
 
 ## Licence
 

@@ -18,8 +18,12 @@ export const runtimePackages = ['core', 'angular', 'analog'];
  * trio: they are development tooling that evolves at its own pace, and a runtime consumer
  * should not see a release whenever a catalog-validation check or the CLI changes. See
  * RELEASING.md.
+ *
+ * `@etyma/astro` is also independent of the runtime trio, for the same reason `astro` is a
+ * peer dependency evolves on its own schedule: an Astro adapter change should not force a
+ * version bump on Angular/Analog consumers who never installed it, and vice versa.
  */
-export const publishedPackages = [...runtimePackages, 'tooling', 'cli'];
+export const publishedPackages = [...runtimePackages, 'astro', 'tooling', 'cli'];
 
 /**
  * Packs every published package exactly as `pnpm publish` would.

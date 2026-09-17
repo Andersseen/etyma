@@ -1,0 +1,14 @@
+---
+import { createAstroI18n } from '@etyma/astro';
+
+import { i18n } from '../i18n/index.js';
+import Layout from '../layouts/Layout.astro';
+
+const etyma = await createAstroI18n(Astro, i18n);
+---
+
+<Layout etyma={etyma} title={etyma.t('nav.blog')}>
+  <h1>{etyma.t('nav.blog')}</h1>
+  <p class="count-one">{etyma.t('posts.count', { count: 1 })}</p>
+  <p class="count-many">{etyma.t('posts.count', { count: 5 })}</p>
+</Layout>

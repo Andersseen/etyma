@@ -123,6 +123,32 @@ const layerBoundaries = [
       ],
     },
   },
+  {
+    // @etyma/astro is a second, independent framework adapter next to the Angular/Analog
+    // pair, not a port of either onto Astro. It reuses @etyma/core's portable engine and
+    // Astro's own i18n router - never Angular's signals, DI or TransferState, and never a
+    // second routing implementation of its own.
+    files: ['packages/astro/src/**/*.ts'],
+    restricted: {
+      patterns: [
+        {
+          group: [
+            '@angular/*',
+            '@analogjs/*',
+            '@etyma/angular',
+            '@etyma/analog',
+            '@etyma/tooling',
+            '@etyma/cli',
+            'rxjs*',
+          ],
+          message:
+            '@etyma/astro must depend only on @etyma/core and Astro. It may not import ' +
+            'Angular, Analog, RxJS, or the development-time @etyma/tooling or @etyma/cli ' +
+            'packages.',
+        },
+      ],
+    },
+  },
 ];
 
 export default tseslint.config(
