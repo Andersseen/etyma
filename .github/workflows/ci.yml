@@ -93,7 +93,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fixture: ['angular-21-analog-26', 'angular-21', 'angular-22']
+        fixture: ['angular-21-analog-26', 'angular-21', 'angular-22', 'astro-6']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -106,7 +106,8 @@ jobs:
 
       # Builds a clean application against the packed tarballs, with npm, outside the
       # workspace, so nothing resolves through a symlink. The matrix covers Angular 21 with
-      # Analog 2.6 and 2.7, plus Angular 22 with Analog 2.7.
+      # Analog 2.6 and 2.7, Angular 22 with Analog 2.7, and a static Astro 6 site built
+      # against @etyma/astro.
       - name: Build the compatibility fixture
         run: pnpm run compat:check ${{ matrix.fixture }}
 

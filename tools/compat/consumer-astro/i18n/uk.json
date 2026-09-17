@@ -1,0 +1,13 @@
+{
+  "nav": { "blog": "Блог" },
+  "home": {
+    "title": "Головна",
+    "greeting": "Привіт, {$name}!"
+  },
+  "footer": {
+    "rights": "© {$year :number useGrouping=never} Мій блог. Усі права захищені."
+  },
+  "posts": {
+    "count": ".input {$count :number}\n.match $count\none {{{$count} стаття}}\nfew {{{$count} статті}}\nmany {{{$count} статей}}\n*   {{{$count} статей}}"
+  }
+}

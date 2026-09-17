@@ -1,0 +1,33 @@
+---
+import type { AstroI18n } from '@etyma/astro';
+
+interface Props {
+  etyma: AstroI18n;
+  title: string;
+}
+
+const { etyma, title } = Astro.props;
+const seo = etyma.seo();
+---
+
+<!doctype html>
+<html lang={seo.lang} dir={seo.direction}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <link rel="canonical" href={seo.canonical} />
+    {seo.alternates.map(alternate => (
+      <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={seo.xDefault} />
+  </head>
+  <body>
+    <nav>
+      <a href={etyma.path('/', 'es')}>ES</a>
+      <a href={etyma.path('/', 'en')}>EN</a>
+      <a href={etyma.path('/', 'uk')}>UK</a>
+      <a href={etyma.path('/blog')}>{etyma.t('nav.blog')}</a>
+    </nav>
+    <slot />
+  </body>
+</html>

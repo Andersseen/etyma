@@ -12,7 +12,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { contentsOf, manifestOf, packAll, repoRoot, runtimePackages } from './pack.mjs';
+import { contentsOf, manifestOf, packAll, readJson, repoRoot, runtimePackages } from './pack.mjs';
 
 const failures = [];
 
@@ -130,6 +130,7 @@ try {
   }
 
   const core = packages.find(pkg => pkg.name === '@etyma/core');
+  const astro = packages.find(pkg => pkg.name === '@etyma/astro');
   const tooling = packages.find(pkg => pkg.name === '@etyma/tooling');
   const cli = packages.find(pkg => pkg.name === '@etyma/cli');
 
@@ -155,6 +156,48 @@ try {
     const versions = new Set(runtime.map(pkg => manifestOf(pkg.tarball).version));
 
     assert(versions.size === 1, `fixed versioning is broken: ${[...versions].join(', ')}`);
+  });
+
+  check(
+    '@etyma/astro depends on nothing from Angular/Analog, and only @etyma/core among Etyma packages',
+    () => {
+      const manifest = manifestOf(astro.tarball);
+
+      const peers = Object.keys(manifest.peerDependencies ?? {});
+      assert(
+        peers.length === 1 && peers[0] === 'astro',
+        `@etyma/astro's only peer dependency should be "astro", not: ${peers.join(', ') || '(none)'}`,
+      );
+
+      const dependencies = Object.keys(manifest.dependencies ?? {});
+      const etymaDependencies = dependencies.filter(name => name.startsWith('@etyma/'));
+
+      assert(
+        etymaDependencies.length === 1 && etymaDependencies[0] === '@etyma/core',
+        `@etyma/astro must depend on exactly @etyma/core among Etyma packages, not: ` +
+          `${etymaDependencies.join(', ') || '(none)'} - it must not depend on @etyma/angular ` +
+          'or @etyma/analog, which would make it a port rather than an independent adapter.',
+      );
+
+      const frameworks = dependencies.filter(
+        name => name.startsWith('@angular/') || name.startsWith('@analogjs/') || name === 'rxjs',
+      );
+      assert(
+        frameworks.length === 0,
+        `@etyma/astro must not depend on Angular/Analog/RxJS: ${frameworks.join(', ')}`,
+      );
+    },
+  );
+
+  check('@etyma/astro is versioned independently of the runtime trio', () => {
+    const changesetConfig = readJson(join(repoRoot, '.changeset/config.json'));
+    const groups = [...(changesetConfig.fixed ?? []), ...(changesetConfig.linked ?? [])];
+
+    assert(
+      !groups.some(group => group.includes('@etyma/astro')),
+      "@etyma/astro must not be listed in .changeset/config.json's `fixed` or `linked` " +
+        'groups - it releases on its own schedule, not whenever Angular/Analog change.',
+    );
   });
 
   check(

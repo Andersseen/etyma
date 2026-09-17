@@ -1,0 +1,13 @@
+{
+  "nav": { "blog": "Blog" },
+  "home": {
+    "title": "Home",
+    "greeting": "Hello, {$name}!"
+  },
+  "footer": {
+    "rights": "© {$year :number useGrouping=never} My Blog. All rights reserved."
+  },
+  "posts": {
+    "count": ".input {$count :number}\n.match $count\none {{{$count} post}}\n*   {{{$count} posts}}"
+  }
+}

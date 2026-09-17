@@ -3,16 +3,19 @@
 Three packages — `@etyma/core`, `@etyma/angular`, `@etyma/analog` — share one version and
 are released together. A changeset for any of them releases all three.
 
-Neither `@etyma/tooling` nor `@etyma/cli` is in that group. `@etyma/tooling` is a catalog
-validator; `@etyma/cli` is the `etyma` binary built on top of it, an MCP server and CMS
-integrations may follow — and each evolves at its own pace: a new diagnostic code, a stricter
-check, or a new CLI command is a real change worth releasing, but none of it has anything to do
-with the runtime engine, and a runtime-only consumer installing `@etyma/core` should not see an
-unrelated version bump because tooling or the CLI shipped a release. Both are therefore
-versioned independently in `.changeset/config.json` (simply by being absent from `fixed` and
-`linked`, which is what makes a package independent under Changesets — no extra configuration
-was needed). A changeset touching only `@etyma/cli` releases only `@etyma/cli`; the runtime
-trio and `@etyma/tooling` only move when a changeset actually names one of them.
+Neither `@etyma/tooling`, `@etyma/astro` nor `@etyma/cli` is in that group. `@etyma/tooling`
+is a catalog validator; `@etyma/astro` is the Astro adapter; `@etyma/cli` is the `etyma`
+binary built on top of tooling, an MCP server and CMS integrations may follow — and each
+evolves at its own pace: a new diagnostic code, an Astro compatibility fix, or a new CLI
+command is a real change worth releasing, but none of it has anything to do with the runtime
+engine, and a runtime-only consumer installing `@etyma/core` should not see an unrelated
+version bump because tooling, the Astro adapter or the CLI shipped a release. `@etyma/astro`
+specifically also evolves against Astro's own release schedule, which has nothing to do with
+Angular or Analog's. All three are therefore versioned independently in
+`.changeset/config.json` (simply by being absent from `fixed` and `linked`, which is what
+makes a package independent under Changesets — no extra configuration was needed). A
+changeset touching only `@etyma/astro` releases only `@etyma/astro`; the runtime trio,
+`@etyma/tooling` and `@etyma/cli` only move when a changeset actually names one of them.
 `tools/scripts/pack.mjs` and `package-check.mjs` check the runtime trio's shared version and
 each independent package's own boundary as separate assertions for the same reason.
 
