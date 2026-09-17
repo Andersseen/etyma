@@ -1,0 +1,22 @@
+{
+  "nav": {
+    "docs": "Docs",
+    "components": "Components"
+  },
+  "docs": {
+    "theme": {
+      "title": "Theming"
+    },
+    "gettingStarted": {
+      "title": "Getting started"
+    }
+  },
+  "footer": {
+    "rights": "© {$year :number useGrouping=never} Volt UI"
+  },
+  "components": {
+    "button": {
+      "count": ".input {$count :number}\n.match $count\none {{{$count} button variant is documented.}}\n*   {{{$count} button variants are documented.}}"
+    }
+  }
+}

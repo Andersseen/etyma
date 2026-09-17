@@ -26,11 +26,11 @@ correctly, and reused by everything that wants to validate one:
 and by `pnpm package:check` reading the packed tarball's own `dependencies`, not just the
 source tree.
 
-This first release is deliberately narrow: a **programmatic validation engine**, with no CLI,
-no filesystem access, and no source-code scanning. A future `@etyma/cli`, an MCP tool, a Vite
-plugin, and Forge CMS's editor are all meant to call the exact same `validateCatalog` /
-`validateCatalogs` this package exports, instead of each re-implementing catalog validation
-their own way.
+This first release is deliberately narrow: a **programmatic validation engine**, with no
+filesystem access of its own and no source-code scanning. [`@etyma/cli`](../cli) is the first
+consumer built on top of it — `etyma validate` calls the exact same `validateCatalog` /
+`validateCatalogs` this package exports, rather than re-implementing catalog validation a
+second way. An MCP tool, a Vite plugin, and Forge CMS's editor are meant to do the same.
 
 ## Install
 
@@ -242,11 +242,12 @@ buys a working editor on the first checkout.
 
 Deliberately not implemented in this first release:
 
-- **No CLI.** No `etyma-tooling` binary, no `etyma.config.ts`, no `glob()` access. The main
-  entry point operates only on catalog objects already in memory; `@etyma/tooling/vite` is
-  the one deliberate, scoped exception that reads and writes exactly one file. A future
-  `@etyma/cli` (and MCP, and Forge CMS) will build on the same engine rather than duplicate
-  it.
+- **No filesystem access of its own beyond `@etyma/tooling/vite`.** The main entry point
+  operates only on catalog objects already in memory; `@etyma/tooling/vite` is the one
+  deliberate, scoped exception that reads and writes exactly one file. Directory discovery,
+  `*.json` reading and a CLI's `etyma.config.ts` (not yet built) live in
+  [`@etyma/cli`](../cli), which builds on this engine rather than duplicating it. A future MCP
+  tool and Forge CMS integration are meant to do the same.
 - **No source-message extraction, template scanning, or hardcoded-copy detection.**
   Determining whether a key is used, or whether a template has untranslated copy, requires
   reading application source code, which this package does not do. That is a later tooling
@@ -267,10 +268,11 @@ Deliberately not implemented in this first release:
 ## Versioning
 
 Unlike `@etyma/core`, `@etyma/angular` and `@etyma/analog` — which are released together as
-one fixed version — `@etyma/tooling` versions independently. It is development tooling that
-will evolve at its own pace as a CLI, an MCP server and CMS integrations are built on top of
-it, and a runtime consumer installing only `@etyma/core` should never see an unrelated release
-because a catalog-validation check changed. See [`RELEASING.md`](../../RELEASING.md).
+one fixed version — `@etyma/tooling` versions independently, and so does
+[`@etyma/cli`](../cli), now built on top of it. Both are development tooling that will keep
+evolving at their own pace — an MCP server and CMS integrations may follow — and a runtime
+consumer installing only `@etyma/core` should never see an unrelated release because a
+catalog-validation check or the CLI changed. See [`RELEASING.md`](../../RELEASING.md).
 
 ## Licence
 

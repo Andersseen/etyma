@@ -1,0 +1,5 @@
+{
+  "footer": {
+    "rights": "© {$anio :number useGrouping=never}"
+  }
+}

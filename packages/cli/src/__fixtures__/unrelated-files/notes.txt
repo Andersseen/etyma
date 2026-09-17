@@ -1,0 +1,1 @@
+Not a catalog. Should be ignored by discovery, not reported as ambiguous.

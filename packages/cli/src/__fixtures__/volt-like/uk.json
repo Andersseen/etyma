@@ -1,0 +1,22 @@
+{
+  "nav": {
+    "docs": "Документація",
+    "components": "Компоненти"
+  },
+  "docs": {
+    "theme": {
+      "title": "Теми"
+    },
+    "gettingStarted": {
+      "title": "Початок роботи"
+    }
+  },
+  "footer": {
+    "rights": "© {$year :number useGrouping=never} Volt UI"
+  },
+  "components": {
+    "button": {
+      "count": ".input {$count :number}\n.match $count\none {{Задокументовано {$count} варіант кнопки.}}\nfew {{Задокументовано {$count} варіанти кнопки.}}\nmany {{Задокументовано {$count} варіантів кнопки.}}\n*    {{Задокументовано {$count} варіанта кнопки.}}"
+    }
+  }
+}

@@ -17,6 +17,8 @@
   <a href="packages/angular">Angular</a>
   ·
   <a href="packages/analog">AnalogJS</a>
+  ·
+  <a href="packages/cli">CLI</a>
 </p>
 
 <p align="center">
@@ -32,9 +34,10 @@ Etyma is a small toolkit for translating an Angular application: JSON catalogs, 
 message keys, MessageFormat 2 formatting, locale-prefixed routing, server-rendered
 translations, and the localized `<head>` that makes a translated page findable.
 
-> **Status: published and early.** `0.1.0` is on npm and is being used by Volt UI, but
-> Etyma is still pre-1.0. The API is small on purpose and the release gates exercise
-> packed packages; read [Non-goals](#non-goals) before adopting it.
+> **Status: published and early.** The runtime trio is at `0.2.0` on npm and is being used by
+> Volt UI, `@etyma/tooling` is at `0.1.0`, and `@etyma/cli` is new and not yet published.
+> Etyma is still pre-1.0. The API is small on purpose and the release gates exercise packed
+> packages; read [Non-goals](#non-goals) before adopting it.
 
 ## Why Etyma exists
 
@@ -74,16 +77,19 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 
 ## Packages
 
-| Package                              | What it is                                                                                                                                      | Depends on                      |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                          | `messageformat`                 |
-| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                    | `@etyma/core`, Angular 21 or 22 |
-| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                       | `@etyma/angular`, Analog 2.x    |
-| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Not a runtime dependency. | `@etyma/core`                   |
+| Package                              | What it is                                                                                                                                       | Depends on                      |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                           | `messageformat`                 |
+| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                     | `@etyma/core`, Angular 21 or 22 |
+| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                        | `@etyma/angular`, Analog 2.x    |
+| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Not a runtime dependency.  | `@etyma/core`                   |
+| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` runs `@etyma/tooling`'s checks against local JSON catalogs, for CI and local use. Not a runtime dependency. | `@etyma/tooling`                |
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
-`core` knows nothing about Angular, `angular` knows nothing about Analog, and nothing in the
-runtime trio depends on `tooling` — it depends on `core`, never the other way around.
+`core` knows nothing about Angular, `angular` knows nothing about Analog, nothing in the
+runtime trio depends on `tooling` — it depends on `core`, never the other way around — and
+`cli` depends on `tooling`, never the other way around, and never reaches past it to `core`
+directly.
 
 ## Apps
 
@@ -310,8 +316,17 @@ const result = validateCatalogs({ sourceLocale: 'en', catalogs: { en, es, uk } }
 ```
 
 It is a dev dependency, not something an application installs to run: see the
-[`@etyma/tooling` README](packages/tooling#readme) for the full diagnostic contract and what
-this first release deliberately does not do yet (no CLI, no source-code scanning).
+[`@etyma/tooling` README](packages/tooling#readme) for the full diagnostic contract and what it
+deliberately does not do (no source-code scanning, no unused-key detection).
+
+From the command line, [`@etyma/cli`](packages/cli) runs the same engine against local JSON
+catalogs without a script of your own:
+
+```sh
+etyma validate ./src/app/i18n --source en
+```
+
+See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes.
 
 ## Remote catalogs
 
@@ -391,7 +406,9 @@ for the full generation, error and fallback behavior.
 `@etyma/core` is framework agnostic. `@etyma/angular` depends on Angular and core, but not
 Analog. `@etyma/analog` is the only package that knows about Analog file routing, URL
 locale activation and localized SEO. `@etyma/tooling` depends on core and is development
-tooling, not a runtime dependency — no package in the runtime trio depends on it.
+tooling, not a runtime dependency — no package in the runtime trio depends on it. `@etyma/cli`
+depends on `@etyma/tooling` only and is also development tooling, not a runtime dependency —
+no other Etyma package depends on it.
 
 ## Non-goals
 
@@ -406,6 +423,9 @@ Not planned for `0.x`, and not partially implemented anywhere:
   case where no local source file can supply that type information at all — and generates
   nothing from message content itself; see [Remote catalogs](#remote-catalogs)
 - CommonJS output, NgModule APIs, an RxJS-first API, or Angular 20 and below
+- A localization platform in `@etyma/cli`: no config file, no remote validation, no
+  translation editing, no MCP server or CMS integration — see the
+  [`@etyma/cli` README](packages/cli#readme)'s own non-goals
 
 ## Repository layout
 
@@ -416,6 +436,7 @@ packages/core        @etyma/core
 packages/angular     @etyma/angular
 packages/analog      @etyma/analog
 packages/tooling     @etyma/tooling - development-time catalog validation
+packages/cli         @etyma/cli - the `etyma` binary, built on @etyma/tooling
 tools/compat         Clean Angular 21 and 22 consumers, built against packed tarballs
 tools/scripts        Package validation and compatibility runners
 ```
@@ -449,10 +470,15 @@ tell you whether the _response_ was translated or only the page.
 
 - **CI** runs formatting, linting, typechecking, unit tests, package builds, packed package
   validation, compatibility fixtures and Cloudflare-backed e2e tests.
-- **Release PR** is driven by Changesets. It opens or updates the version/changelog pull
-  request; publishing is a separate manual decision.
-- **Publish** is manual and protected. Now that `0.1.0` exists, patch releases should use
-  npm Trusted Publishing once the npm package settings have been verified.
+- **Release PR** is driven by Changesets. Every push to `main` opens or updates a
+  **release: version packages** pull request when there are pending changesets; merging it is
+  the release decision.
+- **Publish is automatic** once that pull request merges — `release.yml` finds nothing left to
+  version and triggers `publish.yml`, which re-runs every gate and publishes with npm Trusted
+  Publishing, protected by the `npm-publish` environment. Manual dispatch still exists for a
+  dry run or a package's first-ever publish. See [RELEASING.md](RELEASING.md); if Trusted
+  Publishing is not yet bound for a package on npmjs.com, publishing falls back to a
+  short-lived `NPM_TOKEN` for that run instead.
 - **Deploy sites** publishes the official website and playground to Cloudflare Pages after a
   green `main`, creating GitHub Deployments for the repo sidebar.
 
@@ -465,10 +491,12 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Release Status
 
-`@etyma/core`, `@etyma/angular` and `@etyma/analog` are at `0.1.1`, cut through the process in
+`@etyma/core`, `@etyma/angular` and `@etyma/analog` are at `0.2.0`, cut through the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
-together. `@etyma/tooling` is a new, separate package that versions independently — a
-`0.1.0` first release is expected once it has shipped through the same process.
+together. `@etyma/tooling` is at `0.1.0` and versions independently. `@etyma/cli` is a new,
+separate package that also versions independently — a `0.1.0` first release is expected once
+it has shipped through the same process; see [RELEASING.md](RELEASING.md) for why development
+tooling is not in the runtime trio's fixed version group.
 
 ## Licence
 
