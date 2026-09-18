@@ -1,4 +1,3 @@
-import { getRelativeLocaleUrl, pathHasLocale } from 'astro:i18n';
 import {
   createCatalogRegistry,
   createMessageFormatter,
@@ -8,8 +7,14 @@ import {
   type Locale,
 } from '@etyma/core';
 
-import { buildSeo } from './seo.js';
+import { buildSeo, type AstroI18nRoutingHelpers } from './seo.js';
 import type { AstroI18n, AstroI18nContext } from './types.js';
+
+/** The slice of `astro:i18n` this module calls, imported lazily - see below. */
+interface AstroI18nModule extends AstroI18nRoutingHelpers {
+  getRelativeLocaleUrl(locale: string, path?: string): string;
+  pathHasLocale(path: string): boolean;
+}
 
 /**
  * Builds Etyma's translation API for one Astro render.
@@ -39,7 +44,13 @@ export async function createAstroI18n<TKey extends string>(
   astro: AstroI18nContext,
   definition: I18nDefinition<TKey>,
 ): Promise<AstroI18n<TKey>> {
-  const locale = resolveCurrentLocale(astro, definition);
+  // Imported here, lazily, rather than as a static top-level `import ... from 'astro:i18n'`:
+  // that virtual module only resolves inside Astro's own Vite pipeline, so a static import
+  // would make importing *anything* from this package - even just its exported types -
+  // throw in a plain Node/Vitest environment that never runs Astro's dev/build pipeline.
+  const astroI18n: AstroI18nModule = await import('astro:i18n');
+
+  const locale = resolveCurrentLocale(astro, definition, astroI18n);
 
   const formatter = createMessageFormatter(definition.formatting);
   // No `snapshot` and no `onChange`: a Astro render is one pass, with no hydration step to
@@ -62,7 +73,17 @@ export async function createAstroI18n<TKey extends string>(
 
     const { pathname, search, hash } = new URL(to, 'https://etyma.invalid');
 
-    return `${getRelativeLocaleUrl(target, bareArg(pathname))}${search}${hash}`;
+    if (astroI18n.pathHasLocale(pathname)) {
+      throw new EtymaError(
+        `createAstroI18n: path() expects a bare logical path (e.g. "/blog"), but "${to}" ` +
+          'already contains a locale segment. This usually happens when the current, ' +
+          'already-prefixed `Astro.url.pathname` is passed in directly - to link the ' +
+          "current page in another locale, use `seo().alternates` instead, which already " +
+          'strips the current locale segment for you.',
+      );
+    }
+
+    return `${astroI18n.getRelativeLocaleUrl(target, bareArg(pathname))}${search}${hash}`;
   };
 
   const api: AstroI18n<TKey> = {
@@ -74,7 +95,7 @@ export async function createAstroI18n<TKey extends string>(
     parts: (key, params) => translator.translateToParts(key, params),
     has: key => translator.has(key),
     path,
-    seo: () => buildSeo(definition, locale, astro.url.pathname),
+    seo: () => buildSeo(definition, locale, astro.url.pathname, astroI18n),
   };
 
   return Object.freeze(api);
@@ -88,6 +109,7 @@ export async function createAstroI18n<TKey extends string>(
 function resolveCurrentLocale<TKey extends string>(
   astro: AstroI18nContext,
   definition: I18nDefinition<TKey>,
+  astroI18n: AstroI18nModule,
 ): Locale {
   const locale = astro.currentLocale;
 
@@ -106,7 +128,7 @@ function resolveCurrentLocale<TKey extends string>(
   // `routing.prefixDefaultLocale: false`. This is the one place that rule is enforced -
   // per render, against the URL Astro actually resolved, rather than by trusting
   // `astro.config` to agree with `defineI18n`'s `sourceLocale` unchecked.
-  if (locale === definition.sourceLocale && pathHasLocale(astro.url.pathname)) {
+  if (locale === definition.sourceLocale && astroI18n.pathHasLocale(astro.url.pathname)) {
     throw new EtymaError(
       `createAstroI18n: the source locale "${locale}" is being served from a prefixed URL ` +
         `("${astro.url.pathname}"). Etyma's Astro adapter requires the default/source ` +

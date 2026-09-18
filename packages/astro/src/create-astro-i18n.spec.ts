@@ -153,6 +153,17 @@ describe('createAstroI18n', () => {
 
       expect(() => etyma.path('/blog', 'fr')).toThrow(EtymaError);
     });
+
+    it('rejects an already-locale-prefixed path passed to path(), instead of double-prefixing it', async () => {
+      // The most common real mistake: passing the current, already-prefixed
+      // `Astro.url.pathname` straight into `path()` (e.g. from a language switcher)
+      // instead of a bare logical path. Silently double-prefixing ("/en/ua/blog") is
+      // worse than throwing here - it produces a broken link that looks plausible.
+      const etyma = await createAstroI18n(context('uk', '/ua/blog'), staticDefinition());
+
+      expect(() => etyma.path('/ua/blog', 'en')).toThrow(EtymaError);
+      expect(() => etyma.path('/en/blog', 'es')).toThrow(EtymaError);
+    });
   });
 
   describe('an RTL locale', () => {
