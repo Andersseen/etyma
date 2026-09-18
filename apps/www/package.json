@@ -51,7 +51,7 @@
     "@analogjs/vite-plugin-angular": "2.7.0",
     "@angular/build": "21.2.21",
     "@angular/compiler-cli": "21.2.21",
-    "@playwright/test": "1.62.1",
+    "@playwright/test": "1.63.0",
     "@types/node": "26.4.0",
     "jsdom": "30.0.1",
     "typescript": "5.9.3",
