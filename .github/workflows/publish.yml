@@ -95,6 +95,19 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # `changeset publish` (below) tags each package it publishes with an *annotated* git
+      # tag (`git tag <name> -m <name>`), which needs a git identity to create the tag
+      # object - unlike this job's other git command, `git push`, which needs none. Without
+      # this, `git tag` fails silently as far as this workflow is concerned (changesets
+      # still prints "Created git tags." either way), leaving nothing for the next step to
+      # push - confirmed by a real run where `git push --tags` reported "Everything
+      # up-to-date" immediately after that message, and no tag ever reached the remote.
+      - name: Configure git identity for tagging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
