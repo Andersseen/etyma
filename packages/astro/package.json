@@ -1,6 +1,6 @@
 {
   "name": "@etyma/astro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Astro bindings for Etyma: typed translation keys, MessageFormat 2 and lazy catalogs on top of Astro's own i18n routing.",
   "keywords": [
     "astro",
