@@ -78,7 +78,7 @@ export async function createAstroI18n<TKey extends string>(
         `createAstroI18n: path() expects a bare logical path (e.g. "/blog"), but "${to}" ` +
           'already contains a locale segment. This usually happens when the current, ' +
           'already-prefixed `Astro.url.pathname` is passed in directly - to link the ' +
-          "current page in another locale, use `seo().alternates` instead, which already " +
+          'current page in another locale, use `seo().alternates` instead, which already ' +
           'strips the current locale segment for you.',
       );
     }
