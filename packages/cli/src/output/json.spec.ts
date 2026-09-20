@@ -19,6 +19,7 @@ describe('formatJson', () => {
     };
 
     const output = formatJson(result, {
+      mode: 'local',
       directory: '/repo/src/app/i18n',
       sourceLocale: 'en',
       locales: ['en', 'es'],
@@ -30,6 +31,7 @@ describe('formatJson', () => {
       diagnostics: result.diagnostics,
       meta: {
         command: 'validate',
+        mode: 'local',
         directory: '/repo/src/app/i18n',
         sourceLocale: 'en',
         locales: ['en', 'es'],
@@ -40,7 +42,13 @@ describe('formatJson', () => {
 
   it('produces stable, indented output for identical input', () => {
     const result: CatalogValidationResult = { valid: true, diagnostics: [] };
-    const meta = { directory: '/i18n', sourceLocale: 'en', locales: ['en'], messageCount: 1 };
+    const meta = {
+      mode: 'local' as const,
+      directory: '/i18n',
+      sourceLocale: 'en',
+      locales: ['en'],
+      messageCount: 1,
+    };
 
     expect(formatJson(result, meta)).toBe(formatJson(result, meta));
     expect(formatJson(result, meta).endsWith('\n')).toBe(true);
@@ -49,6 +57,7 @@ describe('formatJson', () => {
   it('emits nothing but the JSON object plus a trailing newline', () => {
     const result: CatalogValidationResult = { valid: true, diagnostics: [] };
     const output = formatJson(result, {
+      mode: 'local',
       directory: '/i18n',
       sourceLocale: 'en',
       locales: ['en'],
@@ -59,5 +68,45 @@ describe('formatJson', () => {
     expect(() => {
       JSON.parse(output);
     }).not.toThrow();
+  });
+
+  it('describes a remote run by its URL template, with no directory', () => {
+    const result: CatalogValidationResult = { valid: true, diagnostics: [] };
+
+    const output = formatJson(result, {
+      mode: 'remote',
+      remote: 'https://cdn.example.com/i18n/{locale}.json',
+      sourceLocale: 'en',
+      locales: ['en', 'es', 'uk'],
+      messageCount: 120,
+    });
+
+    expect(JSON.parse(output)).toEqual({
+      valid: true,
+      diagnostics: [],
+      meta: {
+        command: 'validate',
+        mode: 'remote',
+        remote: 'https://cdn.example.com/i18n/{locale}.json',
+        sourceLocale: 'en',
+        locales: ['en', 'es', 'uk'],
+        messageCount: 120,
+      },
+    });
+  });
+
+  it('lists command and mode first in meta, so the shape reads the same in both modes', () => {
+    const result: CatalogValidationResult = { valid: true, diagnostics: [] };
+    const output = formatJson(result, {
+      mode: 'remote',
+      remote: 'https://cdn.example.com/{locale}.json',
+      sourceLocale: 'en',
+      locales: ['en'],
+      messageCount: 1,
+    });
+
+    const meta = (JSON.parse(output) as { meta: object }).meta;
+
+    expect(Object.keys(meta).slice(0, 2)).toEqual(['command', 'mode']);
   });
 });

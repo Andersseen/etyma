@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { CatalogDirectoryError, discoverCatalogFiles, readCatalogFiles } from './catalogs.js';
+import { CatalogDirectoryError, discoverCatalogFiles, readCatalogFiles } from './local-catalogs.js';
 
 function fixture(name: string): string {
   return fileURLToPath(new URL(`../__fixtures__/${name}`, import.meta.url));

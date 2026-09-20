@@ -243,6 +243,17 @@ try {
     },
   );
 
+  check('@etyma/cli has @etyma/tooling as its only runtime dependency', () => {
+    const dependencies = Object.keys(manifestOf(cli.tarball).dependencies ?? {});
+
+    // Remote validation uses Node's native `fetch` and `AbortSignal.timeout`. An HTTP client
+    // library appearing here would be a second network stack shipped to every CI install.
+    assert(
+      dependencies.length === 1 && dependencies[0] === '@etyma/tooling',
+      `@etyma/cli's only runtime dependency should be @etyma/tooling, not: ${dependencies.join(', ') || '(none)'}`,
+    );
+  });
+
   check('@etyma/cli ships a working `etyma` binary entry', () => {
     const manifest = manifestOf(cli.tarball);
     const files = contentsOf(cli.tarball);

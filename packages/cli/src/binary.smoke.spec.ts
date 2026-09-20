@@ -1,9 +1,15 @@
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { promisify } from 'node:util';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+
+import { hang, serveDirectory, startFixtureServer } from './__testing__/fixture-server.js';
+import type { FixtureServer } from './__testing__/fixture-server.js';
+
+const execFileAsync = promisify(execFile);
 
 /**
  * Proves the npm artifact actually works, not just the TypeScript source the rest of this
@@ -20,6 +26,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * This is what catches a missing shebang, a wrong `bin` path, an ESM packaging mistake, a
  * file missing from `files`, or a `workspace:` dependency that leaked in unrewritten - none
  * of which a test that only imports `src/*.ts` could ever see.
+ *
+ * Remote mode gets the same treatment: the real binary, run as a real process, fetching from
+ * a throwaway HTTP server on loopback (never the public internet). That is what proves Node's
+ * `fetch` and `AbortSignal.timeout` behave in the shipped ESM output, not just under Vitest.
  */
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../..');
@@ -130,5 +140,161 @@ describe('the packed etyma binary', () => {
       expect(failure.status).toBe(1);
       expect(failure.stdout).toContain('catalog.missing-key');
     }
+  });
+
+  describe('remote mode', () => {
+    let server: FixtureServer | undefined;
+
+    afterEach(async () => {
+      await server?.close();
+      server = undefined;
+    });
+
+    /**
+     * Runs the real binary asynchronously. `execFileSync` would block this process's event
+     * loop, and with it the in-process HTTP server the binary is trying to fetch from.
+     */
+    async function etyma(
+      args: readonly string[],
+      cwd?: string,
+    ): Promise<{ status: number; stdout: string; stderr: string }> {
+      try {
+        const { stdout, stderr } = await execFileAsync(binPath, [...args], {
+          encoding: 'utf8',
+          ...(cwd === undefined ? {} : { cwd }),
+        });
+
+        return { status: 0, stdout, stderr };
+      } catch (error) {
+        const failure = error as { code?: unknown; stdout?: string; stderr?: string };
+
+        if (typeof failure.code !== 'number') {
+          throw error;
+        }
+
+        return { status: failure.code, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+      }
+    }
+
+    async function serveFixture(name: string): Promise<FixtureServer> {
+      server = await startFixtureServer(serveDirectory(join(here, '__fixtures__', name)));
+      return server;
+    }
+
+    function remote(origin: string, extra: readonly string[] = []): string[] {
+      return [
+        'validate',
+        '--remote',
+        `${origin}/i18n/{locale}.json`,
+        '--locales',
+        'en,es,uk',
+        '--source',
+        'en',
+        ...extra,
+      ];
+    }
+
+    it('documents remote mode in --help', () => {
+      const stdout = execFileSync(binPath, ['validate', '--help'], { encoding: 'utf8' });
+
+      expect(stdout).toContain('etyma validate --remote <url-template>');
+    });
+
+    it('fetches, validates and exits 0 - without writing anything to disk', async () => {
+      const { origin, requests } = await serveFixture('volt-like');
+      const workingDir = mkdtempSync(join(tmpdir(), 'etyma-cli-remote-cwd-'));
+
+      try {
+        const result = await etyma(remote(origin), workingDir);
+
+        expect(result.status).toBe(0);
+        expect(result.stderr).toBe('');
+        expect(result.stdout).toContain('3 locales');
+        expect(result.stdout).toContain('Catalogs are valid');
+        expect([...requests].sort()).toEqual(['/i18n/en.json', '/i18n/es.json', '/i18n/uk.json']);
+        expect(readdirSync(workingDir)).toEqual([]);
+      } finally {
+        rmSync(workingDir, { recursive: true, force: true });
+      }
+    });
+
+    it('exits 1 with machine-readable diagnostics for a catalog with validation errors', async () => {
+      const { origin } = await serveFixture('missing-key');
+
+      const result = await etyma([
+        'validate',
+        '--remote',
+        `${origin}/i18n/{locale}.json`,
+        '--locales',
+        'en,es',
+        '--source',
+        'en',
+        '--format',
+        'json',
+      ]);
+
+      const payload = JSON.parse(result.stdout) as {
+        valid: boolean;
+        diagnostics: { code: string }[];
+        meta: { mode: string; remote: string };
+      };
+
+      expect(result.status).toBe(1);
+      expect(payload.valid).toBe(false);
+      expect(payload.diagnostics.map(diagnostic => diagnostic.code)).toContain(
+        'catalog.missing-key',
+      );
+      expect(payload.meta.mode).toBe('remote');
+      expect(payload.meta.remote).toBe(`${origin}/i18n/{locale}.json`);
+    });
+
+    it('exits 2 for an HTTP error, naming the locale and URL', async () => {
+      const { origin } = await serveFixture('missing-source');
+
+      const result = await etyma(remote(origin));
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(`en (${origin}/i18n/en.json): HTTP 404`);
+    });
+
+    it('exits 2 for a host that never answers, within --timeout', async () => {
+      server = await startFixtureServer({ '/i18n/en.json': hang() });
+      const started = Date.now();
+
+      const result = await etyma([
+        'validate',
+        '--remote',
+        `${server.origin}/i18n/{locale}.json`,
+        '--locales',
+        'en',
+        '--source',
+        'en',
+        '--timeout',
+        '500',
+      ]);
+
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain('timed out after 500ms');
+      expect(Date.now() - started).toBeLessThan(10_000);
+    });
+
+    it('exits 2 for a configuration error, before making any request', async () => {
+      server = await startFixtureServer({});
+
+      const result = await etyma([
+        'validate',
+        '--remote',
+        `${server.origin}/i18n/en.json`,
+        '--locales',
+        'en',
+        '--source',
+        'en',
+      ]);
+
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain('{locale}');
+      expect(server.requests).toEqual([]);
+    });
   });
 });
