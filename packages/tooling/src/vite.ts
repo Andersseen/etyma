@@ -7,6 +7,12 @@ import { EtymaError, type MessageSource } from '@etyma/core';
 
 import { extractContractKeys, renderContractModule } from './generate-contract.js';
 
+export { etymaRemoteValidation } from './remote-validation.js';
+export type {
+  EtymaRemoteValidationOptions,
+  EtymaRemoteValidationPlugin,
+} from './remote-validation.js';
+
 export type EtymaRemoteContractOptions =
   | { readonly source: string; readonly output: string }
   | { readonly load: () => Promise<MessageSource>; readonly output: string };

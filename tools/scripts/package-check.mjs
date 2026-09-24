@@ -8,7 +8,7 @@
  * a source tree shipped by accident. None of those are visible from inside the repository.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -220,6 +220,45 @@ try {
       );
     },
   );
+
+  check('@etyma/tooling/vite ships both Vite plugins, and the main entry reaches neither', () => {
+    const manifest = manifestOf(tooling.tarball);
+    const files = contentsOf(tooling.tarball);
+    const vite = manifest.exports?.['./vite'];
+
+    assert(
+      vite?.types === './dist/vite.d.ts' && vite?.default === './dist/vite.js',
+      `unexpected "./vite" export: ${JSON.stringify(vite)}`,
+    );
+
+    const declarations = readFileSync(join(tooling.extracted, 'dist/vite.d.ts'), 'utf8');
+    for (const name of ['etymaRemoteContract', 'etymaRemoteValidation']) {
+      assert(declarations.includes(name), `dist/vite.d.ts does not declare ${name}`);
+    }
+
+    assert(
+      !files.some(file => file.includes('__testing__')),
+      'the loopback test server in src/__testing__ was packed',
+    );
+
+    // `import { validateCatalogs } from '@etyma/tooling'` must stay network-free: walk the
+    // packed main entry's relative imports and make sure none of them is the remote code.
+    const pending = ['index.js'];
+    const reached = new Set();
+
+    for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
+      if (reached.has(file)) continue;
+      reached.add(file);
+
+      const source = readFileSync(join(tooling.extracted, 'dist', file), 'utf8');
+      assert(!/\bfetch\(/.test(source), `dist/${file}, reachable from the main entry, calls fetch`);
+
+      for (const [, specifier] of source.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
+    }
+
+    const leaked = [...reached].filter(file => /vite|remote/.test(file));
+    assert(leaked.length === 0, `the main entry reaches ${leaked.join(', ')}`);
+  });
 
   check(
     '@etyma/cli depends on nothing from a framework, and only @etyma/tooling among Etyma packages',

@@ -380,7 +380,9 @@ etyma validate --remote "https://cdn.example.com/i18n/{locale}.json" \
   --locales en,es,uk --source en
 ```
 
-See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes.
+See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes. For
+remote catalogs, `etymaRemoteValidation` from `@etyma/tooling/vite` makes the same check part
+of `vite build` itself — see [Remote catalogs](#remote-catalogs).
 
 ## Remote catalogs
 
@@ -447,8 +449,29 @@ for the full generation, error and fallback behavior.
 
 `etymaRemoteContract` reads the source catalog's _keys_ and nothing else. It does not check
 that the other locales are complete, that their MessageFormat 2 parses, or that they kept the
-source's variables. To check all of that against the catalogs a remote source actually serves,
-run `etyma validate --remote` in CI — see [Validating catalogs](#validating-catalogs).
+source's variables. `etymaRemoteValidation`, from the same subpath, does: it fetches every
+locale from a `{locale}` URL template and runs them through the same `validateCatalogs()`
+engine, failing `vite build` (and `astro build`) on any error diagnostic or on a catalog it
+cannot fetch. The two are separate plugins, declared side by side:
+
+```ts
+import { etymaRemoteContract, etymaRemoteValidation } from '@etyma/tooling/vite';
+
+plugins: [
+  etymaRemoteContract({
+    source: 'https://cdn.example.com/i18n/en.json',
+    output: 'src/app/i18n/contract.generated.ts',
+  }),
+  etymaRemoteValidation({
+    remote: 'https://cdn.example.com/i18n/{locale}.json',
+    locales: ['en', 'es', 'uk'],
+    sourceLocale: 'en',
+  }),
+],
+```
+
+Outside a Vite build — a CI job, a scheduled check — `etyma validate --remote` runs the same
+validation; see [Validating catalogs](#validating-catalogs).
 
 ## Goals
 
@@ -560,11 +583,9 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 `@etyma/core`, `@etyma/angular` and `@etyma/analog` are at `0.2.0`, cut through the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
-together. `@etyma/tooling` is at `0.1.0` and versions independently. `@etyma/astro` and
-`@etyma/cli` are new, separate packages that also version independently — a `0.1.0` first
-release is expected for each once they have shipped through the same process; see
-[RELEASING.md](RELEASING.md) for why an Astro adapter and development tooling are not in the
-runtime trio's fixed version group.
+together. `@etyma/tooling` (`0.1.0`), `@etyma/cli` (`0.1.0`) and `@etyma/astro` (`0.1.1`) are
+published too and version independently; see [RELEASING.md](RELEASING.md) for why an Astro
+adapter and development tooling are not in the runtime trio's fixed version group.
 
 ## Licence
 

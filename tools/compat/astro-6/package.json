@@ -15,10 +15,12 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@etyma/tooling": "file:../.tarballs/etyma-tooling.tgz",
     "typescript": "5.9.3"
   },
   "overrides": {
     "@etyma/astro": "file:../.tarballs/etyma-astro.tgz",
-    "@etyma/core": "file:../.tarballs/etyma-core.tgz"
+    "@etyma/core": "file:../.tarballs/etyma-core.tgz",
+    "@etyma/tooling": "file:../.tarballs/etyma-tooling.tgz"
   }
 }
