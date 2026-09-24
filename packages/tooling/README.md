@@ -26,11 +26,16 @@ correctly, and reused by everything that wants to validate one:
 and by `pnpm package:check` reading the packed tarball's own `dependencies`, not just the
 source tree.
 
-This first release is deliberately narrow: a **programmatic validation engine**, with no
-filesystem access of its own and no source-code scanning. [`@etyma/cli`](../cli) is the first
-consumer built on top of it — `etyma validate` calls the exact same `validateCatalog` /
-`validateCatalogs` this package exports, rather than re-implementing catalog validation a
-second way. An MCP tool, a Vite plugin, and Forge CMS's editor are meant to do the same.
+At its centre is a **programmatic validation engine** with no filesystem or network access of
+its own and no source-code scanning. Everything else calls that engine rather than
+re-implementing catalog validation a second way:
+
+| API                                               | What it is                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `validateCatalogs()` (main entry)                 | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                         |
+| `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed, keys-only TypeScript file.                  |
+| `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails. |
+| [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                      |
 
 ## Install
 
@@ -207,7 +212,9 @@ only when the remote catalog's keys actually change.
 
 A separate subpath, not part of the main entry point: it is the one place in this package
 that touches the filesystem or the network, so it stays out of the browser-and-edge-safe rest
-of `@etyma/tooling` and out of any bundle that only imports `@etyma/tooling` itself.
+of `@etyma/tooling` and out of any bundle that only imports `@etyma/tooling` itself. Its
+plugins are plain objects typed structurally, so `@etyma/tooling` has no dependency or peer
+dependency on `vite` — or on Astro, whose `vite.plugins` accepts them unchanged.
 
 ```ts
 // vite.config.ts
@@ -238,16 +245,113 @@ broken types until someone remembers to run `vite dev` once. Since generation is
 deterministic, committing it costs nothing but a reviewable diff on the rare change, and
 buys a working editor on the first checkout.
 
+## Validating remote catalogs during a Vite build
+
+`etymaRemoteContract` reads the source catalog's keys and nothing else. `etymaRemoteValidation`
+checks everything else a remote project ships: it fetches **every** locale's catalog and hands
+them, unchanged, to `validateCatalogs()` — so key parity, MessageFormat 2, variable parity and
+locale identifiers are judged by exactly the engine documented above, and a broken production
+catalog fails `vite build` instead of reaching users.
+
+```ts
+// vite.config.ts - or `vite.plugins` in astro.config.mjs
+import { etymaRemoteContract, etymaRemoteValidation } from '@etyma/tooling/vite';
+
+export default defineConfig({
+  plugins: [
+    // remote source catalog -> typed key contract (writes one file)
+    etymaRemoteContract({
+      source: 'https://cdn.example.com/i18n/en.json',
+      output: 'src/app/i18n/contract.generated.ts',
+    }),
+    // source + translated catalogs -> correctness diagnostics (writes nothing)
+    etymaRemoteValidation({
+      remote: 'https://cdn.example.com/i18n/{locale}.json',
+      locales: ['en', 'es', 'uk'],
+      sourceLocale: 'en',
+    }),
+  ],
+});
+```
+
+| Option         | Type                | Meaning                                                                                         |
+| -------------- | ------------------- | ----------------------------------------------------------------------------------------------- |
+| `remote`       | `string`            | URL template; `{locale}` is replaced (percent-encoded) with each locale. Public `http(s)` only. |
+| `locales`      | `readonly string[]` | Every locale to fetch and validate, the source included. An array, not `'en,es,uk'`.            |
+| `sourceLocale` | `string`            | The contract every other locale is measured against. Must be one of `locales`.                  |
+| `timeout`      | `number`            | Per-request timeout in milliseconds, including a body that stalls after the headers. `10_000`.  |
+
+**Configuration is checked when the plugin is created**, before any request: `{locale}` must
+be present, `locales` must be a non-empty array without repeated entries and include
+`sourceLocale`, every resolved URL must be `http:` or `https:` without embedded credentials,
+and `timeout` must be a whole number of milliseconds. A bad configuration throws while Vite
+loads its config. Whether a locale is a well-formed BCP 47 tag, or collides with another once
+canonicalized, is left to `validateCatalogs()` (`config.invalid-locale`,
+`config.duplicate-locale`) — there is no second locale validator here.
+
+**Fetching.** Every locale is requested concurrently with the platform `fetch` — no HTTP
+client dependency — each with its own `AbortSignal.timeout`. Responses are only ever parsed as
+JSON data: never evaluated, never written to disk. Output is ordered by locale, never by which
+request finished first.
+
+**During `vite build`** (and `astro build`) the build fails with one error when:
+
+- a catalog cannot be obtained — network error, timeout, HTTP error status, or a body that is
+  not JSON. The error names each failed locale, its URL and the reason, never the response
+  body; nothing is validated from a partial set.
+- `validateCatalogs()` returns any `error` diagnostic. Every diagnostic is listed, grouped by
+  locale in the engine's own deterministic order, with its existing `code`, key and message:
+
+```
+[etyma] remote catalog validation failed: 2 errors
+
+  ES  https://cdn.example.com/i18n/es.json
+    error message.missing-variable  footer.rights
+      Variable "year" is used in the source message but missing from the "es" translation.
+
+  UK  https://cdn.example.com/i18n/uk.json
+    error catalog.missing-key  nav.docs
+      "nav.docs" exists in the source locale "en" but has no translation in "uk".
+```
+
+Warnings alone (`message.variable-function-mismatch`) do not fail the build; they are printed
+through Vite's logger. A valid run prints one line.
+
+**During `vite dev`** (and `astro dev`) validation runs once when the server starts, and the
+same report is logged as a **warning** instead: a translator's in-progress mistake or an
+offline laptop should not stop local development, and the build still refuses to ship it.
+Nothing is polled or watched — an HTTP source cannot send Vite a file-change event — so a
+catalog that changes remotely is picked up on the next server start or restart.
+
+Validation runs **once per plugin instance**: Astro runs several Vite passes per build with the
+same plugin objects, and they share one result. Whether that result fails a pass is still
+decided per pass, so a `serve`-mode pass that only warned (Astro's content sync, for example)
+never lets the real build through.
+
+**Keep the two plugins pointed at the same logical source catalog.** Their options are not
+coupled: `etymaRemoteContract` could generate keys from one URL while `etymaRemoteValidation`
+validates against another, and neither can detect that. With both enabled, the source catalog
+is also fetched twice per build — once by each plugin. That is accepted deliberately for now:
+sharing it would mean coupling the two plugins' lifecycles or a process-wide cache, for one
+request.
+
+No authentication (headers, tokens, cookies) is supported yet, and credentials in the URL are
+rejected. Do not put secrets in the query string either: the URL is printed in errors.
+Outside a Vite build, [`etyma validate --remote`](../cli) runs the same check from CI.
+
 ## Limitations
 
 Deliberately not implemented in this first release:
 
-- **No filesystem access of its own beyond `@etyma/tooling/vite`.** The main entry point
-  operates only on catalog objects already in memory; `@etyma/tooling/vite` is the one
-  deliberate, scoped exception that reads and writes exactly one file. Directory discovery,
-  `*.json` reading and a CLI's `etyma.config.ts` (not yet built) live in
+- **No filesystem or network access of its own beyond `@etyma/tooling/vite`.** The main entry
+  point operates only on catalog objects already in memory; `@etyma/tooling/vite` is the one
+  deliberate, scoped exception — `etymaRemoteContract` reads and writes exactly one file and
+  fetches one catalog, `etymaRemoteValidation` fetches catalogs and writes nothing. Directory
+  discovery, `*.json` reading and a CLI's `etyma.config.ts` (not yet built) live in
   [`@etyma/cli`](../cli), which builds on this engine rather than duplicating it. A future MCP
   tool and Forge CMS integration are meant to do the same.
+- **No remote watching.** `etymaRemoteValidation` validates once per dev-server start and once
+  per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
 - **No source-message extraction, template scanning, or hardcoded-copy detection.**
   Determining whether a key is used, or whether a template has untranslated copy, requires
   reading application source code, which this package does not do. That is a later tooling

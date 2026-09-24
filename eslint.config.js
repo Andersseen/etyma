@@ -214,11 +214,16 @@ export default tseslint.config(
   })),
 
   {
-    // The one file in @etyma/tooling that runs exclusively under Node, for Vite's own build
-    // pipeline - contract generation has to fetch a remote catalog and write a file, neither
-    // of which is possible from the browser-and-edge-safe rest of this package. Everything
-    // else in `layerBoundaries` above still applies except the Node built-in restriction.
-    files: ['packages/tooling/src/vite.ts', 'packages/tooling/src/vite.spec.ts'],
+    // The one shipped file in @etyma/tooling that runs exclusively under Node, for Vite's own
+    // build pipeline - contract generation has to write a file, which is not possible from the
+    // browser-and-edge-safe rest of this package - plus tests and their loopback HTTP fixture
+    // server, which never ship. Everything else in `layerBoundaries` above still applies except
+    // the Node built-in restriction.
+    files: [
+      'packages/tooling/src/vite.ts',
+      'packages/tooling/src/**/*.spec.ts',
+      'packages/tooling/src/__testing__/**/*.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
