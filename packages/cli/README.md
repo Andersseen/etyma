@@ -131,6 +131,21 @@ What remote mode is, and is not:
   `config.invalid-locale` / `config.duplicate-locale`, reported exactly as they are for local
   files.
 
+#### Remote mode, Vite builds and your project's values
+
+A Vite or Astro project can run the same check inside `vite build` with `@etyma/tooling/vite`'s
+`etymaRemoteValidation`. The two are not alternatives: the build validates what it is about to
+ship, and a CI job running `etyma validate --remote` - on pull requests, or on a schedule - can
+catch a catalog that changed remotely between deploys.
+
+The CLI takes the remote template, locales and source locale as arguments, every time. It does
+not read your application's code, so a TypeScript constant that feeds `defineRemoteI18n` and
+the Vite plugins (the
+[recommended setup](../tooling#recommended-setup-for-a-remote-catalog-project)) does not
+configure it. Those values are therefore written a second time, usually in one
+`package.json` script. That is a known, accepted duplication in this release, not an
+oversight - see [Non-goals](#non-goals).
+
 #### Timeout
 
 Every catalog request has its own timeout, **10 seconds by default**, covering the whole
@@ -287,9 +302,11 @@ above, including both modes.
 Deliberately not here - all of it either belongs to a future, separate iteration or was never in
 scope:
 
-- **No config file.** No `etyma.config.ts`, no per-project defaults. An explicit invocation is
-  the whole contract for now; a config file becomes worthwhile when several commands share one
-  project definition, and one command doesn't.
+- **No config file.** No `etyma.config.ts`, no config discovery, no per-project defaults. An
+  explicit invocation is the whole contract for now, even though a remote project's template,
+  locales and source locale also appear in its application code. A shared project
+  configuration may be justified once several real projects need the CLI and their build
+  tooling to read the same settings automatically; one command does not justify it yet.
 - **No authenticated remote sources.** No `--header`, bearer token, cookie or OAuth. Remote mode
   reads public catalogs only, so it doesn't yet have to be an API for handling secrets.
 - **No pull, push or sync.** Nothing fetched is written to disk, and there is no `etyma pull`,
@@ -299,9 +316,10 @@ scope:
 - **No translation editing or automatic translation.**
 - **No MCP server, no CMS or provider integration, no general plugin system.** Remote mode is a
   URL template, not a Glossa (or any other vendor's) adapter.
-- **No automatic remote validation in a bundler.** `@etyma/tooling/vite`'s
-  `etymaRemoteContract` generates a typed key contract from a remote source catalog; it does
-  not validate translations. Run `etyma validate --remote` in CI for that.
+- **No bundler integration in this package.** Build-time remote validation is
+  `@etyma/tooling/vite`'s `etymaRemoteValidation`, and typed contract generation is its
+  `etymaRemoteContract`. Both call the same engine this CLI does; the CLI itself never runs
+  inside a bundler.
 - **No colour**, to keep output stable for CI logs and tests without `NO_COLOR` handling.
 
 One command, doing one thing, on top of the same validation engine `@etyma/tooling` already

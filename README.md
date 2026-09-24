@@ -80,14 +80,14 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 
 ## Packages
 
-| Package                              | What it is                                                                                                                                                             | Depends on                      |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                                                 | `messageformat`                 |
-| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                                           | `@etyma/core`, Angular 21 or 22 |
-| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                                              | `@etyma/angular`, Analog 2.x    |
-| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                            | `@etyma/core`, Astro 6.x        |
-| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Not a runtime dependency.                        | `@etyma/core`                   |
-| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` runs `@etyma/tooling`'s checks against local JSON catalogs or public remote ones, for CI and local use. Not a runtime dependency. | `@etyma/tooling`                |
+| Package                              | What it is                                                                                                                                                                  | Depends on                      |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                                                      | `messageformat`                 |
+| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                                                | `@etyma/core`, Angular 21 or 22 |
+| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                                                   | `@etyma/angular`, Analog 2.x    |
+| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                                 | `@etyma/core`, Astro 6.x        |
+| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Vite plugins under `/vite`. Not a runtime dependency. | `@etyma/core`                   |
+| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` runs `@etyma/tooling`'s checks against local JSON catalogs or public remote ones, for CI and local use. Not a runtime dependency.      | `@etyma/tooling`                |
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
 `core` knows nothing about Angular or Astro, `angular` knows nothing about Analog, `astro`
@@ -470,8 +470,16 @@ plugins: [
 ],
 ```
 
+No Etyma config file is needed to keep `locales`, `sourceLocale` and the URL template in one
+place. An ordinary module in your application can own them, and `defineRemoteI18n` and both
+plugins can read them from it. That also keeps the contract and validation pointed at the
+same source catalog. See the
+[recommended setup](packages/tooling#recommended-setup-for-a-remote-catalog-project), which also
+explains why framework routing, such as Astro's `i18n.locales`, stays separate.
+
 Outside a Vite build — a CI job, a scheduled check — `etyma validate --remote` runs the same
-validation; see [Validating catalogs](#validating-catalogs).
+validation; see [Validating catalogs](#validating-catalogs). It takes those values as arguments
+rather than reading your module, so they are written once more there.
 
 ## Goals
 
@@ -586,6 +594,11 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 together. `@etyma/tooling` (`0.1.0`), `@etyma/cli` (`0.1.0`) and `@etyma/astro` (`0.1.1`) are
 published too and version independently; see [RELEASING.md](RELEASING.md) for why an Astro
 adapter and development tooling are not in the runtime trio's fixed version group.
+
+Not yet released: remote mode for `etyma validate` (`--remote`) and `etymaRemoteValidation` in
+`@etyma/tooling/vite` are on `main` with pending changesets, queued as `@etyma/cli` `0.2.0` and
+`@etyma/tooling` `0.2.0`. Local `etyma validate <directory>`, `validateCatalogs()` and
+`etymaRemoteContract` are in the published `0.1.0` releases.
 
 ## Licence
 

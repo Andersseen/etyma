@@ -330,7 +330,10 @@ never lets the real build through.
 
 **Keep the two plugins pointed at the same logical source catalog.** Their options are not
 coupled: `etymaRemoteContract` could generate keys from one URL while `etymaRemoteValidation`
-validates against another, and neither can detect that. With both enabled, the source catalog
+validates against another, and neither can detect that. Deriving both from one project
+constant, as in the
+[recommended setup below](#recommended-setup-for-a-remote-catalog-project), rules that out.
+With both enabled, the source catalog
 is also fetched twice per build — once by each plugin. That is accepted deliberately for now:
 sharing it would mean coupling the two plugins' lifecycles or a process-wide cache, for one
 request.
@@ -339,17 +342,154 @@ No authentication (headers, tokens, cookies) is supported yet, and credentials i
 rejected. Do not put secrets in the query string either: the URL is printed in errors.
 Outside a Vite build, [`etyma validate --remote`](../cli) runs the same check from CI.
 
+## Recommended setup for a remote-catalog project
+
+A remote-catalog project states the same three facts to three consumers — the runtime
+(`defineRemoteI18n`), contract generation (`etymaRemoteContract`) and build-time validation
+(`etymaRemoteValidation`):
+
+- the locales it publishes,
+- its source locale,
+- where each locale's catalog lives.
+
+That does not need an Etyma config file. An ordinary module in your application can own the
+three values, and every consumer can read them from it:
+
+```ts
+// src/i18n/project.ts
+export const I18N_PROJECT = {
+  locales: ['en', 'es', 'uk'],
+  sourceLocale: 'en',
+  remote: 'https://cdn.example.com/i18n/{locale}.json',
+} as const;
+
+export const catalogUrl = (locale: string): string =>
+  I18N_PROJECT.remote.replace('{locale}', locale);
+```
+
+Keep this module free of imports. Your Vite config loads it before anything is built, so it
+must not import the generated contract, application code or a framework runtime.
+
+**Runtime.** `as const` keeps `locales` a literal tuple, so `sourceLocale` is checked against
+it and `loaders` must name every locale — leaving one out does not compile:
+
+```ts
+// src/i18n/i18n.ts
+import { createHttpMessageLoader, defineRemoteI18n } from '@etyma/core';
+import { contract } from './contract.generated';
+import { catalogUrl, I18N_PROJECT } from './project';
+
+const load = createHttpMessageLoader(catalogUrl);
+
+export const i18n = defineRemoteI18n({
+  locales: I18N_PROJECT.locales,
+  sourceLocale: I18N_PROJECT.sourceLocale,
+  contract,
+  loaders: { en: load, es: load, uk: load },
+});
+```
+
+**Vite.** The contract's source URL is derived from the same template and source locale that
+validation uses, so the two plugins cannot drift apart:
+
+```ts
+// vite.config.ts
+import { etymaRemoteContract, etymaRemoteValidation } from '@etyma/tooling/vite';
+import { catalogUrl, I18N_PROJECT } from './src/i18n/project';
+
+export default defineConfig({
+  plugins: [
+    etymaRemoteContract({
+      source: catalogUrl(I18N_PROJECT.sourceLocale),
+      output: 'src/i18n/contract.generated.ts',
+    }),
+    etymaRemoteValidation({
+      remote: I18N_PROJECT.remote,
+      locales: I18N_PROJECT.locales,
+      sourceLocale: I18N_PROJECT.sourceLocale,
+    }),
+  ],
+});
+```
+
+### Framework routing is a separate thing
+
+`I18N_PROJECT` describes catalogs. Your framework's routing configuration describes URLs. They
+overlap, but they do not have the same shape, so do not merge them into one object. In Astro,
+for example, a locale's route path does not have to be its language code:
+
+```js
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import { etymaRemoteContract, etymaRemoteValidation } from '@etyma/tooling/vite';
+import { catalogUrl, I18N_PROJECT } from './src/i18n/project.ts';
+
+export default defineConfig({
+  i18n: {
+    defaultLocale: 'en', // the route of I18N_PROJECT.sourceLocale
+    locales: ['en', 'es', { path: 'ua', codes: ['uk'] }], // route "ua", language "uk"
+  },
+  vite: {
+    plugins: [
+      etymaRemoteContract({
+        source: catalogUrl(I18N_PROJECT.sourceLocale),
+        output: './src/i18n/contract.generated.ts',
+      }),
+      etymaRemoteValidation({
+        remote: I18N_PROJECT.remote,
+        locales: I18N_PROJECT.locales,
+        sourceLocale: I18N_PROJECT.sourceLocale,
+      }),
+    ],
+  },
+});
+```
+
+Catalogs and Etyma only ever see `uk`; only Astro's router sees `ua`. The one invariant
+between the two is that Astro's `defaultLocale` is the route of Etyma's `sourceLocale`:
+`@etyma/astro` requires the source locale to be served from the unprefixed route and throws if
+it is served from a prefixed one (see the [`@etyma/astro` README](../astro#readme)).
+`defaultLocale` names a route, not a language code. It equals `sourceLocale` whenever that
+locale's route path is its own code, as with `en` here. A source locale served under a different
+path would need that path, for example `defaultLocale: 'ua'` for a `uk` source. So write it
+out rather than assigning `I18N_PROJECT.sourceLocale` to it.
+
+### What still repeats: the CLI
+
+`etyma validate --remote` is a separate process that cannot import your TypeScript module, so
+it still takes the same values as arguments:
+
+```json
+{
+  "scripts": {
+    "i18n:check": "etyma validate --remote \"https://cdn.example.com/i18n/{locale}.json\" --locales en,es,uk --source en"
+  }
+}
+```
+
+That is the one place the values are written twice, and it is accepted for now. A project
+that validates during `vite build` may not need the CLI at all. One that also runs it in CI,
+for example on a schedule to catch catalog changes made between deploys, keeps this script
+next to `project.ts`.
+
+Etyma has no project configuration file, no config discovery, and no config-aware CLI or Vite
+wrapper. A shared project configuration may be worth adding if several real projects show that
+their CLI and build tooling need to read the same settings automatically. Until then, the
+module above is the recommended pattern.
+
 ## Limitations
 
-Deliberately not implemented in this first release:
+Deliberately not implemented yet:
 
 - **No filesystem or network access of its own beyond `@etyma/tooling/vite`.** The main entry
   point operates only on catalog objects already in memory; `@etyma/tooling/vite` is the one
   deliberate, scoped exception — `etymaRemoteContract` reads and writes exactly one file and
   fetches one catalog, `etymaRemoteValidation` fetches catalogs and writes nothing. Directory
-  discovery, `*.json` reading and a CLI's `etyma.config.ts` (not yet built) live in
-  [`@etyma/cli`](../cli), which builds on this engine rather than duplicating it. A future MCP
+  discovery and `*.json` reading live in [`@etyma/cli`](../cli), which builds on this engine
+  rather than duplicating it. A future MCP
   tool and Forge CMS integration are meant to do the same.
+- **No project configuration file.** No `etyma.config.ts` or config discovery; see the
+  [recommended setup](#recommended-setup-for-a-remote-catalog-project) for sharing values.
 - **No remote watching.** `etymaRemoteValidation` validates once per dev-server start and once
   per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
 - **No source-message extraction, template scanning, or hardcoded-copy detection.**
