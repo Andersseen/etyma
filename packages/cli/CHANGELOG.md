@@ -15,7 +15,7 @@
     --source en
   ```
   
-  - `--remote <url-template>` replaces `{locale}` with each entry of `--locales`, fetches every catalog concurrently with Node's native `fetch`, and passes the parsed JSON to the same `validateCatalogs()` local mode uses. Diagnostics, pretty output, JSON output and exit codes are identical; no catalog semantic is reimplemented in the CLI, and `@etyma/tooling` is unchanged.
+  - `--remote <url-template>` replaces `{locale}` with each entry of `--locales`, fetches every catalog concurrently with Node's native `fetch`, and passes the parsed JSON to the same `validateCatalogs()` local mode uses. Diagnostics, pretty output, JSON output and exit codes are identical; no catalog semantic is reimplemented in the CLI, and remote mode needed no change to `@etyma/tooling`.
   - The two modes are explicit: `etyma validate <directory>` is exactly what 0.1 did, and a `<directory>` cannot be combined with `--remote`. Nothing is guessed from what a positional argument looks like.
   - Public `http:` / `https:` URLs only. `file:`, `data:` and other protocols, and URLs with embedded credentials, are usage errors. No auth options exist yet. Nothing fetched is written to disk.
   - Each request has its own timeout, 10 seconds by default, covering a body that stalls after the headers; `--timeout <ms>` overrides it.

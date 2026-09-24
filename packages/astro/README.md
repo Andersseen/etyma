@@ -211,6 +211,15 @@ For a static build, the remote catalog is fetched at build time, once per page r
 a server-rendered route, it is fetched per request through the normal Etyma catalog
 registry - there is no build-vs-remote special case in this package to reason about.
 
+To generate the typed `contract` and validate every remote catalog during `astro build`,
+declare `@etyma/tooling/vite`'s `etymaRemoteContract` and `etymaRemoteValidation` under
+`vite.plugins`. Its
+[recommended setup](../tooling#recommended-setup-for-a-remote-catalog-project) keeps
+`locales`, `sourceLocale` and the URL template in one application module. It also keeps
+Astro's `i18n` block separate: route paths such as `ua` are not language codes such as `uk`.
+The only invariant is that `defaultLocale` is the route of `sourceLocale`. It is the same
+string whenever that locale's route path is its language code.
+
 ## Limitations
 
 - **Astro 6 only, for now.** Astro 7 exists but has not been verified against this package.

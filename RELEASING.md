@@ -21,9 +21,8 @@ each independent package's own boundary as separate assertions for the same reas
 
 Each independently-versioned package's _first_ release hits the same bootstrap problem `0.1.0`
 did (below): npm Trusted Publishing cannot be configured for a package that does not exist
-yet. `@etyma/tooling`'s first release already went through this. `@etyma/cli`, new in this
-release, has not — its first publish needs the same short-lived-token dance, scoped to _only_
-`@etyma/cli`, followed by switching it to OIDC once the package exists on npm.
+yet. `@etyma/tooling` and `@etyma/cli` have both been through it and are published, so their
+releases now go through the normal flow below.
 
 The process is deliberately in three separable steps, even though only the first two need a
 human:
