@@ -591,14 +591,11 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 `@etyma/core`, `@etyma/angular` and `@etyma/analog` are at `0.2.0`, cut through the process in
 [RELEASING.md](RELEASING.md). The three packages share one version and are released
-together. `@etyma/tooling` (`0.1.0`), `@etyma/cli` (`0.1.0`) and `@etyma/astro` (`0.1.1`) are
+together. `@etyma/tooling` (`0.2.0`), `@etyma/cli` (`0.2.0`) and `@etyma/astro` (`0.1.1`) are
 published too and version independently; see [RELEASING.md](RELEASING.md) for why an Astro
 adapter and development tooling are not in the runtime trio's fixed version group.
-
-Not yet released: remote mode for `etyma validate` (`--remote`) and `etymaRemoteValidation` in
-`@etyma/tooling/vite` are on `main` with pending changesets, queued as `@etyma/cli` `0.2.0` and
-`@etyma/tooling` `0.2.0`. Local `etyma validate <directory>`, `validateCatalogs()` and
-`etymaRemoteContract` are in the published `0.1.0` releases.
+`@etyma/cli` `0.2.0` added remote mode (`etyma validate --remote`), and `@etyma/tooling` `0.2.0`
+added build-time remote validation (`etymaRemoteValidation` in `@etyma/tooling/vite`).
 
 ## Licence
 
