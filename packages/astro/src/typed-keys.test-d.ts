@@ -1,3 +1,4 @@
+import type { APIContext } from 'astro';
 import { describe, expectTypeOf, it } from 'vitest';
 import { defineI18n, defineMessages } from '@etyma/core';
 
@@ -36,5 +37,19 @@ describe('AstroI18n typed keys', () => {
 
   it('leaves keys as plain strings when the definition is untyped', () => {
     expectTypeOf<AstroI18n['t']>().parameter(0).toEqualTypeOf<string>();
+  });
+});
+
+describe('AstroI18nContext', () => {
+  it("accepts Astro's own context, which always says whether the page is prerendered", () => {
+    expectTypeOf<APIContext>().toExtend<AstroI18nContext>();
+  });
+
+  it('still accepts a hand-built context without isPrerendered', () => {
+    expectTypeOf({
+      currentLocale: 'es',
+      url: new URL('https://example.com/'),
+    }).toExtend<AstroI18nContext>();
+    expectTypeOf<AstroI18nContext['isPrerendered']>().toEqualTypeOf<boolean | undefined>();
   });
 });

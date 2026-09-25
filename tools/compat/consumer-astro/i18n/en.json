@@ -1,5 +1,7 @@
 {
-  "nav": { "blog": "Blog" },
+  "nav": {
+    "blog": "Blog"
+  },
   "home": {
     "title": "Home",
     "greeting": "Hello, {$name}!"
@@ -9,5 +11,9 @@
   },
   "posts": {
     "count": ".input {$count :number}\n.match $count\none {{{$count} post}}\n*   {{{$count} posts}}"
+  },
+  "about": {
+    "title": "About",
+    "body": "I write about {$topic}."
   }
 }

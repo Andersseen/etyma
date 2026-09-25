@@ -3,6 +3,7 @@ import {
   createMessageFormatter,
   createTranslator,
   EtymaError,
+  type CatalogRegistry,
   type I18nDefinition,
   type Locale,
 } from '@etyma/core';
@@ -17,13 +18,30 @@ interface AstroI18nModule extends AstroI18nRoutingHelpers {
 }
 
 /**
+ * The catalogs loaded while prerendering, one registry per definition.
+ *
+ * A prerendered page renders the same catalog content as every other prerendered page in
+ * the same process, so loading it again per page only repeats the same fetch - and during
+ * a build risks mixing two revisions of a remote catalog into one deploy. Keyed by the
+ * definition object, never by its `id` or a locale: two definitions can share an `id`, and
+ * a definition that is no longer referenced takes its catalogs with it.
+ *
+ * Only catalog content lives here. A registry holds no locale, request or route state, and
+ * on-demand renders never reach this map at all - see {@link registryFor}.
+ */
+const prerenderRegistries = new WeakMap<I18nDefinition, CatalogRegistry>();
+
+/**
  * Builds Etyma's translation API for one Astro render.
  *
  * Astro decides the locale - from the URL, through the `i18n` routing configured in
  * `astro.config` - and this reads that decision off `Astro.currentLocale` rather than
- * re-deriving it from the path. Everything downstream (loading the catalog, formatting,
- * localized paths, SEO metadata) is scoped to this one call and shares nothing with any
- * other render, static or concurrent.
+ * re-deriving it from the path. The translator, the locale, localized paths and SEO
+ * metadata are scoped to this one call and shared with no other render.
+ *
+ * Catalog content is the one exception, and only for prerendered pages: when Astro reports
+ * `isPrerendered`, every prerendered render of the same definition in this process reuses
+ * the catalogs the first one loaded. On-demand (server-rendered) requests load their own.
  *
  * ```astro
  * ---
@@ -53,10 +71,10 @@ export async function createAstroI18n<TKey extends string>(
   const locale = resolveCurrentLocale(astro, definition, astroI18n);
 
   const formatter = createMessageFormatter(definition.formatting);
-  // No `snapshot` and no `onChange`: a Astro render is one pass, with no hydration step to
-  // transfer state to, so there is nothing here for a transfer payload to serve.
-  const registry = createCatalogRegistry(definition);
+  const registry = registryFor(astro, definition);
 
+  // A shared registry deduplicates concurrent prerenders of the same locale into one load,
+  // and forgets a failed load, so a later page retries it instead of inheriting the error.
   await registry.load(locale);
 
   const translator = createTranslator<TKey>({
@@ -99,6 +117,30 @@ export async function createAstroI18n<TKey extends string>(
   };
 
   return Object.freeze(api);
+}
+
+/**
+ * The registry this render loads its catalogs through.
+ *
+ * Shared only when Astro says the page is prerendered. Anything else - an on-demand request,
+ * or a context that does not say (`isPrerendered` absent) - gets a registry of its own, so
+ * concurrent server requests never share catalog state.
+ */
+function registryFor(astro: AstroI18nContext, definition: I18nDefinition): CatalogRegistry {
+  // No `snapshot` and no `onChange`: an Astro render is one pass, with no hydration step to
+  // transfer state to, so there is nothing here for a transfer payload to serve.
+  if (astro.isPrerendered !== true) {
+    return createCatalogRegistry(definition);
+  }
+
+  let registry = prerenderRegistries.get(definition);
+
+  if (registry === undefined) {
+    registry = createCatalogRegistry(definition);
+    prerenderRegistries.set(definition, registry);
+  }
+
+  return registry;
 }
 
 /**
