@@ -108,7 +108,7 @@ project's catalogs as plain JSON over HTTP, so nothing Glossa-specific is needed
 ```sh
 etyma validate \
   --remote "https://glossa.andersseen.dev/i18n/my-blog/{locale}.json" \
-  --locales en,es,uk --source en
+  --locales es,en,uk --source es
 ```
 
 What remote mode is, and is not:

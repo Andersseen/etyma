@@ -39,7 +39,7 @@ const families = [
   {
     prefix: 'astro-',
     consumer: join(compatRoot, 'consumer-astro'),
-    verify: cwd => verifyAstroFixture(join(cwd, 'dist')),
+    verify: cwd => verifyAstroFixture(cwd),
   },
 ];
 
@@ -84,6 +84,7 @@ for (const { name: fixture, family } of fixtures) {
   rmSync(join(cwd, 'node_modules'), { recursive: true, force: true });
   rmSync(join(cwd, 'package-lock.json'), { force: true });
   rmSync(join(cwd, 'dist'), { recursive: true, force: true });
+  rmSync(join(cwd, 'catalog-requests.json'), { force: true });
 
   // npm rather than pnpm: a fixture that resolved through the workspace store would be
   // testing the repository again instead of the package.
@@ -105,7 +106,7 @@ for (const { name: fixture, family } of fixtures) {
       process.exit(1);
     }
 
-    console.log(`  ok   generated HTML matches the expected locale, routing and SEO output`);
+    console.log(`  ok   generated HTML and catalog request counts match expectations`);
   }
 }
 

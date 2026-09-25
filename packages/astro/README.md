@@ -97,12 +97,14 @@ const etyma = await createAstroI18n(Astro, i18n);
 ```
 
 `createAstroI18n` also works from Astro middleware, or anywhere else that has the request's
-`currentLocale` and `url` - it only needs `Pick<APIContext, 'currentLocale' | 'url'>`, not
-the full `AstroGlobal`.
+`currentLocale` and `url` - it only needs `Pick<APIContext, 'currentLocale' | 'url'>`, plus
+the optional `isPrerendered`, not the full `AstroGlobal`.
 
-Nothing here is process-global. Every call builds one translator scoped to that render, so
-concurrent server requests in different languages never share state, and there is no
-signal, no store and no `TransferState` to reason about.
+Every call builds one translator scoped to that render: its locale, paths and SEO data belong
+to that page alone, so concurrent server requests in different languages never share state,
+and there is no signal, no store and no `TransferState` to reason about. The one thing
+prerendered pages share is the loaded catalog content - see
+[Prerendered pages share catalogs](#prerendered-pages-share-catalogs).
 
 ## API
 
@@ -186,6 +188,38 @@ pages exactly like it is during SSR, so every example above works unchanged for 
 site with no server adapter installed. Server-rendered routes work through the same code
 path, using whatever the same primitives resolve to per request.
 
+### Prerendered pages share catalogs
+
+When Astro reports a page as prerendered (`Astro.isPrerendered`), `createAstroI18n` loads its
+catalogs through one registry per `I18nDefinition` that every prerendered page in the same
+process shares. Each locale's catalog is loaded once for the whole build, by the first page
+that needs it, and every later page renders from that copy:
+
+- **Loads follow locales, not pages.** Three locales cost three catalog loads whether the
+  build renders 9 pages or 900. A secondary-locale page still needs the source catalog for
+  fallback, and reuses it if another page already loaded it.
+- **One build, one snapshot.** Once a catalog is loaded, it is not fetched again during that
+  build, so a remote catalog edited halfway through generation cannot put two revisions of
+  the translations into one deploy.
+- **Pages rendering at once share one load.** Concurrent prerenders of the same locale wait on
+  the same in-flight load rather than each starting their own.
+- **Failures are not remembered.** A load that fails is dropped, and the next page that needs
+  that catalog tries again.
+- **Only catalog content is shared.** The locale, translator, paths, SEO data and the Astro
+  context all stay per render. Definitions are kept apart by object identity, so two
+  definitions with the same `id` never see each other's catalogs.
+
+On-demand (server-rendered) requests are not part of this: when `isPrerendered` is `false` -
+or absent, as in a hand-built context - every call loads into a registry of its own, exactly
+as before, and nothing is cached between requests.
+
+The shared catalogs live in memory for the lifetime of the process and nowhere else: there is
+no cache directory, no disk or KV store and no expiry. A remote catalog edit therefore
+appears in the next build. `astro dev` also reports prerendered pages as prerendered, so a
+running dev server keeps serving the catalogs it first loaded: restart it to pick up a remote
+edit. Local catalogs imported through Vite are unaffected in practice, because editing one
+reloads the module that defines them, and a new definition starts with nothing loaded.
+
 ## Remote catalogs
 
 `createAstroI18n` takes any `I18nDefinition`, so `defineRemoteI18n` from `@etyma/core` works
@@ -207,9 +241,10 @@ export const i18n = defineRemoteI18n({
 });
 ```
 
-For a static build, the remote catalog is fetched at build time, once per page render. For
+For a static build, each remote catalog is fetched once, at build time, by the first page
+that needs it - see [Prerendered pages share catalogs](#prerendered-pages-share-catalogs). For
 a server-rendered route, it is fetched per request through the normal Etyma catalog
-registry - there is no build-vs-remote special case in this package to reason about.
+registry.
 
 To generate the typed `contract` and validate every remote catalog during `astro build`,
 declare `@etyma/tooling/vite`'s `etymaRemoteContract` and `etymaRemoteValidation` under

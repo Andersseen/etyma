@@ -59,6 +59,27 @@ const pages = [
     // Ukrainian plural categories, from CLDR via Intl.PluralRules('uk') - not "one"/"other".
     contains: ['1 стаття', '5 статей'],
   },
+  {
+    path: 'about/index.html',
+    lang: 'es',
+    canonical: `${SITE}/about/`,
+    xDefault: `${SITE}/about/`,
+    contains: ['Sobre mí', 'Escribo sobre Astro.'],
+  },
+  {
+    path: 'en/about/index.html',
+    lang: 'en',
+    canonical: `${SITE}/en/about/`,
+    xDefault: `${SITE}/about/`,
+    contains: ['About', 'I write about Astro.'],
+  },
+  {
+    path: 'ua/about/index.html',
+    lang: 'uk',
+    canonical: `${SITE}/ua/about/`,
+    xDefault: `${SITE}/about/`,
+    contains: ['Про мене', 'Я пишу про Astro.'],
+  },
 ];
 
 const expectedAlternates = [
@@ -67,7 +88,8 @@ const expectedAlternates = [
   { hreflang: 'uk', bare: 'ua/' },
 ];
 
-export function verifyAstroFixture(distDir) {
+export function verifyAstroFixture(cwd) {
+  const distDir = join(cwd, 'dist');
   const failures = [];
 
   const assert = (condition, message) => {
@@ -101,9 +123,8 @@ export function verifyAstroFixture(distDir) {
     );
 
     for (const alternate of expectedAlternates) {
-      const bareForThisPage = page.path.includes('blog')
-        ? `${alternate.bare}blog/`
-        : alternate.bare;
+      const section = /(blog|about)\//.exec(page.path)?.[0] ?? '';
+      const bareForThisPage = `${alternate.bare}${section}`;
       const expected = `hreflang="${alternate.hreflang}" href="${SITE}/${bareForThisPage}"`;
 
       assert(html.includes(expected), `${page.path}: expected alternate ${expected}`);
@@ -120,7 +141,38 @@ export function verifyAstroFixture(distDir) {
     }
   }
 
+  verifyCatalogRequests(cwd, assert);
+
   return failures;
+}
+
+/**
+ * The fixture prerenders three pages per locale, several at a time, from remote catalogs.
+ * `@etyma/astro` must load each catalog once for the whole build - the count follows the
+ * locales, never the pages. Requests from `@etyma/tooling`'s build-time validation are a
+ * separate consumer and are only reported.
+ */
+function verifyCatalogRequests(cwd, assert) {
+  const { tooling, render } = JSON.parse(readFileSync(join(cwd, 'catalog-requests.json'), 'utf8'));
+  const locales = ['es', 'en', 'uk'];
+
+  console.log(
+    `  catalog requests while rendering ${pages.length} pages: ${JSON.stringify(render)}`,
+  );
+  console.log(`  catalog requests from etymaRemoteValidation: ${JSON.stringify(tooling)}`);
+
+  for (const locale of locales) {
+    assert(
+      render[locale] === 1,
+      `expected exactly 1 render-time request for the "${locale}" catalog across the whole ` +
+        `build, got ${render[locale] ?? 0} - catalogs are being loaded per page`,
+    );
+  }
+
+  assert(
+    Object.keys(render).every(locale => locales.includes(locale)),
+    `unexpected render-time catalog requests: ${JSON.stringify(render)}`,
+  );
 }
 
 function firstHtmlTag(html) {

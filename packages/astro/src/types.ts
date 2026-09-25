@@ -8,8 +8,13 @@ import type { Locale, MessageParams, MessagePart, TextDirection } from '@etyma/c
  * file's frontmatter) already extends - rather than either type in full. That is what lets
  * `createAstroI18n` be called the same way from a page and from a middleware handler, and
  * what lets a test build one of these from a plain object instead of a real Astro request.
+ *
+ * `isPrerendered` is optional so a hand-built context stays valid; Astro's own always has
+ * it. Only `true` lets a render reuse catalogs loaded by other prerendered pages - absent is
+ * treated exactly like `false`.
  */
-export type AstroI18nContext = Pick<APIContext, 'currentLocale' | 'url'>;
+export type AstroI18nContext = Pick<APIContext, 'currentLocale' | 'url'> &
+  Partial<Pick<APIContext, 'isPrerendered'>>;
 
 /** One entry of a page's `hreflang` set, keyed by BCP 47 language code - never a route path. */
 export interface AstroSeoAlternate {
@@ -37,8 +42,9 @@ export interface AstroSeoData {
  * Etyma's translation API for one Astro render.
  *
  * Created fresh by {@link createAstroI18n} for each page, from the locale Astro already
- * resolved for the current request - never held across renders and never backed by module-
- * level state, so two concurrent SSR requests in two languages share nothing.
+ * resolved for the current request - never held across renders, so two concurrent SSR
+ * requests in two languages share nothing. Prerendered pages share only the loaded catalog
+ * content behind it, never this object.
  */
 export interface AstroI18n<TKey extends string = string> {
   /** The actual BCP 47 language code for this render, e.g. `"uk"` for the `/ua` route. */
