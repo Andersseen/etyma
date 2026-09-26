@@ -1,5 +1,56 @@
 # @etyma/astro
 
+## 0.2.0
+
+### Minor Changes
+
+- [#75](https://github.com/Andersseen/etyma/pull/75) [`7ce936b`](https://github.com/Andersseen/etyma/commit/7ce936be83a2e72e48efd97b7e666d3854c3a789) Thanks [@Andersseen](https://github.com/Andersseen)! - Astro 7 is now supported alongside Astro 6: the `astro` peer dependency is
+  `^6.0.0 || ^7.0.0`.
+  
+  No API or behaviour change, and no Astro 7-specific code path - `@etyma/astro` still relies
+  only on `Astro.currentLocale`, `Astro.url`, `Astro.isPrerendered` and `astro:i18n`'s URL
+  helpers, which Astro 7 keeps unchanged. The package is still built against Astro 6, and the
+  same static site is built from the packed package on both Astro 6.4.8 and Astro 7.3.5 (Vite 8),
+  checking:
+  
+  - the `/ua` route rendering the `uk` language in `lang`, `hreflang` and `etyma.locale`;
+  - localized paths (`etyma.path('/blog?tag=astro#latest', 'uk')` is
+    `/ua/blog/?tag=astro#latest`), canonical, alternates and `x-default`;
+  - prerendered pages loading each remote catalog once per locale for the whole build;
+  - `@etyma/tooling/vite`'s `etymaRemoteContract` (one source request per build) and
+    `etymaRemoteValidation` running under Astro 7's Vite 8;
+  - `AstroI18nContext` still matching Astro 7's `APIContext` and `AstroGlobal` types, and
+    `@etyma/astro` importing from plain Node without `astro:i18n`.
+
+- [#72](https://github.com/Andersseen/etyma/pull/72) [`50c42b3`](https://github.com/Andersseen/etyma/commit/50c42b35dc80767d620333674ddc9cdc2821c37c) Thanks [@Andersseen](https://github.com/Andersseen)! - Prerendered pages now share loaded catalogs instead of loading them once per page.
+  
+  `createAstroI18n` used to build a fresh catalog registry for every render, so a static build
+  with remote catalogs fetched the source catalog on every page and each secondary catalog on
+  every page in that locale: the request count grew with the number of pages. When Astro reports
+  a page as prerendered (`Astro.isPrerendered`), catalogs now load through one registry per
+  `I18nDefinition`, shared by every prerendered page in the process. Each locale's catalog is
+  loaded once per build, by the first page that needs it; pages prerendering concurrently share
+  that one in-flight load, and a failed load is retried by the next page instead of being
+  remembered.
+  
+  - **One build, one snapshot.** A catalog is not fetched again mid-build, so a remote catalog
+    edited during generation cannot mix two translation revisions into one deploy.
+  - **On-demand SSR is unchanged.** When `isPrerendered` is `false`, or absent, every call still
+    loads into a registry of its own and nothing is shared between requests.
+  - **Only catalog content is shared.** Locale, translator, paths and SEO data stay per render.
+    Definitions are kept apart by object identity, not by `id`.
+  - **In memory only**, for the life of the process: no disk cache and no expiry. A remote
+    catalog edit appears in the next build. `astro dev` also reports prerendered pages as
+    prerendered, so restart the dev server to pick up a remote edit.
+  
+  No API change: `AstroI18nContext` gains an optional `isPrerendered`, which Astro's own context
+  always provides, so existing calls - `createAstroI18n(Astro, i18n)` - get this automatically
+  and hand-built contexts keep compiling.
+  
+  Measured with `@etyma/astro`'s packed Astro 6 compatibility fixture (9 pages, 3 remote
+  locales), render-time catalog requests went from 15 to 3; on a real 11-page site, from 17 to 3,
+  with byte-identical output.
+
 ## 0.1.1
 
 ### Patch Changes
