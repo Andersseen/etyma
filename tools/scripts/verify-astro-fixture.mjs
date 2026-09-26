@@ -1,5 +1,7 @@
 /**
- * Static acceptance checks for `tools/compat/astro-6`'s build output.
+ * Static acceptance checks for every `tools/compat/astro-*` fixture's build output. Each
+ * fixture builds the same shared consumer (`tools/compat/consumer-astro`) with a different
+ * Astro major, so every check here must hold on every supported major.
  *
  * A green `astro build` only proves the package resolves and renders *something*; it does
  * not prove Etyma got the one thing this fixture exists to test right - that the Ukrainian
@@ -9,8 +11,9 @@
  * against the packed tarballs, which is the only thing that can catch a mismatch between
  * this package's assumptions and Astro's actual behaviour.
  */
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 const SITE = 'https://example.com';
 
@@ -82,6 +85,9 @@ const pages = [
   },
 ];
 
+/** The locale route prefix of each page, as `etyma.path()` must produce it - `ua/`, not `uk/`. */
+const routePrefixes = { es: '', en: 'en/', uk: 'ua/' };
+
 const expectedAlternates = [
   { hreflang: 'es', bare: '' },
   { hreflang: 'en', bare: 'en/' },
@@ -136,15 +142,82 @@ export function verifyAstroFixture(cwd) {
         '("uk"), never the Astro route path ("ua")',
     );
 
+    // `etyma.path()` goes through `astro:i18n`'s `getRelativeLocaleUrl`, so it must follow the
+    // route path ("ua"), and keep the query string and fragment of the logical path it is given.
+    for (const [locale, prefix] of Object.entries(routePrefixes)) {
+      assert(
+        html.includes(`href="/${prefix}"`),
+        `${page.path}: expected the "${locale}" home link href="/${prefix}"`,
+      );
+    }
+
+    const blogHref = `/${routePrefixes[page.lang]}blog/`;
+    assert(
+      html.includes(`href="${blogHref}"`),
+      `${page.path}: expected the current-locale blog link href="${blogHref}"`,
+    );
+
+    assert(
+      html.includes('href="/ua/blog/?tag=astro#latest"'),
+      `${page.path}: expected etyma.path('/blog?tag=astro#latest', 'uk') to render ` +
+        'href="/ua/blog/?tag=astro#latest"',
+    );
+
+    assert(
+      !/href="\/uk\//.test(html),
+      `${page.path}: found a link under /uk/ - localized paths must use the Astro route ` +
+        'path ("ua"), never the language code ("uk")',
+    );
+
     for (const text of page.contains) {
       assert(html.includes(text), `${page.path}: expected to find "${text}" in the rendered HTML`);
     }
   }
 
+  verifyAstroMajor(cwd, assert);
+  verifyPlainNodeImport(cwd, assert);
   verifyCatalogRequests(cwd, assert);
   verifyRemoteContract(cwd, assert);
 
   return failures;
+}
+
+/**
+ * The fixture's name is the Astro major it claims to test (`astro-7` -> 7). A range that
+ * resolved to another major would make every other check here prove the wrong thing.
+ */
+function verifyAstroMajor(cwd, assert) {
+  const expected = /^astro-(\d+)$/.exec(basename(cwd))?.[1];
+  const { version } = JSON.parse(
+    readFileSync(join(cwd, 'node_modules/astro/package.json'), 'utf8'),
+  );
+
+  console.log(`  astro ${version}`);
+
+  assert(
+    expected !== undefined && version.split('.')[0] === expected,
+    `expected Astro ${expected}.x from the fixture name, but astro ${version} is installed`,
+  );
+}
+
+/**
+ * `astro:i18n` only resolves inside Astro's Vite pipeline, so `@etyma/astro` imports it
+ * lazily. Importing the packed package from plain Node - with this fixture's Astro installed
+ * next to it - must still succeed, or a static top-level import of it has crept back in.
+ */
+function verifyPlainNodeImport(cwd, assert) {
+  const script =
+    "const m = await import('@etyma/astro');" +
+    "if (typeof m.createAstroI18n !== 'function') throw new Error('no createAstroI18n export');";
+
+  try {
+    execFileSync(process.execPath, ['--input-type=module', '--eval', script], {
+      cwd,
+      stdio: 'pipe',
+    });
+  } catch (error) {
+    assert(false, `importing @etyma/astro from plain Node failed: ${error.stderr ?? error}`);
+  }
 }
 
 /**

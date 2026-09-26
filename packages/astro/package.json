@@ -47,7 +47,7 @@
     "clean": "rimraf dist .turbo"
   },
   "peerDependencies": {
-    "astro": "^6.0.0"
+    "astro": "^6.0.0 || ^7.0.0"
   },
   "dependencies": {
     "@etyma/core": "workspace:^"

@@ -85,7 +85,7 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 | [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                                                      | `messageformat`                 |
 | [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                                                | `@etyma/core`, Angular 21 or 22 |
 | [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                                                   | `@etyma/angular`, Analog 2.x    |
-| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                                 | `@etyma/core`, Astro 6.x        |
+| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                                 | `@etyma/core`, Astro 6.x or 7.x |
 | [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Vite plugins under `/vite`. Not a runtime dependency. | `@etyma/core`                   |
 | [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` runs `@etyma/tooling`'s checks against local JSON catalogs or public remote ones, for CI and local use. Not a runtime dependency.      | `@etyma/tooling`                |
 
@@ -116,14 +116,15 @@ other way around, and never reaches past it to `core` directly.
 | --------------- | -------------------------------------------------------------- |
 | Angular         | 21 (build baseline) and 22 (verified consumer)                 |
 | AnalogJS        | 2.6.x and 2.7.x with Angular 21; 2.7.x with Angular 22         |
-| Astro           | 6.x                                                            |
+| Astro           | 6.x (build baseline) and 7.x (verified consumer, 7.3.5)        |
 | Node            | >= 22.22                                                       |
 | Package manager | pnpm 10.x                                                      |
 | Module format   | ESM only — there is no CommonJS build                          |
 | Runtimes        | Browsers, Node, and edge runtimes including Cloudflare Workers |
 
 The Angular/Analog packages are built with Angular 21 as Angular Package Format partial
-declarations. `@etyma/astro` is a plain ESM package built with `tsc`, like `@etyma/core`.
+declarations. `@etyma/astro` is a plain ESM package built with `tsc` against Astro 6, like
+`@etyma/core`, and the same consumer is built with both Astro 6 and Astro 7.
 Angular, Analog and Astro compatibility are all verified by building clean applications
 against packed tarballs, not workspace symlinks - see
 [`packages/astro`](packages/astro#readme) for the Astro-specific setup, including the
