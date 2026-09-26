@@ -34,6 +34,7 @@ tools/compat/*/package-lock.json
 tools/compat/*/dist/
 tools/compat/*/src/
 tools/compat/*/catalog-requests.json
+tools/compat/*/contract.generated.ts
 tools/compat/.tarballs/
 
 # editors & os

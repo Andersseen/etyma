@@ -36,10 +36,11 @@ export interface EtymaContractPlugin {
  *
  * Etyma's compile-time key contract is decoupled from the runtime source catalog in remote
  * mode - see `defineRemoteI18n` in `@etyma/core` - and this closes that gap without a
- * consumer hand-maintaining the contract: it loads the source catalog once per build or
- * dev-server start, derives its keys, and writes `output` only when the rendered content
+ * consumer hand-maintaining the contract: it loads the source catalog once per plugin
+ * instance - once per build or dev-server start, however many Vite passes that build runs
+ * (Astro runs several) - derives its keys, and writes `output` only when the rendered content
  * actually changed, so the file stays a normal, reviewable diff instead of churning on every
- * run.
+ * run. A custom `load` is called on the same schedule: once per plugin instance.
  *
  * If loading the catalog fails and `output` does not already hold a previously generated
  * contract, this throws - which fails `vite dev`/`vite build` loudly rather than silently
@@ -48,9 +49,15 @@ export interface EtymaContractPlugin {
  * construction, the last one known to work.
  */
 export function etymaRemoteContract(options: EtymaRemoteContractOptions): EtymaContractPlugin {
+  let generation: Promise<void> | undefined;
+
   return {
     name: 'etyma-remote-contract',
-    buildStart: () => generate(options),
+    // Memoized per plugin instance, not per process: Astro runs several Vite builds (and
+    // environments) with the same plugin objects, sometimes concurrently, and one generation
+    // covers all of them. A failure is kept too, so every pass of that one build reports the
+    // same outcome; a new plugin instance - the next build or dev-server start - tries again.
+    buildStart: () => (generation ??= generate(options)),
   };
 }
 

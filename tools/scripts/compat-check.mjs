@@ -85,6 +85,7 @@ for (const { name: fixture, family } of fixtures) {
   rmSync(join(cwd, 'package-lock.json'), { force: true });
   rmSync(join(cwd, 'dist'), { recursive: true, force: true });
   rmSync(join(cwd, 'catalog-requests.json'), { force: true });
+  rmSync(join(cwd, 'contract.generated.ts'), { force: true });
 
   // npm rather than pnpm: a fixture that resolved through the workspace store would be
   // testing the repository again instead of the package.
