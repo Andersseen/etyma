@@ -1,22 +1,24 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
 
-import { etymaRemoteValidation } from '@etyma/tooling/vite';
+import { etymaRemoteContract, etymaRemoteValidation } from '@etyma/tooling/vite';
 import { defineConfig } from 'astro/config';
 
 // Every request the catalog server below has answered, by consumer and locale.
-const requests = { tooling: {}, render: {} };
+const requests = { contract: {}, tooling: {}, render: {} };
 
 // Stands in for a CDN or translation platform: serves this fixture's own catalogs over HTTP on
 // a random loopback port, so a real `astro build` fetches remote catalogs without the
 // compatibility check ever touching the public internet. `unref` lets the process exit once
 // Astro is done.
 //
-// Two URL prefixes for the same files, so the two consumers are counted apart:
-// `etymaRemoteValidation` fetches `/i18n/...`, and the pages' own `@etyma/astro` loaders fetch
-// `/render/...`. Only the second is what `@etyma/astro`'s prerender reuse is about.
+// Three URL prefixes for the same files, so each consumer is counted apart:
+// `etymaRemoteContract` fetches `/contract/...`, `etymaRemoteValidation` fetches `/i18n/...`,
+// and the pages' own `@etyma/astro` loaders fetch `/render/...`.
+const buckets = { contract: 'contract', i18n: 'tooling', render: 'render' };
 const catalogs = createServer((request, response) => {
-  const match = /^\/(i18n|render)\/([\w-]+)\.json$/.exec(request.url ?? '');
+  const match = /^\/(contract|i18n|render)\/([\w-]+)\.json$/.exec(request.url ?? '');
 
   if (match === null) {
     response.writeHead(404).end();
@@ -24,7 +26,7 @@ const catalogs = createServer((request, response) => {
   }
 
   const [, prefix, locale] = match;
-  const bucket = requests[prefix === 'i18n' ? 'tooling' : 'render'];
+  const bucket = requests[buckets[prefix]];
   bucket[locale] = (bucket[locale] ?? 0) + 1;
 
   try {
@@ -71,6 +73,14 @@ export default defineConfig({
       __ETYMA_COMPAT_CATALOGS__: JSON.stringify(`${origin}/render`),
     },
     plugins: [
+      // Generates the key contract from the remote source catalog. Astro runs several Vite
+      // passes per build with these same plugin objects; the source must still be fetched
+      // once. Written beside the fixture, not imported: this proves the lifecycle and the
+      // packed output, and `src/i18n` keeps its hand-written contract.
+      etymaRemoteContract({
+        source: `${origin}/contract/es.json`,
+        output: fileURLToPath(new URL('./contract.generated.ts', import.meta.url)),
+      }),
       // `@etyma/tooling/vite` declared where an Astro 6 site declares any Vite plugin: the
       // build fails if a remote catalog cannot be fetched or does not validate.
       etymaRemoteValidation({

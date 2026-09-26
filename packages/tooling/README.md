@@ -231,7 +231,14 @@ export default defineConfig({
 ```
 
 Runs once per `vite dev` server start and once per `vite build`, before anything else needs
-the generated file. If the source is unreachable and `output` does not already exist, it
+the generated file. "Once" means **once per plugin instance**: Astro runs several Vite passes
+per `astro build` with the same plugin objects, and they all share the first pass's result —
+one fetch (or one `load()` call), one warning, one write at most. A failure is shared the
+same way, so every pass of that build reports the same error rather than fetching again; the
+next build or dev-server start creates a new instance and tries again. A custom `load` follows
+the same schedule, so one that reads local state sees it once per start, not on every change.
+
+If the source is unreachable and `output` does not already exist, it
 throws — a build should fail loudly, not silently widen every translation key to `string`. If
 `output` already holds a previously generated contract, a failed fetch falls back to it with a
 `console.warn` instead of failing the build: the file already in the branch is, by
@@ -490,8 +497,8 @@ Deliberately not implemented yet:
   tool and Forge CMS integration are meant to do the same.
 - **No project configuration file.** No `etyma.config.ts` or config discovery; see the
   [recommended setup](#recommended-setup-for-a-remote-catalog-project) for sharing values.
-- **No remote watching.** `etymaRemoteValidation` validates once per dev-server start and once
-  per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
+- **No remote watching.** `etymaRemoteContract` and `etymaRemoteValidation` each run once per
+  dev-server start and once per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
 - **No source-message extraction, template scanning, or hardcoded-copy detection.**
   Determining whether a key is used, or whether a template has untranslated copy, requires
   reading application source code, which this package does not do. That is a later tooling

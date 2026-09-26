@@ -142,6 +142,7 @@ export function verifyAstroFixture(cwd) {
   }
 
   verifyCatalogRequests(cwd, assert);
+  verifyRemoteContract(cwd, assert);
 
   return failures;
 }
@@ -153,7 +154,7 @@ export function verifyAstroFixture(cwd) {
  * separate consumer and are only reported.
  */
 function verifyCatalogRequests(cwd, assert) {
-  const { tooling, render } = JSON.parse(readFileSync(join(cwd, 'catalog-requests.json'), 'utf8'));
+  const { tooling, render } = readCatalogRequests(cwd);
   const locales = ['es', 'en', 'uk'];
 
   console.log(
@@ -173,6 +174,42 @@ function verifyCatalogRequests(cwd, assert) {
     Object.keys(render).every(locale => locales.includes(locale)),
     `unexpected render-time catalog requests: ${JSON.stringify(render)}`,
   );
+}
+
+/**
+ * Astro runs several Vite passes per `astro build`, all with the same plugin objects, so each
+ * pass calls `etymaRemoteContract`'s `buildStart` again. The source catalog must still be
+ * fetched once per build, and the contract generated from it must be the fixture's.
+ */
+function verifyRemoteContract(cwd, assert) {
+  const { contract } = readCatalogRequests(cwd);
+
+  console.log(`  catalog requests from etymaRemoteContract: ${JSON.stringify(contract)}`);
+
+  assert(
+    JSON.stringify(contract) === JSON.stringify({ es: 1 }),
+    `expected etymaRemoteContract to fetch only the source catalog, once per build, got ` +
+      `${JSON.stringify(contract)} - it is refreshing on every Vite pass`,
+  );
+
+  const generated = readFileSync(join(cwd, 'contract.generated.ts'), 'utf8');
+  const expectedKeys = [
+    'about.body',
+    'about.title',
+    'footer.rights',
+    'home.greeting',
+    'home.title',
+    'nav.blog',
+    'posts.count',
+  ];
+
+  for (const key of expectedKeys) {
+    assert(generated.includes(`"${key}"`), `contract.generated.ts: expected key "${key}"`);
+  }
+}
+
+function readCatalogRequests(cwd) {
+  return JSON.parse(readFileSync(join(cwd, 'catalog-requests.json'), 'utf8'));
 }
 
 function firstHtmlTag(html) {
