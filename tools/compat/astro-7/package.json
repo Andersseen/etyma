@@ -1,0 +1,26 @@
+{
+  "name": "etyma-compat-astro-7",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Builds a clean Astro 7 static site against the packed Etyma tarballs. Not a workspace member: it must resolve the published package, not a symlink.",
+  "scripts": {
+    "build": "astro build",
+    "typecheck": "astro check --minimumSeverity error"
+  },
+  "dependencies": {
+    "@etyma/astro": "file:../.tarballs/etyma-astro.tgz",
+    "@etyma/core": "file:../.tarballs/etyma-core.tgz",
+    "astro": "7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@etyma/tooling": "file:../.tarballs/etyma-tooling.tgz",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@etyma/astro": "file:../.tarballs/etyma-astro.tgz",
+    "@etyma/core": "file:../.tarballs/etyma-core.tgz",
+    "@etyma/tooling": "file:../.tarballs/etyma-tooling.tgz"
+  }
+}

@@ -14,7 +14,8 @@
  * Not a general Astro test double - the algorithms mirror `astro/dist/i18n/index.js` and
  * `astro/dist/i18n/utils.js` closely enough to exercise this package's logic correctly, but
  * this file exists so unit tests do not need a real Astro request. The real proof against
- * actual Astro behaviour is `tools/compat/astro-6`'s `astro build`, not this fixture.
+ * actual Astro behaviour is the `tools/compat/astro-*` fixtures' `astro build`, one per
+ * supported Astro major, not this fixture.
  */
 type LocaleEntry = string | { readonly path: string; readonly codes: readonly string[] };
 

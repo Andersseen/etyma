@@ -13,10 +13,17 @@
  * - angular-21-analog-26: Angular 21, Analog 2.6.x
  * - angular-21: Angular 21, Analog 2.7.x
  * - angular-22: Angular 22, Analog 2.7.x
- * - astro-6: Astro 6.x, `@etyma/astro`
+ * - astro-6: Astro 6, `@etyma/astro` (the major its declarations are built against)
+ * - astro-7: Astro 7 (Vite 8 / Rolldown), `@etyma/astro`
  *
  * Angular 22 also requires TypeScript 6, so this is the only place the published Angular
- * declarations meet a compiler a major version newer than the one that wrote them.
+ * declarations meet a compiler a major version newer than the one that wrote them. Astro 7
+ * plays the same role for `@etyma/astro`, and for `@etyma/tooling/vite` running under Vite 8.
+ *
+ * Fixtures are discovered by directory prefix: a new major is a new directory whose
+ * `package.json` pins it, with no change to this script. Every fixture in a family builds
+ * the same shared consumer source - for Astro, including its `astro.config` - so the
+ * matrix proves the same API on every major rather than a different app per version.
  */
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';

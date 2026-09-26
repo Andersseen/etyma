@@ -18,9 +18,10 @@ through `astro:i18n`'s own URL helpers - never a routing table of its own.
 pnpm add @etyma/core @etyma/astro astro
 ```
 
-Requires **Astro 6.x**. Astro 5 and below are not supported, and Astro 7 has not been
-verified yet - see [Limitations](#limitations). No Angular, no Analog, no RxJS: this package
-depends on `@etyma/core` and nothing else from Etyma.
+Requires **Astro 6.x or 7.x**. Astro 5 and below are not supported. The package is built
+against Astro 6 and verified on Astro 6.4.8 and 7.3.5 - see [Limitations](#limitations). No
+Angular, no Analog, no RxJS: this package depends on `@etyma/core` and nothing else from
+Etyma.
 
 ## Configure Astro's i18n routing
 
@@ -257,7 +258,10 @@ string whenever that locale's route path is its language code.
 
 ## Limitations
 
-- **Astro 6 only, for now.** Astro 7 exists but has not been verified against this package.
+- **Astro 6 and 7.** Every change is verified by building one shared static site - custom
+  `ua` route for the `uk` language, SEO links, localized paths, prerender catalog reuse and
+  `@etyma/tooling/vite` - against the packed package on Astro 6.4.8 and Astro 7.3.5 (Vite 8).
+  A later Astro major is not supported until it has been verified the same way.
 - **No Astro integration plugin.** Everything here works through `createAstroI18n()` and
   Astro's own public APIs; there is nothing an `integrations: [...]` entry would add.
 - **No client-side locale store, no `localStorage`, no cookies.** Locale comes from the URL,
