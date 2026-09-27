@@ -84,6 +84,10 @@ does not have is a missing message at runtime.
 - `walkMessageSource(source, onLeaf, onProblem)` — the catalog walk behind it, reporting
   every leaf and every shape problem instead of throwing at the first.
 - `MessageKey<T>` — the dotted keys of a catalog shape, as a string literal union.
+- `MessageParamsOf<T>` — the params each message of a literal catalog shape requires, keyed
+  by dotted key; `MessageVariables<S>` reads one message's external variables and
+  `MessageArgs<TParams, K>` is what `t()` takes after the key. Messages typed as plain
+  `string` (JSON imports, remote catalogs) get no entry, and keep optional, untyped params.
 
 **Formatting**
 
@@ -91,7 +95,8 @@ does not have is a missing message at runtime.
   locale and pattern. Never throws: a malformed pattern renders as its own source and is
   reported through `onIssue`.
 - `createTranslator(input)` — immutable translation bound to one locale and one set of
-  catalogs, with fallback to the source locale.
+  catalogs, with fallback to the source locale. `Translator<TKey, TParams>` requires
+  params for a key `TParams` records variables for.
 
 **Loading**
 

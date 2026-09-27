@@ -59,6 +59,8 @@ hydration fix it later. Etyma keeps those pieces in one contract:
   addressed as `nav.docs`; arrays of strings, addressed by index as `steps.0`.
 - **Typed keys.** `t('footer.foo')` does not compile when the source catalog has no
   `footer.foo`. Inferred from the source catalog's type — no code generator, no build step.
+  For messages written in `defineMessages()`, params are typed too: `t('welcome')` does not
+  compile when the message is `'Hello, {$name}!'`.
 - **MessageFormat 2**, through the [`messageformat`](https://messageformat.github.io/)
   reference implementation. Plurals, selects, numbers and dates come from CLDR and `Intl`,
   not from anything Etyma invented.
@@ -337,6 +339,37 @@ const seo = defineMessages({ siteName: 'Etyma', tagline: 'i18n for Angular' });
 
 export const i18n = defineI18n({ /* … */ source: { ...en, seo } });
 ```
+
+### Typed params
+
+When TypeScript knows a message's text, it knows the message's variables. For a source
+catalog written with `defineMessages()` (or as an object literal passed to `defineI18n`),
+`t()` requires exactly the params each message declares:
+
+```ts
+const source = defineMessages({
+  welcome: 'Hello, {$name}!',
+  footer: { rights: '© {$year :number useGrouping=never} {$author}' },
+  nav: { docs: 'Docs' },
+});
+
+t('welcome', { name: 'Ada' }); // ok
+t('welcome'); // error: `name` is required
+t('footer.rights', { year: 2026 }); // error: `author` is missing
+t('nav.docs'); // ok: no variables, params stay optional
+```
+
+Variables are read from placeholders (`{$name}`, `{$count :number}`), `.input`
+declarations and variable option values (`minimumFractionDigits=$digits`); names bound by
+`.local` are not asked for. Each param accepts any value `t()` always accepted — a string,
+number, bigint, boolean or `Date`; the check is on the names, not on which `:function`
+formats them.
+
+**Where it does not reach.** A `.json` import types every message as plain `string`, so
+TypeScript never sees the text, and a remote contract carries only keys. For those
+messages params stay optional and untyped, exactly as before — nothing breaks, and nothing
+is claimed that is not known. Mix the two freely: `source: { ...json, ...defineMessages({…}) }`
+types params for the `defineMessages` part only.
 
 ### Arrays of messages
 

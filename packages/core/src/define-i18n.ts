@@ -11,6 +11,8 @@ import {
   flattenMessages,
   type MessageCatalog,
   type MessageKey,
+  type MessageParamsMap,
+  type MessageParamsOf,
   type MessageSource,
 } from './messages.js';
 import { createLocaleRouter, type LocaleRouter } from './routing.js';
@@ -71,7 +73,10 @@ export interface I18nOptions<TSource extends MessageSource, TLocales extends Loc
  * reads this and nothing else. `TKey` carries the source catalog's key union, which is how
  * `t()` stays typed across a package boundary without a code generator.
  */
-export interface I18nDefinition<TKey extends string = string> {
+export interface I18nDefinition<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> {
   readonly id: string;
   readonly locales: readonly Locale[];
   readonly sourceLocale: Locale;
@@ -105,6 +110,13 @@ export interface I18nDefinition<TKey extends string = string> {
 
   /** The text direction to render `locale` in. */
   directionOf(locale: Locale): TextDirection;
+
+  /**
+   * Type-only: the params each message key needs, as {@link MessageParamsOf} reads them from
+   * a literal source catalog. Never set at runtime. It exists so a framework layer can infer
+   * `TParams` from the definition it is given, the way `keys` carries `TKey`.
+   */
+  readonly messageParams?: TParams;
 }
 
 /**
@@ -117,7 +129,9 @@ export interface I18nDefinition<TKey extends string = string> {
  */
 export function defineI18n<const TSource extends MessageSource, const TLocales extends LocaleTuple>(
   options: I18nOptions<TSource, TLocales>,
-): I18nDefinition<MessageKey<TSource>> & { readonly sourceCatalog: MessageCatalog } {
+): I18nDefinition<MessageKey<TSource>, MessageParamsOf<TSource>> & {
+  readonly sourceCatalog: MessageCatalog;
+} {
   const locales: readonly Locale[] = [...options.locales];
 
   validateLocales('defineI18n', locales);
@@ -183,7 +197,7 @@ export function defineI18n<const TSource extends MessageSource, const TLocales e
     ),
   );
 
-  const definition: I18nDefinition<MessageKey<TSource>> & {
+  const definition: I18nDefinition<MessageKey<TSource>, MessageParamsOf<TSource>> & {
     readonly sourceCatalog: MessageCatalog;
   } = {
     id: options.id ?? 'etyma',

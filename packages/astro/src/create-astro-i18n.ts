@@ -6,6 +6,7 @@ import {
   type CatalogRegistry,
   type I18nDefinition,
   type Locale,
+  type MessageParamsMap,
 } from '@etyma/core';
 
 import { buildSeo, type AstroI18nRoutingHelpers } from './seo.js';
@@ -58,10 +59,13 @@ const prerenderRegistries = new WeakMap<I18nDefinition, CatalogRegistry>();
  * Works the same way for a static build and for a server-rendered route: both give
  * `Astro.currentLocale` a value, and neither is treated as a special case here.
  */
-export async function createAstroI18n<TKey extends string>(
+export async function createAstroI18n<
+  TKey extends string,
+  TParams extends MessageParamsMap = Record<never, never>,
+>(
   astro: AstroI18nContext,
-  definition: I18nDefinition<TKey>,
-): Promise<AstroI18n<TKey>> {
+  definition: I18nDefinition<TKey, TParams>,
+): Promise<AstroI18n<TKey, TParams>> {
   // Imported here, lazily, rather than as a static top-level `import ... from 'astro:i18n'`:
   // that virtual module only resolves inside Astro's own Vite pipeline, so a static import
   // would make importing *anything* from this package - even just its exported types -
@@ -77,7 +81,7 @@ export async function createAstroI18n<TKey extends string>(
   // and forgets a failed load, so a later page retries it instead of inheriting the error.
   await registry.load(locale);
 
-  const translator = createTranslator<TKey>({
+  const translator = createTranslator<TKey, TParams>({
     locale,
     catalog: registry.get(locale),
     sourceLocale: definition.sourceLocale,
@@ -104,13 +108,13 @@ export async function createAstroI18n<TKey extends string>(
     return `${astroI18n.getRelativeLocaleUrl(target, bareArg(pathname))}${search}${hash}`;
   };
 
-  const api: AstroI18n<TKey> = {
+  const api: AstroI18n<TKey, TParams> = {
     locale,
     sourceLocale: definition.sourceLocale,
     locales: definition.locales,
     direction: definition.directionOf(locale),
-    t: (key, params) => translator.translate(key, params),
-    parts: (key, params) => translator.translateToParts(key, params),
+    t: (key, ...params) => translator.translate(key, ...params),
+    parts: (key, ...params) => translator.translateToParts(key, ...params),
     has: key => translator.has(key),
     path,
     seo: () => buildSeo(definition, locale, astro.url.pathname, astroI18n),

@@ -20,19 +20,32 @@ import {
   type ContractDriftInfo,
   type Locale,
   type MessageFormatIssue,
+  type MessageArgs,
   type MessageFormatter,
   type MessageParams,
+  type MessageParamsMap,
   type MessagePart,
   type TextDirection,
 } from '@etyma/core';
 
 import { ETYMA_DEFINITION, ETYMA_LOCALE_SWITCH } from './tokens.js';
 
-/** Translates a key in the active locale. Reading it in a template subscribes to the locale. */
-export type TranslateFn<TKey extends string = string> = (
-  key: TKey,
-  params?: MessageParams,
-) => string;
+/**
+ * Translates a key in the active locale. Reading it in a template subscribes to the locale.
+ *
+ * `params` is required, and exact, for a key whose literal source message declares
+ * variables - see `MessageParamsOf` - and optional for every other key.
+ */
+export type TranslateFn<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> = <K extends TKey>(key: K, ...params: MessageArgs<TParams, K>) => string;
+
+/** The message as MessageFormat 2 parts, with the same params rule as {@link TranslateFn}. */
+export type PartsFn<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> = <K extends TKey>(key: K, ...params: MessageArgs<TParams, K>) => readonly MessagePart[];
 
 interface EtymaHydrationState {
   readonly locale: Locale;
@@ -53,7 +66,10 @@ const NO_TRANSFERRED_HYDRATION_STATE: EtymaHydrationState | null = null;
  * language changes. No zone, no subscription, no manual invalidation.
  */
 @Injectable()
-export class EtymaI18n<TKey extends string = string> {
+export class EtymaI18n<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> {
   /**
    * The configuration this instance was built from.
    *
@@ -93,7 +109,7 @@ export class EtymaI18n<TKey extends string = string> {
 
     const locale = this.activeLocale();
 
-    return createTranslator<TKey>({
+    return createTranslator({
       locale,
       catalog: this.registry.get(locale),
       sourceLocale: this.definition.sourceLocale,
@@ -164,7 +180,8 @@ export class EtymaI18n<TKey extends string = string> {
    *
    * The result is always text. A translated string is never interpreted as markup.
    */
-  readonly t: TranslateFn<TKey> = (key, params) => this.translator().translate(key, params);
+  readonly t: TranslateFn<TKey, TParams> = ((key: string, params?: MessageParams) =>
+    this.translator().translate(key, params)) as TranslateFn<TKey, TParams>;
 
   /**
    * The message as MessageFormat 2 parts.
@@ -172,8 +189,8 @@ export class EtymaI18n<TKey extends string = string> {
    * For a message that needs more than a string - a number in its own element, a date in a
    * `<time>` - without ever routing a translation through `innerHTML`.
    */
-  readonly parts = (key: TKey, params?: MessageParams): readonly MessagePart[] =>
-    this.translator().translateToParts(key, params);
+  readonly parts: PartsFn<TKey, TParams> = ((key: string, params?: MessageParams) =>
+    this.translator().translateToParts(key, params)) as PartsFn<TKey, TParams>;
 
   /** Whether `key` resolves in the active locale or in the source locale. */
   readonly has = (key: TKey): boolean => this.translator().has(key);

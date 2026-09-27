@@ -30,8 +30,130 @@ export type MessageValue = string | MessageSource | readonly string[];
  */
 export type MessageCatalog = ReadonlyMap<string, string>;
 
+/** One value substituted into a message's `{$placeholder}` slot. */
+export type MessageParamValue = string | number | bigint | boolean | Date;
+
 /** Values substituted into a message's `{$placeholder}` slots. */
-export type MessageParams = Readonly<Record<string, string | number | bigint | boolean | Date>>;
+export type MessageParams = Readonly<Record<string, MessageParamValue>>;
+
+/**
+ * The external variables of a MessageFormat 2 message, read from its literal type.
+ *
+ * Every `$name` a caller has to supply: placeholders (`{$name}`, `{$count :number}`),
+ * `.input` declarations, and variable option values (`minimumFractionDigits=$digits`) -
+ * minus the names a `.local` declaration defines inside the message. `never` for a message
+ * with no variables, and for a plain `string`, whose text TypeScript does not know.
+ *
+ * A type-level reading, not the parser: it agrees with `messageformat` on well-formed
+ * messages (`@etyma/tooling`'s tests check that against the real parser), and makes no claim
+ * about malformed ones, which `@etyma/tooling` reports as `message.invalid-syntax`.
+ */
+export type MessageVariables<S extends string> = string extends S
+  ? never
+  : Exclude<ReferencedVariables<Unescape<S>>, LocalVariables<Unescape<S>>>;
+
+/**
+ * The params each message of a catalog shape needs, keyed by dotted message key.
+ *
+ * Only messages whose literal text declares at least one variable get an entry. A message
+ * with no variables, and any message typed as plain `string` - every value in an imported
+ * `.json` file, every message behind a remote contract - has none, and `t()` keeps taking
+ * optional, untyped {@link MessageParams} for it.
+ */
+export type MessageParamsOf<T> = ParamMap<MessageParamEntry<T, ''>>;
+
+/**
+ * The upper bound of a key-to-params map such as {@link MessageParamsOf} produces. The
+ * default, `Record<never, never>`, has no entries, so every key takes optional untyped params.
+ */
+export type MessageParamsMap = Readonly<Record<string, MessageParams>>;
+
+/**
+ * What `t()` takes after `key`: the exact params `TParams` records for that key, required,
+ * or optional untyped {@link MessageParams} for a key it has no entry for.
+ *
+ * For a key typed as a union, the params every member with an entry needs, together - a
+ * runtime key could be any of them, so satisfying only one is not enough. A `TParams` with an
+ * index signature, such as {@link MessageParamsMap} itself, knows no particular key and is
+ * untyped for all of them: that is what an injector hands back for `EtymaI18n` with no
+ * definition to narrow it.
+ */
+export type MessageArgs<TParams, TKey extends string> = string extends keyof TParams
+  ? [params?: MessageParams]
+  : [Extract<TKey, keyof TParams>] extends [never]
+    ? [params?: MessageParams]
+    : [params: UnionToIntersection<TParams[Extract<TKey, keyof TParams>]>];
+
+type UnionToIntersection<U> = (U extends unknown ? (union: U) => void : never) extends (
+  intersection: infer I,
+) => void
+  ? I
+  : never;
+
+interface ParamEntryShape {
+  readonly key: string;
+  readonly variables: string;
+}
+
+type ParamMap<E extends ParamEntryShape> = {
+  [X in E as X['key']]: Readonly<Record<X['variables'], MessageParamValue>>;
+};
+
+type MessageParamEntry<T, P extends string> = {
+  [K in keyof T & string]: T[K] extends string
+    ? ParamEntry<`${P}${K}`, T[K]>
+    : T[K] extends readonly string[]
+      ? {
+          [I in Extract<keyof T[K], `${number}`>]: ParamEntry<`${P}${K}.${I}`, T[K][I]>;
+        }[Extract<keyof T[K], `${number}`>]
+      : MessageParamEntry<T[K], `${P}${K}.`>;
+}[keyof T & string];
+
+type ParamEntry<K extends string, S> = S extends string
+  ? [MessageVariables<S>] extends [never]
+    ? never
+    : { readonly key: K; readonly variables: MessageVariables<S> }
+  : never;
+
+/** Drops escaped braces, so `\{$x}` is text rather than a placeholder. */
+type Unescape<S extends string> = S extends `${infer A}\\{${infer B}` ? `${A}${Unescape<B>}` : S;
+
+/**
+ * Every `{...}` expression's variable, and every `$name` used as an option value. The `{{`
+ * that opens a quoted pattern (`one {{{$count} item}}`) is stripped with the whitespace.
+ */
+type ReferencedVariables<S extends string> = S extends `${string}{${infer Body}}${infer Rest}`
+  ? ExpressionVariables<Trim<Body>> | ReferencedVariables<Rest>
+  : never;
+
+type ExpressionVariables<B extends string> =
+  (B extends `$${infer Name}` ? Word<Name> : never) | OptionVariables<NormalizeEquals<B>>;
+
+type OptionVariables<B extends string> = B extends `${string}=$${infer Rest}`
+  ? Word<Rest> | OptionVariables<Rest>
+  : never;
+
+/** Names bound by `.local $name = ...`, which the caller does not supply. */
+type LocalVariables<S extends string> = S extends `${string}.local${infer Rest}`
+  ? Trim<Rest> extends `$${infer Name}`
+    ? Word<NormalizeEquals<Name>> | LocalVariables<Rest>
+    : LocalVariables<Rest>
+  : never;
+
+/** A variable name ends at whitespace, `=`, `}` or `:`. */
+type Word<S extends string> =
+  S extends `${infer Head}${' ' | '\n' | '\t' | '=' | ':' | '}'}${string}` ? Word<Head> : S;
+
+type NormalizeEquals<S extends string> = S extends `${infer A} =${infer B}`
+  ? NormalizeEquals<`${A}=${B}`>
+  : S extends `${infer A}= ${infer B}`
+    ? NormalizeEquals<`${A}=${B}`>
+    : S;
+
+type Trim<S extends string> = S extends
+  ` ${infer R}` | `\n${infer R}` | `\t${infer R}` | `{${infer R}`
+  ? Trim<R>
+  : S;
 
 /**
  * Authors a catalog in TypeScript instead of JSON.

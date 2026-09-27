@@ -337,6 +337,29 @@ describe('arrays of messages', () => {
   });
 });
 
+describe('typed params', () => {
+  it('requires the params a literal source message declares, and only those', () => {
+    const typed = defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: { nav: { docs: 'Docs' }, welcome: 'Hello, {$name}!' },
+    });
+    TestBed.configureTestingModule({ providers: [provideEtyma(typed)] });
+
+    const t = TestBed.runInInjectionContext(() => injectT(typed));
+    const i18n = TestBed.runInInjectionContext(() => injectI18n(typed));
+
+    expect(t('welcome', { name: 'Ada' })).toBe('Hello, Ada!');
+    expect(i18n.parts('welcome', { name: 'Ada' })).toHaveLength(3);
+    expect(t('nav.docs')).toBe('Docs');
+
+    // @ts-expect-error - `welcome` needs `name`; MF2 would render the fallback `{$name}`.
+    expect(t('welcome')).toBe('Hello, {$name}!');
+    // @ts-expect-error - a misspelt param.
+    expect(t('welcome', { nmae: 'Ada' })).toBe('Hello, {$name}!');
+  });
+});
+
 describe('injectI18n', () => {
   it('returns the provided instance', () => {
     const shared = definition();

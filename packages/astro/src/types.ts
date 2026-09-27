@@ -1,5 +1,11 @@
 import type { APIContext } from 'astro';
-import type { Locale, MessageParams, MessagePart, TextDirection } from '@etyma/core';
+import type {
+  Locale,
+  MessageArgs,
+  MessageParamsMap,
+  MessagePart,
+  TextDirection,
+} from '@etyma/core';
 
 /**
  * The slice of Astro's own request context that Etyma needs.
@@ -46,18 +52,26 @@ export interface AstroSeoData {
  * requests in two languages share nothing. Prerendered pages share only the loaded catalog
  * content behind it, never this object.
  */
-export interface AstroI18n<TKey extends string = string> {
+export interface AstroI18n<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> {
   /** The actual BCP 47 language code for this render, e.g. `"uk"` for the `/ua` route. */
   readonly locale: Locale;
   readonly sourceLocale: Locale;
   readonly locales: readonly Locale[];
   readonly direction: TextDirection;
 
-  /** The translated, formatted string. Always text - never markup. */
-  t(key: TKey, params?: MessageParams): string;
+  /**
+   * The translated, formatted string. Always text - never markup.
+   *
+   * `params` is required, and exact, for a key whose literal source message declares
+   * variables - see `MessageParamsOf` - and optional for every other key.
+   */
+  t<K extends TKey>(key: K, ...params: MessageArgs<TParams, K>): string;
 
   /** The message as MessageFormat 2 parts, for structure `t()` cannot express as text. */
-  parts(key: TKey, params?: MessageParams): readonly MessagePart[];
+  parts<K extends TKey>(key: K, ...params: MessageArgs<TParams, K>): readonly MessagePart[];
 
   /** Whether `key` resolves in this locale or in the source locale. */
   has(key: TKey): boolean;

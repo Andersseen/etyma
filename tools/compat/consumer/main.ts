@@ -55,6 +55,9 @@ export class CompatRoot {
     // @ts-expect-error - `features` is a two-element tuple in the source, so its indexes are
     // exact through the packed declarations too.
     this.t('features.2');
+    // @ts-expect-error - `footer.rights` declares `{$year}`, so its params are required -
+    // typed params have to survive packaging just as typed keys do.
+    this.t('footer.rights');
     void known;
   }
 
