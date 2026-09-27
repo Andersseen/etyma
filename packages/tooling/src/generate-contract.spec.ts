@@ -37,6 +37,27 @@ describe('extractContractKeys', () => {
   it('rejects a malformed catalog root', () => {
     expect(() => extractContractKeys(null as unknown as never)).toThrow(/root is null/);
   });
+
+  it('keeps every exact index of an array, since the real catalog is at hand', () => {
+    expect(extractContractKeys({ features: ['A', 'B'] })).toEqual(['features.0', 'features.1']);
+  });
+
+  it('sorts indexed keys the same way as every other key: as strings, not numbers', () => {
+    // The contract's order is the existing deterministic string sort, not the array's order -
+    // `items.10` before `items.2`. Traversal itself stays in array order (see core's tests).
+    const items = Array.from({ length: 11 }, (_, index) => `item ${index}`);
+
+    expect(extractContractKeys({ items }).slice(0, 4)).toEqual([
+      'items.0',
+      'items.1',
+      'items.10',
+      'items.2',
+    ]);
+  });
+
+  it('rejects an empty array, the same as flattenMessages does', () => {
+    expect(() => extractContractKeys({ features: [] })).toThrow(/"features" is an empty array/);
+  });
 });
 
 describe('renderContractModule', () => {

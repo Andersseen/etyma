@@ -14,6 +14,7 @@
   },
   "about": {
     "title": "Sobre mí",
-    "body": "Escribo sobre {$topic}."
+    "body": "Escribo sobre {$topic}.",
+    "paragraphs": ["Este sitio está hecho con {$framework}.", "Escrito por {$author}."]
   }
 }

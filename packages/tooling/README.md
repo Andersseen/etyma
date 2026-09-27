@@ -69,7 +69,9 @@ if (!result.valid) {
 ```
 
 Catalogs are plain nested objects — the same shape a `.json` file or `defineMessages()`
-produces, not a pre-flattened `Map`. Nothing here reads a file, spawns a process, or writes
+produces, not a pre-flattened `Map`. Message values may be strings, nested message objects,
+or non-empty arrays of strings; an array's elements are checked as the keys they flatten to,
+`steps.0`, `steps.1` and so on. Nothing here reads a file, spawns a process, or writes
 to `stdout`; `console.log` and `process.exit` above are the caller's choice, not something
 this package does on your behalf. That is deliberate: a CLI, a Vite plugin, an MCP tool and
 Forge CMS's in-browser editor can all call `validateCatalogs` directly and decide for
@@ -129,7 +131,8 @@ three diagnostics from one call.
 | `catalog.empty-key`                       | error    | A key is the empty string.                                                                                                                                                                                                                       |
 | `catalog.dotted-key`                      | error    | A key contains a `.`, which would collide with nesting.                                                                                                                                                                                          |
 | `catalog.duplicate-key`                   | error    | Two nodes flatten to the same dotted path. Kept for completeness with `@etyma/core`'s catalog walk; unreachable from a plain JS object or parsed JSON, since a key may not contain `.` and an object cannot repeat a property name at one level. |
-| `catalog.invalid-leaf`                    | error    | A value where a message string was expected is `null`, a boolean, a number, an array, or a non-leaf object.                                                                                                                                      |
+| `catalog.invalid-leaf`                    | error    | A value where a message was expected is `null`, a boolean, a number or `undefined`; or an array element is not a string (an object, a nested array, a sparse-array hole). Keyed by the element's own index, e.g. `steps.1`.                      |
+| `catalog.empty-array`                     | error    | An array has no elements, so it would contribute no key at all. Keyed by the array, e.g. `steps`.                                                                                                                                                |
 | `catalog.missing-key`                     | error    | A key the source catalog has is missing from this locale.                                                                                                                                                                                        |
 | `catalog.extra-key`                       | error    | A key this locale has does not exist in the source catalog.                                                                                                                                                                                      |
 | `message.empty`                           | error    | A message is `""`.                                                                                                                                                                                                                               |
@@ -153,7 +156,10 @@ a human and its wording is not part of the stable contract, only `code` is.
   carrying one the source doesn't have, is an error — reused from `@etyma/core`'s own
   `walkMessageSource`, the same tree-walk `flattenMessages` builds a runtime catalog from,
   used here in a form that collects every problem instead of stopping at the first.
-- **Catalog shape.** Every leaf must be a string; every key must be non-empty and dot-free.
+- **Catalog shape.** Every leaf must be a string, or a non-empty array of strings; every key
+  must be non-empty and dot-free. An array is compared element by element, as indexed keys:
+  a translation one element short is a `catalog.missing-key` for the last index, one element
+  long a `catalog.extra-key`, and variable parity is checked per element.
 - **Empty and whitespace-only messages**, in every locale including the source.
 - **MessageFormat 2 syntax and data model**, through the `messageformat` reference
   implementation `@etyma/core` formats messages with — the same parser, not a second one.

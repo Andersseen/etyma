@@ -1,14 +1,25 @@
 import { EtymaError } from './errors.js';
 
 /**
- * A catalog as an author writes it: nested objects of strings.
+ * A catalog as an author writes it: nested objects whose leaves are strings, or non-empty
+ * arrays of strings.
  *
  * This is the shape of a `.json` file and the shape {@link defineMessages} takes, so the
- * two authoring styles converge before anything else in Etyma sees them.
+ * two authoring styles converge before anything else in Etyma sees them. The root is always
+ * an object.
  */
 export interface MessageSource {
-  readonly [key: string]: string | MessageSource;
+  readonly [key: string]: MessageValue;
 }
+
+/**
+ * One value in a {@link MessageSource}: a message, a nested namespace, or a list of messages.
+ *
+ * An array is only a shorter way to write numbered keys - `{"steps": ["a", "b"]}` flattens
+ * to `steps.0` and `steps.1`, exactly as `{"steps": {"0": "a", "1": "b"}}` would. It must be
+ * non-empty and hold only strings; an array of objects or of arrays is not a catalog shape.
+ */
+export type MessageValue = string | MessageSource | readonly string[];
 
 /**
  * A catalog as Etyma stores it: dotted key to MessageFormat 2 pattern.
@@ -40,12 +51,27 @@ export function defineMessages<const T extends MessageSource>(messages: T): T {
  * This is what makes `t('footer.rights')` compile and `t('footer.foo')` not. It reads the
  * source catalog's type, so the source language is the key contract and a translation that
  * has drifted cannot widen it.
+ *
+ * An array contributes one key per index. A tuple type - what {@link defineMessages} infers
+ * for an array literal - gives the exact indexes (`'steps.0' | 'steps.1'`). A plain
+ * `string[]` - what TypeScript infers for an array in an imported `.json` file - has no
+ * known length, so the honest key is `` `steps.${number}` ``: any index type-checks, and an
+ * index past the end is a missing message at runtime, not a compile error.
  */
 export type MessageKey<T> = T extends string
   ? never
   : {
-      [K in keyof T & string]: T[K] extends string ? K : `${K}.${MessageKey<T[K]>}`;
+      [K in keyof T & string]: T[K] extends string
+        ? K
+        : T[K] extends readonly string[]
+          ? `${K}.${MessageIndex<T[K]>}`
+          : `${K}.${MessageKey<T[K]>}`;
     }[keyof T & string];
+
+/** The index keys of an array of messages: exact for a tuple, `${number}` otherwise. */
+type MessageIndex<T extends readonly string[]> = number extends T['length']
+  ? `${number}`
+  : Extract<keyof T, `${number}`>;
 
 /**
  * A message-key contract, independent of any translation values.
@@ -90,6 +116,9 @@ export function defineMessageContract<const TKeys extends readonly string[]>(
 /**
  * Flattens a nested catalog into dotted keys.
  *
+ * An array of strings flattens to one key per zero-based index, in array order:
+ * `{"steps": ["a", "b"]}` becomes `steps.0` and `steps.1`.
+ *
  * Rejects a key that already contains a dot, because `{"a.b": "x"}` and `{"a": {"b": "x"}}`
  * would otherwise produce the same flat key and one would silently win. Built on
  * {@link walkMessageSource}, and throws on the first problem the walk reports: a malformed
@@ -127,7 +156,13 @@ export interface MessageSourceLeaf {
  *
  * `'invalid-root'` describes the tree itself; every other kind names the offending node by
  * its dotted `path`. `value` carries the offending value for the kinds where it is not
- * redundant with `path` alone, i.e. every kind except `'dotted-key'` and `'duplicate-key'`.
+ * redundant with `path` alone, i.e. every kind except `'dotted-key'`, `'duplicate-key'` and
+ * `'empty-array'`.
+ *
+ * An array element that is not a string - a number, an object, a nested array, or a hole in
+ * a sparse array - is an `'invalid-leaf'` at the element's own indexed path (`steps.1`), not
+ * at the array's. `'empty-array'` is an array with no elements at all, which would otherwise
+ * contribute no key and vanish from the catalog contract without a trace.
  *
  * `'duplicate-key'` cannot occur from a plain nested object: segments may not contain `.`,
  * and an object cannot have two own properties with the same name at one level, so every
@@ -137,7 +172,8 @@ export interface MessageSourceLeaf {
  */
 export interface MessageSourceProblem {
   readonly path: string;
-  readonly kind: 'invalid-root' | 'empty-key' | 'dotted-key' | 'duplicate-key' | 'invalid-leaf';
+  readonly kind:
+    'invalid-root' | 'empty-key' | 'dotted-key' | 'duplicate-key' | 'invalid-leaf' | 'empty-array';
   readonly value?: unknown;
 }
 
@@ -186,23 +222,67 @@ function walk(
     const path = `${prefix}${segment}`;
 
     if (typeof value === 'string') {
-      if (seen.has(path)) {
-        onProblem({ path, kind: 'duplicate-key' });
-        continue;
-      }
-
-      seen.add(path);
-      onLeaf({ path, value });
+      leaf(path, value, seen, onLeaf, onProblem);
       continue;
     }
 
-    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    if (Array.isArray(value)) {
+      walkArray(value, path, seen, onLeaf, onProblem);
+      continue;
+    }
+
+    if (value === null || typeof value !== 'object') {
       onProblem({ path, kind: 'invalid-leaf', value });
       continue;
     }
 
     walk(value as MessageSource, `${path}.`, seen, onLeaf, onProblem);
   }
+}
+
+/**
+ * Walks an array of messages by index, not with `forEach` or `entries`: a sparse array's
+ * hole must be reported as the missing element it is, not skipped so that `[a, , c]` quietly
+ * becomes keys `0` and `2`. A hole and an explicit `undefined` are the same invalid leaf.
+ */
+function walkArray(
+  array: readonly unknown[],
+  path: string,
+  seen: Set<string>,
+  onLeaf: (leaf: MessageSourceLeaf) => void,
+  onProblem: (problem: MessageSourceProblem) => void,
+): void {
+  if (array.length === 0) {
+    onProblem({ path, kind: 'empty-array' });
+    return;
+  }
+
+  for (let index = 0; index < array.length; index++) {
+    const value = array[index];
+    const elementPath = `${path}.${index}`;
+
+    if (typeof value === 'string') {
+      leaf(elementPath, value, seen, onLeaf, onProblem);
+    } else {
+      onProblem({ path: elementPath, kind: 'invalid-leaf', value });
+    }
+  }
+}
+
+function leaf(
+  path: string,
+  value: string,
+  seen: Set<string>,
+  onLeaf: (leaf: MessageSourceLeaf) => void,
+  onProblem: (problem: MessageSourceProblem) => void,
+): void {
+  if (seen.has(path)) {
+    onProblem({ path, kind: 'duplicate-key' });
+    return;
+  }
+
+  seen.add(path);
+  onLeaf({ path, value });
 }
 
 function problemToError(problem: MessageSourceProblem): EtymaError {
@@ -226,14 +306,22 @@ function problemToError(problem: MessageSourceProblem): EtymaError {
     case 'invalid-leaf':
       return new EtymaError(
         `Invalid message catalog: "${problem.path}" is ${describe(problem.value)}; ` +
-          'message values must be strings or nested objects of strings.',
+          'message values must be strings, nested objects of messages, or non-empty arrays ' +
+          'of strings, and array elements must be strings.',
+      );
+    case 'empty-array':
+      return new EtymaError(
+        `Invalid message catalog: "${problem.path}" is an empty array; ` +
+          'an array of messages must contain at least one string.',
       );
   }
 }
 
 function describe(value: unknown): string {
   if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
   if (Array.isArray(value)) return 'an array';
+  if (typeof value === 'object') return 'an object';
 
   return `a ${typeof value}`;
 }

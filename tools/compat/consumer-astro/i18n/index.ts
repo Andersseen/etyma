@@ -17,6 +17,8 @@ const contract = defineMessageContract([
   'posts.count',
   'about.title',
   'about.body',
+  'about.paragraphs.0',
+  'about.paragraphs.1',
 ] as const);
 
 const load = createHttpMessageLoader(locale => `${__ETYMA_COMPAT_CATALOGS__}/${locale}.json`);

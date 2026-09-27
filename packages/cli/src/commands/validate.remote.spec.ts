@@ -76,6 +76,28 @@ describe('runValidateCommand --remote', () => {
       });
     });
 
+    it('validates remote catalogs with string arrays like local ones', async () => {
+      const { origin } = await serveFixture('arrays');
+
+      const result = await runValidateCommand(remoteArgs(origin, 'en,es'), '/');
+
+      expect(result).toEqual({
+        exitCode: 0,
+        stdout: '✓ 2 locales\n✓ 4 messages\n✓ Catalogs are valid\n',
+        stderr: '',
+      });
+    });
+
+    it('exits 1 and names the missing index of a shorter remote array', async () => {
+      const { origin } = await serveFixture('array-length-mismatch');
+
+      const result = await runValidateCommand(remoteArgs(origin, 'en,es'), '/');
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain('ERROR catalog.missing-key');
+      expect(result.stdout).toContain('onboarding.steps.2');
+    });
+
     it('exits 1 and reports catalog.missing-key', async () => {
       const { origin } = await serveFixture('missing-key');
 
@@ -120,7 +142,8 @@ describe('runValidateCommand --remote', () => {
       ['an array', '[]'],
       ['null', 'null'],
       ['a string', '"hello"'],
-      ['a nested array leaf', '{"nav":["a"]}'],
+      ['an array of numbers', '{"nav":{"docs":[1]}}'],
+      ['an empty array', '{"nav":{"docs":[]}}'],
     ])('exits 1, not 2, for valid JSON that is %s instead of a catalog', async (_name, body) => {
       const { origin } = await serve({
         '/i18n/en.json': json({ nav: { docs: 'Docs' } }),

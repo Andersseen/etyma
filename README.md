@@ -56,7 +56,7 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 ## What it does today
 
 - **JSON catalogs first.** `i18n/en.json`, `i18n/es.json`, `i18n/uk.json`. Nested keys,
-  addressed as `nav.docs`.
+  addressed as `nav.docs`; arrays of strings, addressed by index as `steps.0`.
 - **Typed keys.** `t('footer.foo')` does not compile when the source catalog has no
   `footer.foo`. Inferred from the source catalog's type — no code generator, no build step.
 - **MessageFormat 2**, through the [`messageformat`](https://messageformat.github.io/)
@@ -337,6 +337,37 @@ const seo = defineMessages({ siteName: 'Etyma', tagline: 'i18n for Angular' });
 
 export const i18n = defineI18n({ /* … */ source: { ...en, seo } });
 ```
+
+### Arrays of messages
+
+A list of strings can be written as an array. Each element is an ordinary message, keyed by
+its zero-based index:
+
+```json
+{
+  "onboarding": {
+    "steps": ["Create an account", "Choose {$plan}", "Invite your team"]
+  }
+}
+```
+
+That is `onboarding.steps.0`, `onboarding.steps.1` and `onboarding.steps.2` — exactly the
+catalog `{"steps": {"0": …, "1": …, "2": …}}` would give. You still translate one key at a
+time, `t('onboarding.steps.1', { plan: 'Pro' })`; there is no API that returns a whole list.
+Fallback, MessageFormat 2 and validation treat each index like any other key, so a
+translation one element short is a `catalog.missing-key` for the last index, and
+`t('onboarding.steps.2')` falls back to the source until it is translated.
+
+- An array must be **non-empty** and hold **only strings**. An empty array, an array of
+  objects, a nested array or a sparse array's hole is a catalog error, reported at the
+  array (`steps`) or at the offending index (`steps.1`).
+- The root of a catalog is still an object.
+- **Key precision depends on what TypeScript knows.** An array written in `defineMessages()`
+  is a tuple, so its keys are exact: `'steps.0' | 'steps.1' | 'steps.2'`. An array in an
+  imported `.json` file is typed `string[]`, which has no length, so its key type is
+  `` `onboarding.steps.${number}` `` — `t('onboarding.steps.9')` compiles and renders the
+  missing-message fallback. The generated contract of a [remote catalog](#remote-catalogs) is
+  built from the real catalog, so it lists the exact indexes.
 
 ## Migrating from simple interpolation
 

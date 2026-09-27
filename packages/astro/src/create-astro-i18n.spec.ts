@@ -203,6 +203,27 @@ describe('createAstroI18n', () => {
     });
   });
 
+  describe('arrays of messages', () => {
+    it('translates indexed keys through the "ua" route, falling back per index', async () => {
+      const definition = defineI18n({
+        locales: ['es', 'en', 'uk'],
+        sourceLocale: 'es',
+        source: { about: { paragraphs: ['Escribo sobre {$topic}.', 'Segundo párrafo.'] } },
+        loaders: {
+          en: () => ({ about: { paragraphs: ['I write about {$topic}.', 'Second paragraph.'] } }),
+          uk: () => ({ about: { paragraphs: ['Я пишу про {$topic}.'] } }),
+        },
+      });
+
+      const etyma = await createAstroI18n(context('uk', '/ua/about'), definition);
+
+      expect(etyma.locale).toBe('uk');
+      expect(etyma.t('about.paragraphs.0', { topic: 'Astro' })).toBe('Я пишу про Astro.');
+      expect(etyma.t('about.paragraphs.1')).toBe('Segundo párrafo.');
+      expect(etyma.has('about.paragraphs.1')).toBe(true);
+    });
+  });
+
   describe('seo()', () => {
     it('keys the alternate set by BCP 47 language code, never the Astro route path', async () => {
       const etyma = await createAstroI18n(context('uk', '/ua/blog'), staticDefinition());

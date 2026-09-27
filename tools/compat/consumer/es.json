@@ -1,4 +1,5 @@
 {
   "nav": { "docs": "Documentación" },
-  "footer": { "rights": "Licencia MIT. {$year :number useGrouping=never}" }
+  "footer": { "rights": "Licencia MIT. {$year :number useGrouping=never}" },
+  "features": ["Claves tipadas", "¡Hola, {$name}!"]
 }

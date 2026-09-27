@@ -19,6 +19,7 @@ import { defineI18n, defineMessages, type Locale, type MessageKey } from '@etyma
 const source = defineMessages({
   nav: { docs: 'Docs' },
   footer: { rights: 'MIT licensed. {$year :number useGrouping=never}' },
+  features: ['Typed keys', 'Hello, {$name}!'],
 });
 
 const i18n = defineI18n({
@@ -37,6 +38,7 @@ const known: Key = 'footer.rights';
   template: `
     <p>{{ t('nav.docs') }}</p>
     <p>{{ t('footer.rights', { year: 2026 }) }}</p>
+    <p>{{ t('features.0') }} / {{ t('features.1', { name: 'Ada' }) }}</p>
     <p>{{ i18n.path('/docs') }}</p>
     <p>{{ i18n.locale() }} / {{ i18n.direction() }} / {{ i18n.ready() }}</p>
     <button type="button" (click)="switchTo('es')">es</button>
@@ -50,6 +52,9 @@ export class CompatRoot {
     // @ts-expect-error - the source catalog has no `nav.nope`, and the published types
     // have to keep rejecting it. If this ever stops being an error, typed keys are broken.
     this.t('nav.nope');
+    // @ts-expect-error - `features` is a two-element tuple in the source, so its indexes are
+    // exact through the packed declarations too.
+    this.t('features.2');
     void known;
   }
 

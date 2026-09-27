@@ -10,4 +10,6 @@ const etyma = await createAstroI18n(Astro, i18n);
 <Layout etyma={etyma} title={etyma.t('about.title')}>
   <h1>{etyma.t('about.title')}</h1>
   <p class="body">{etyma.t('about.body', { topic: 'Astro' })}</p>
+  <p class="paragraph">{etyma.t('about.paragraphs.0', { framework: 'Etyma' })}</p>
+  <p class="paragraph">{etyma.t('about.paragraphs.1', { author: 'Andrii' })}</p>
 </Layout>

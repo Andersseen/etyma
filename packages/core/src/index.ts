@@ -31,6 +31,7 @@ export {
   type MessageSource,
   type MessageSourceLeaf,
   type MessageSourceProblem,
+  type MessageValue,
 } from './messages.js';
 
 export { createLocaleRouter, type LocaleRouter, type LocaleRouterOptions } from './routing.js';

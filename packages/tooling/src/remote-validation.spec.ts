@@ -144,6 +144,34 @@ describe('etymaRemoteValidation', () => {
     });
   });
 
+  describe('arrays of messages', () => {
+    const withArrays = (features: unknown) => ({ ...es, features });
+
+    it('passes remote catalogs whose arrays line up', async () => {
+      const { origin } = await serve(
+        catalogs({
+          en: { ...en, features: ['Typed keys', 'Hello, {$name}!'] },
+          es: withArrays(['Claves tipadas', '¡Hola, {$name}!']),
+          uk: { ...uk, features: ['Типізовані ключі', 'Привіт, {$name}!'] },
+        }),
+      );
+
+      await expect(plugin(origin).buildStart()).resolves.toBeUndefined();
+    });
+
+    it('fails on a translated array that is one element short, naming the index', async () => {
+      const { origin } = await serve(
+        catalogs({
+          en: { ...en, features: ['Typed keys', 'Hello, {$name}!'] },
+          es: withArrays(['Claves tipadas']),
+          uk: { ...uk, features: ['Типізовані ключі', 'Привіт, {$name}!'] },
+        }),
+      );
+
+      expect(await failureOf(plugin(origin))).toContain('error catalog.missing-key  features.1');
+    });
+  });
+
   describe('fails the build on catalog diagnostics', () => {
     it.each([
       ['a missing key', { es: { nav: {}, footer: es.footer } }, 'catalog.missing-key  nav.docs'],

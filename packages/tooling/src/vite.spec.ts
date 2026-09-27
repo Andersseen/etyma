@@ -91,6 +91,23 @@ describe('etymaRemoteContract', () => {
     }
   });
 
+  it('generates the exact indexed keys of a remote source catalog with arrays', async () => {
+    const output = join(dir, 'contract.generated.ts');
+    const server = await startFixtureServer({
+      '/en.json': json({ features: ['A', 'B'], title: 'Etyma' }),
+    });
+
+    try {
+      await etymaRemoteContract({ source: `${server.origin}/en.json`, output }).buildStart();
+    } finally {
+      await server.close();
+    }
+
+    expect(readFileSync(output, 'utf8')).toContain(
+      'export default defineMessageContract([\n  "features.0",\n  "features.1",\n  "title",\n] as const);',
+    );
+  });
+
   it('throws when loading fails and no previously generated contract exists', async () => {
     const output = join(dir, 'contract.generated.ts');
     const plugin = etymaRemoteContract({

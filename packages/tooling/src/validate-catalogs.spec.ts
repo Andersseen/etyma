@@ -325,3 +325,62 @@ describe('validateCatalogs: multiple errors per run', () => {
     );
   });
 });
+
+describe('validateCatalogs: arrays of messages', () => {
+  it('reports a shorter translated array as a missing indexed key', () => {
+    const result = validateCatalogs({
+      sourceLocale: 'en',
+      catalogs: { en: { features: ['A', 'B', 'C'] }, es: { features: ['Uno', 'Dos'] } },
+    });
+
+    expect(result.diagnostics.map(d => [d.code, d.locale, d.key])).toEqual([
+      ['catalog.missing-key', 'es', 'features.2'],
+    ]);
+  });
+
+  it('reports a longer translated array as an extra indexed key', () => {
+    const result = validateCatalogs({
+      sourceLocale: 'en',
+      catalogs: {
+        en: { features: ['A', 'B', 'C'] },
+        es: { features: ['Uno', 'Dos', 'Tres', 'Cuatro'] },
+      },
+    });
+
+    expect(result.diagnostics.map(d => [d.code, d.locale, d.key])).toEqual([
+      ['catalog.extra-key', 'es', 'features.3'],
+    ]);
+  });
+
+  it('compares MessageFormat 2 variables per array element', () => {
+    const result = validateCatalogs({
+      sourceLocale: 'en',
+      catalogs: {
+        en: { rows: ['Hello {$name}', '{$count :number} results'] },
+        es: { rows: ['Hola', '{$count :number} resultados'] },
+      },
+    });
+
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: 'message.missing-variable', locale: 'es', key: 'rows.0' }),
+    ]);
+  });
+
+  it('treats an array and numbered object keys as the same keys', () => {
+    const result = validateCatalogs({
+      sourceLocale: 'en',
+      catalogs: { en: { features: ['A', 'B'] }, es: { features: { '0': 'Uno', '1': 'Dos' } } },
+    });
+
+    expect(result).toEqual({ valid: true, diagnostics: [] });
+  });
+
+  it('reports an empty translated array, not a missing key for every index', () => {
+    const result = validateCatalogs({
+      sourceLocale: 'en',
+      catalogs: { en: { features: ['A', 'B'] }, es: { features: [] } },
+    });
+
+    expect(codes(result)).toContain('catalog.empty-array');
+  });
+});

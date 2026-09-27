@@ -1,0 +1,6 @@
+{
+  "onboarding": {
+    "title": "Welcome",
+    "steps": ["Create an account", "Choose {$plan}", "Invite your team"]
+  }
+}

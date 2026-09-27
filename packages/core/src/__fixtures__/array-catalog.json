@@ -1,0 +1,13 @@
+{
+  "home": {
+    "title": "Home",
+    "editorialPoints": [
+      "Scalable frontend architecture",
+      "Real experiments with Angular and Web Components",
+      "Tooling, DX and code quality insights"
+    ]
+  },
+  "about": {
+    "paragraphs": ["This blog is designed to scale without friction.", "Written by {$author}."]
+  }
+}

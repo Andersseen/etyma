@@ -16,6 +16,18 @@ describe('validateCatalog: valid catalogs', () => {
     expect(result).toEqual({ valid: true, diagnostics: [] });
   });
 
+  it('accepts non-empty string arrays, including MessageFormat 2 elements', () => {
+    const result = validateCatalog({
+      locale: 'en',
+      catalog: {
+        nav: { items: ['Home', 'Docs'] },
+        steps: ['Hello, {$name}!', 'You have {$count :number} items.'],
+      },
+    });
+
+    expect(result).toEqual({ valid: true, diagnostics: [] });
+  });
+
   it('accepts a simple external variable', () => {
     const result = validateCatalog({ locale: 'en', catalog: { greeting: 'Hello {$name}' } });
 
@@ -116,7 +128,8 @@ describe('validateCatalog: invalid catalogs', () => {
         locale: 'en',
         key: 'count',
         message:
-          '"count" is a number; message values must be strings or nested objects of strings.',
+          '"count" is a number; message values must be strings, nested objects of messages, ' +
+          'or non-empty arrays of strings, and array elements must be strings.',
       },
     ]);
   });
@@ -136,10 +149,76 @@ describe('validateCatalog: invalid catalogs', () => {
     expect(result.diagnostics[0]?.message).toMatch(/is null/);
   });
 
-  it('reports an array leaf', () => {
-    const result = validateCatalog({ locale: 'en', catalog: { items: [] as unknown as string } });
+  it('reports an empty array as catalog.empty-array, keyed by the array', () => {
+    const result = validateCatalog({ locale: 'en', catalog: { title: 'Hi', features: [] } });
 
-    expect(result.diagnostics[0]?.message).toMatch(/is an array/);
+    expect(result.diagnostics).toEqual([
+      {
+        code: 'catalog.empty-array',
+        severity: 'error',
+        locale: 'en',
+        key: 'features',
+        message:
+          '"features" is an empty array; an array of messages must contain at least one string.',
+      },
+    ]);
+  });
+
+  it('reports a non-string array element at its indexed key, not at the array', () => {
+    const result = validateCatalog({
+      locale: 'en',
+      catalog: { features: ['Typed', 42, 'Safe'] } as unknown as never,
+    });
+
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: 'catalog.invalid-leaf', key: 'features.1' }),
+    ]);
+    expect(result.diagnostics[0]?.message).toMatch(/^"features\.1" is a number;/);
+  });
+
+  it('reports an object element of an array, which is a collection rather than a message', () => {
+    const result = validateCatalog({
+      locale: 'en',
+      catalog: { team: [{ name: 'Andrii' }, { name: 'Julia' }] } as unknown as never,
+    });
+
+    expect(result.diagnostics.map(d => [d.code, d.key])).toEqual([
+      ['catalog.invalid-leaf', 'team.0'],
+      ['catalog.invalid-leaf', 'team.1'],
+    ]);
+    expect(result.diagnostics[0]?.message).toMatch(/is an object;.*array elements must be strings/);
+  });
+
+  it('reports a nested array at the index where it occurs', () => {
+    const result = validateCatalog({
+      locale: 'en',
+      catalog: {
+        matrix: [
+          ['a', 'b'],
+          ['c', 'd'],
+        ],
+      } as unknown as never,
+    });
+
+    expect(result.diagnostics.map(d => d.key)).toEqual(['matrix.0', 'matrix.1']);
+    expect(result.diagnostics[0]?.message).toMatch(/"matrix\.0" is an array/);
+  });
+
+  it('still reports an array root as catalog.invalid-root', () => {
+    const result = validateCatalog({ locale: 'en', catalog: ['Hello'] as unknown as never });
+
+    expect(codes(result)).toEqual(['catalog.invalid-root']);
+  });
+
+  it('checks MessageFormat 2 syntax inside an array element, at its indexed key', () => {
+    const result = validateCatalog({
+      locale: 'en',
+      catalog: { steps: ['Hello, {$name}!', 'Broken {$count'] },
+    });
+
+    expect(result.diagnostics.map(d => [d.code, d.key])).toEqual([
+      ['message.invalid-syntax', 'steps.1'],
+    ]);
   });
 
   it('reports a dotted key', () => {
