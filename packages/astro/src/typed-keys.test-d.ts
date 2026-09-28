@@ -1,6 +1,6 @@
 import type { APIContext } from 'astro';
 import { describe, expectTypeOf, it } from 'vitest';
-import { defineI18n, defineMessages } from '@etyma/core';
+import { defineI18n, defineMessages, type MessageParamValue } from '@etyma/core';
 
 import { createAstroI18n } from './create-astro-i18n.js';
 import type { AstroI18n, AstroI18nContext } from './types.js';
@@ -23,7 +23,12 @@ describe('AstroI18n typed keys', () => {
   it('types t(), parts() and has() against the source catalog', async () => {
     const etyma = await createAstroI18n(astro, definition);
 
-    expectTypeOf(etyma).toEqualTypeOf<AstroI18n<'home.title' | 'footer.rights'>>();
+    expectTypeOf(etyma).toEqualTypeOf<
+      AstroI18n<
+        'home.title' | 'footer.rights',
+        { 'footer.rights': { readonly year: MessageParamValue } }
+      >
+    >();
 
     etyma.t('home.title');
     etyma.parts('footer.rights', { year: 2026 });
@@ -33,6 +38,17 @@ describe('AstroI18n typed keys', () => {
     etyma.t('home.titel');
     // @ts-expect-error - `nav` was never a key in this catalog at all.
     etyma.t('nav.docs');
+  });
+
+  it('requires the params a literal source message declares', async () => {
+    const etyma = await createAstroI18n(astro, definition);
+
+    etyma.t('footer.rights', { year: 2026 });
+
+    // @ts-expect-error - `footer.rights` needs `year`.
+    etyma.t('footer.rights');
+    // @ts-expect-error - and nothing but `year`.
+    etyma.parts('footer.rights', { year: 2026, month: 9 });
   });
 
   it('leaves keys as plain strings when the definition is untyped', () => {

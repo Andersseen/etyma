@@ -19,6 +19,24 @@ describe('runValidateCommand', () => {
     expect(result.stdout).toBe('✓ 3 locales\n✓ 2 messages\n✓ Catalogs are valid\n');
   });
 
+  it('counts each element of a string array as a message', async () => {
+    const result = await runValidateCommand([fixture('arrays'), '--source', 'en'], '/');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('✓ 2 locales\n✓ 4 messages\n✓ Catalogs are valid\n');
+  });
+
+  it('exits 1 and names the missing index when a translated array is shorter', async () => {
+    const result = await runValidateCommand(
+      [fixture('array-length-mismatch'), '--source', 'en'],
+      '/',
+    );
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain('catalog.missing-key');
+    expect(result.stdout).toContain('onboarding.steps.2');
+  });
+
   it('resolves a relative directory against the given cwd', async () => {
     const result = await runValidateCommand(['./valid', '--source', 'en'], fixturesRoot);
 

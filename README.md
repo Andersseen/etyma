@@ -56,9 +56,11 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 ## What it does today
 
 - **JSON catalogs first.** `i18n/en.json`, `i18n/es.json`, `i18n/uk.json`. Nested keys,
-  addressed as `nav.docs`.
+  addressed as `nav.docs`; arrays of strings, addressed by index as `steps.0`.
 - **Typed keys.** `t('footer.foo')` does not compile when the source catalog has no
   `footer.foo`. Inferred from the source catalog's type — no code generator, no build step.
+  For messages written in `defineMessages()`, params are typed too: `t('welcome')` does not
+  compile when the message is `'Hello, {$name}!'`.
 - **MessageFormat 2**, through the [`messageformat`](https://messageformat.github.io/)
   reference implementation. Plurals, selects, numbers and dates come from CLDR and `Intl`,
   not from anything Etyma invented.
@@ -338,6 +340,72 @@ const seo = defineMessages({ siteName: 'Etyma', tagline: 'i18n for Angular' });
 export const i18n = defineI18n({ /* … */ source: { ...en, seo } });
 ```
 
+### Typed params
+
+When TypeScript knows a message's text, it knows the message's variables. For a source
+catalog written with `defineMessages()` (or as an object literal passed to `defineI18n`),
+`t()` requires exactly the params each message declares:
+
+```ts
+const source = defineMessages({
+  welcome: 'Hello, {$name}!',
+  footer: { rights: '© {$year :number useGrouping=never} {$author}' },
+  nav: { docs: 'Docs' },
+});
+
+t('welcome', { name: 'Ada' }); // ok
+t('welcome'); // error: `name` is required
+t('footer.rights', { year: 2026 }); // error: `author` is missing
+t('nav.docs'); // ok: no variables, params stay optional
+```
+
+Variables are read from placeholders (`{$name}`, `{$count :number}`), `.input`
+declarations and variable option values (`minimumFractionDigits=$digits`); names bound by
+`.local` are not asked for. Each param accepts any value `t()` always accepted — a string,
+number, bigint, boolean or `Date`; the check is on the names, not on which `:function`
+formats them.
+
+**Remote catalogs** get typed params from their generated contract: `etymaRemoteContract`
+reads each source message's variables with the MessageFormat 2 parser and writes them next
+to the keys — see [Remote catalogs](#remote-catalogs).
+
+**Where it does not reach.** A `.json` import types every message as plain `string`, so
+TypeScript never sees the text. For those messages params stay optional and untyped, exactly
+as before — nothing breaks, and nothing is claimed that is not known. Mix the two freely:
+`source: { ...json, ...defineMessages({…}) }` types params for the `defineMessages` part
+only.
+
+### Arrays of messages
+
+A list of strings can be written as an array. Each element is an ordinary message, keyed by
+its zero-based index:
+
+```json
+{
+  "onboarding": {
+    "steps": ["Create an account", "Choose {$plan}", "Invite your team"]
+  }
+}
+```
+
+That is `onboarding.steps.0`, `onboarding.steps.1` and `onboarding.steps.2` — exactly the
+catalog `{"steps": {"0": …, "1": …, "2": …}}` would give. You still translate one key at a
+time, `t('onboarding.steps.1', { plan: 'Pro' })`; there is no API that returns a whole list.
+Fallback, MessageFormat 2 and validation treat each index like any other key, so a
+translation one element short is a `catalog.missing-key` for the last index, and
+`t('onboarding.steps.2')` falls back to the source until it is translated.
+
+- An array must be **non-empty** and hold **only strings**. An empty array, an array of
+  objects, a nested array or a sparse array's hole is a catalog error, reported at the
+  array (`steps`) or at the offending index (`steps.1`).
+- The root of a catalog is still an object.
+- **Key precision depends on what TypeScript knows.** An array written in `defineMessages()`
+  is a tuple, so its keys are exact: `'steps.0' | 'steps.1' | 'steps.2'`. An array in an
+  imported `.json` file is typed `string[]`, which has no length, so its key type is
+  `` `onboarding.steps.${number}` `` — `t('onboarding.steps.9')` compiles and renders the
+  missing-message fallback. The generated contract of a [remote catalog](#remote-catalogs) is
+  built from the real catalog, so it lists the exact indexes.
+
 ## Migrating from simple interpolation
 
 Etyma does not implement a custom `{name}` interpolator. Catalog strings are MessageFormat 2
@@ -422,7 +490,7 @@ therefore separates the two concerns `defineI18n` used to merge into one static 
 
 ```
 remote catalog        = the content authority — the actual messages, always
-generated contract    = a build-time type artifact — keys only, never messages
+generated contract    = a build-time type artifact — keys and variable names, never messages
 ```
 
 `@etyma/tooling/vite` generates that contract automatically, from the remote catalog's shape,

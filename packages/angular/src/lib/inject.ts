@@ -1,5 +1,5 @@
 import { inject, isDevMode } from '@angular/core';
-import { EtymaError, type I18nDefinition } from '@etyma/core';
+import { EtymaError, type I18nDefinition, type MessageParamsMap } from '@etyma/core';
 
 import { EtymaI18n, type TranslateFn } from './i18n.js';
 import { ETYMA_DEFINITION } from './tokens.js';
@@ -20,9 +20,10 @@ import { ETYMA_DEFINITION } from './tokens.js';
  *
  * Called with no argument it still works; keys are then plain strings.
  */
-export function injectI18n<TKey extends string = string>(
-  definition?: I18nDefinition<TKey>,
-): EtymaI18n<TKey> {
+export function injectI18n<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+>(definition?: I18nDefinition<TKey, TParams>): EtymaI18n<TKey, TParams> {
   const instance = inject(EtymaI18n);
 
   if (isDevMode() && definition !== undefined && definition !== inject(ETYMA_DEFINITION)) {
@@ -32,7 +33,9 @@ export function injectI18n<TKey extends string = string>(
     );
   }
 
-  return instance;
+  // The injector only knows `EtymaI18n<string>`; key and params types are a property of the
+  // call site that named the definition, and narrow what a caller may pass, nothing else.
+  return instance as unknown as EtymaI18n<TKey, TParams>;
 }
 
 /**
@@ -44,8 +47,9 @@ export function injectI18n<TKey extends string = string>(
  * }
  * ```
  */
-export function injectT<TKey extends string = string>(
-  definition?: I18nDefinition<TKey>,
-): TranslateFn<TKey> {
+export function injectT<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+>(definition?: I18nDefinition<TKey, TParams>): TranslateFn<TKey, TParams> {
   return injectI18n(definition).t;
 }

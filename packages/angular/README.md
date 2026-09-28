@@ -47,7 +47,9 @@ export class Nav {
 ```
 
 Passing the definition is a type-level argument — the instance comes from the injector
-either way — and it is what makes `t('nav.dcos')` a compile error. Calling `injectI18n()`
+either way — and it is what makes `t('nav.dcos')` a compile error. For a source written
+with `defineMessages()` it also types params, so `t('footer.rights')` without `{ year }` is
+an error in a strict template too. Calling `injectI18n()`
 with no argument works too; the keys are then plain strings.
 
 ## API

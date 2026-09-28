@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createCatalogRegistry } from './catalog-registry.js';
 import { defineI18n } from './define-i18n.js';
+import { createMessageFormatter } from './format.js';
 import type { MessageLoader } from './loader.js';
 import { defineMessageContract } from './messages.js';
 import { defineRemoteI18n } from './remote-i18n.js';
+import { createTranslator } from './translator.js';
 
 const source = { nav: { docs: 'Docs' } };
 
@@ -274,5 +276,79 @@ describe('createCatalogRegistry, remote mode', () => {
     await registry.load('en');
 
     expect(onContractDrift).not.toHaveBeenCalled();
+  });
+});
+
+describe('createCatalogRegistry, arrays of messages', () => {
+  const arraySource = {
+    features: ['One', 'Two'],
+    steps: ['Hello, {$name}!', 'You have {$count :number} items.'],
+  };
+
+  function arrayDefinition(es: MessageLoader) {
+    return defineI18n({
+      locales: ['en', 'es'],
+      sourceLocale: 'en',
+      source: arraySource,
+      loaders: { es },
+    });
+  }
+
+  it('falls back to the source for an index the translation lacks, like any missing key', async () => {
+    const definition = arrayDefinition(() => ({ features: ['Uno'], steps: ['¡Hola, {$name}!'] }));
+    const registry = createCatalogRegistry(definition);
+
+    await registry.load('es');
+
+    const t = createTranslator({
+      locale: 'es',
+      catalog: registry.get('es'),
+      sourceLocale: 'en',
+      sourceCatalog: definition.sourceCatalog,
+      formatter: createMessageFormatter(),
+    });
+
+    expect(t.translate('features.0')).toBe('Uno');
+    expect(t.translate('features.1')).toBe('Two');
+    expect(t.translate('steps.0', { name: 'Ada' })).toBe('¡Hola, Ada!');
+    expect(t.translate('steps.1', { count: 3 })).toBe('You have 3 items.');
+  });
+
+  it('transfers flattened indexed keys, so the snapshot format does not change', async () => {
+    const registry = createCatalogRegistry(arrayDefinition(() => ({ features: ['Uno', 'Dos'] })));
+
+    await registry.load('es');
+
+    const snapshot = registry.dehydrate();
+
+    expect(snapshot).toEqual({ es: { 'features.0': 'Uno', 'features.1': 'Dos' } });
+
+    const es = vi.fn(() => ({ features: ['never loaded'] }));
+    const hydrated = createCatalogRegistry(arrayDefinition(es), {
+      snapshot: JSON.parse(JSON.stringify(snapshot)) as typeof snapshot,
+    });
+
+    await hydrated.load('es');
+
+    expect(es).not.toHaveBeenCalled();
+    expect(hydrated.get('es')?.get('features.1')).toBe('Dos');
+  });
+
+  it('reports a remote source that grew an array element as ordinary contract drift', async () => {
+    const onContractDrift = vi.fn();
+    const definition = defineRemoteI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      contract: defineMessageContract(['features.0', 'features.1']),
+      loaders: { en: () => ({ features: ['A', 'B', 'C'] }) },
+    });
+
+    await createCatalogRegistry(definition, { onContractDrift }).load('en');
+
+    expect(onContractDrift).toHaveBeenCalledWith({
+      locale: 'en',
+      missing: [],
+      extra: ['features.2'],
+    });
   });
 });

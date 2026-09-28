@@ -294,6 +294,72 @@ describe('signal reactivity', () => {
   });
 });
 
+describe('arrays of messages', () => {
+  const arrays = defineI18n({
+    locales: ['en', 'es'],
+    sourceLocale: 'en',
+    source: { features: ['Typed keys', 'SSR ready'], steps: ['Hello, {$name}!'] },
+    loaders: { es: () => ({ features: ['Claves tipadas'], steps: ['¡Hola, {$name}!'] }) },
+  });
+
+  @Component({
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `<p>{{ t('features.0') }}</p>
+      <p>{{ t('features.1') }}</p>
+      <p>{{ t('steps.0', { name: 'Ada' }) }}</p>`,
+  })
+  class ArrayHost {
+    protected readonly t = injectT(arrays);
+  }
+
+  it('translates indexed keys like any other key, falling back per index', async () => {
+    TestBed.configureTestingModule({ providers: [provideEtyma(arrays)] });
+
+    const fixture = TestBed.createComponent(ArrayHost);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toBe('Typed keysSSR readyHello, Ada!');
+
+    await TestBed.inject(EtymaI18n).setLocale('es');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toBe('Claves tipadasSSR ready¡Hola, Ada!');
+  });
+
+  it('keeps the exact indexes of the source tuple in the key type', () => {
+    TestBed.configureTestingModule({ providers: [provideEtyma(arrays)] });
+
+    const t = TestBed.runInInjectionContext(() => injectT(arrays));
+
+    expect(t('features.1')).toBe('SSR ready');
+    // @ts-expect-error - the source array has two elements, so there is no `features.2`.
+    expect(t('features.2')).toBe('features.2');
+  });
+});
+
+describe('typed params', () => {
+  it('requires the params a literal source message declares, and only those', () => {
+    const typed = defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: { nav: { docs: 'Docs' }, welcome: 'Hello, {$name}!' },
+    });
+    TestBed.configureTestingModule({ providers: [provideEtyma(typed)] });
+
+    const t = TestBed.runInInjectionContext(() => injectT(typed));
+    const i18n = TestBed.runInInjectionContext(() => injectI18n(typed));
+
+    expect(t('welcome', { name: 'Ada' })).toBe('Hello, Ada!');
+    expect(i18n.parts('welcome', { name: 'Ada' })).toHaveLength(3);
+    expect(t('nav.docs')).toBe('Docs');
+
+    // @ts-expect-error - `welcome` needs `name`; MF2 would render the fallback `{$name}`.
+    expect(t('welcome')).toBe('Hello, {$name}!');
+    // @ts-expect-error - a misspelt param.
+    expect(t('welcome', { nmae: 'Ada' })).toBe('Hello, {$name}!');
+  });
+});
+
 describe('injectI18n', () => {
   it('returns the provided instance', () => {
     const shared = definition();

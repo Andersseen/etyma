@@ -30,12 +30,12 @@ At its centre is a **programmatic validation engine** with no filesystem or netw
 its own and no source-code scanning. Everything else calls that engine rather than
 re-implementing catalog validation a second way:
 
-| API                                               | What it is                                                                                                      |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `validateCatalogs()` (main entry)                 | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                         |
-| `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed, keys-only TypeScript file.                  |
-| `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails. |
-| [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                      |
+| API                                               | What it is                                                                                                               |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `validateCatalogs()` (main entry)                 | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                                  |
+| `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables. |
+| `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.          |
+| [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                               |
 
 ## Install
 
@@ -69,7 +69,9 @@ if (!result.valid) {
 ```
 
 Catalogs are plain nested objects — the same shape a `.json` file or `defineMessages()`
-produces, not a pre-flattened `Map`. Nothing here reads a file, spawns a process, or writes
+produces, not a pre-flattened `Map`. Message values may be strings, nested message objects,
+or non-empty arrays of strings; an array's elements are checked as the keys they flatten to,
+`steps.0`, `steps.1` and so on. Nothing here reads a file, spawns a process, or writes
 to `stdout`; `console.log` and `process.exit` above are the caller's choice, not something
 this package does on your behalf. That is deliberate: a CLI, a Vite plugin, an MCP tool and
 Forge CMS's in-browser editor can all call `validateCatalogs` directly and decide for
@@ -129,7 +131,8 @@ three diagnostics from one call.
 | `catalog.empty-key`                       | error    | A key is the empty string.                                                                                                                                                                                                                       |
 | `catalog.dotted-key`                      | error    | A key contains a `.`, which would collide with nesting.                                                                                                                                                                                          |
 | `catalog.duplicate-key`                   | error    | Two nodes flatten to the same dotted path. Kept for completeness with `@etyma/core`'s catalog walk; unreachable from a plain JS object or parsed JSON, since a key may not contain `.` and an object cannot repeat a property name at one level. |
-| `catalog.invalid-leaf`                    | error    | A value where a message string was expected is `null`, a boolean, a number, an array, or a non-leaf object.                                                                                                                                      |
+| `catalog.invalid-leaf`                    | error    | A value where a message was expected is `null`, a boolean, a number or `undefined`; or an array element is not a string (an object, a nested array, a sparse-array hole). Keyed by the element's own index, e.g. `steps.1`.                      |
+| `catalog.empty-array`                     | error    | An array has no elements, so it would contribute no key at all. Keyed by the array, e.g. `steps`.                                                                                                                                                |
 | `catalog.missing-key`                     | error    | A key the source catalog has is missing from this locale.                                                                                                                                                                                        |
 | `catalog.extra-key`                       | error    | A key this locale has does not exist in the source catalog.                                                                                                                                                                                      |
 | `message.empty`                           | error    | A message is `""`.                                                                                                                                                                                                                               |
@@ -153,7 +156,10 @@ a human and its wording is not part of the stable contract, only `code` is.
   carrying one the source doesn't have, is an error — reused from `@etyma/core`'s own
   `walkMessageSource`, the same tree-walk `flattenMessages` builds a runtime catalog from,
   used here in a form that collects every problem instead of stopping at the first.
-- **Catalog shape.** Every leaf must be a string; every key must be non-empty and dot-free.
+- **Catalog shape.** Every leaf must be a string, or a non-empty array of strings; every key
+  must be non-empty and dot-free. An array is compared element by element, as indexed keys:
+  a translation one element short is a `catalog.missing-key` for the last index, one element
+  long a `catalog.extra-key`, and variable parity is checked per element.
 - **Empty and whitespace-only messages**, in every locale including the source.
 - **MessageFormat 2 syntax and data model**, through the `messageformat` reference
   implementation `@etyma/core` formats messages with — the same parser, not a second one.
@@ -196,17 +202,39 @@ at runtime. `@etyma/tooling` closes that gap with two pure functions, exported f
 entry point, plus a Vite plugin that automates running them.
 
 ```ts
-import { extractContractKeys, renderContractModule } from '@etyma/tooling';
+import {
+  extractContractKeys,
+  extractContractVariables,
+  renderContractModule,
+} from '@etyma/tooling';
 
-const keys = extractContractKeys(sourceCatalog); // sorted dotted keys, nothing else
-const moduleSource = renderContractModule(keys); // a `defineMessageContract([...])` module
+const keys = extractContractKeys(sourceCatalog); // sorted dotted keys
+const variables = extractContractVariables(sourceCatalog); // { welcome: ['name'], … }
+const moduleSource = renderContractModule(keys, variables); // a `defineMessageContract` module
 ```
 
 `extractContractKeys` reuses `@etyma/core`'s own `flattenMessages` rather than a second
 catalog walker, so a malformed remote catalog is rejected exactly the same way a malformed
-local one is. `renderContractModule` is byte-stable for a given key set — no timestamp, no
-random id, no machine-specific path — so the file it produces is safe to commit and diffs
-only when the remote catalog's keys actually change.
+local one is. `extractContractVariables` reads each message's external variables with the
+`messageformat` parser — the same analysis variable parity uses — and lists only messages
+that have any. A message that is not valid MessageFormat 2 gets no entry, so its params stay
+untyped rather than guessed; `etymaRemoteValidation` is what reports the syntax error.
+
+With variables, the generated module types `t()`'s params as well as its keys:
+
+```ts
+export default defineMessageContract(
+  ['footer.rights', 'nav.docs', 'welcome'] as const,
+  { 'footer.rights': ['author', 'year'], welcome: ['name'] } as const,
+);
+```
+
+so `t('welcome')` without `{ name }` is a compile error, exactly as for a `defineMessages()`
+source. The names are types only - a param still accepts any `MessageParamValue`.
+`renderContractModule` is byte-stable for a given input — no timestamp, no random id, no
+machine-specific path — so the file it produces is safe to commit and diffs only when the
+remote catalog's keys or variables actually change. A catalog with no variables renders
+exactly the keys-only module earlier versions generated.
 
 ### `@etyma/tooling/vite`
 
@@ -254,7 +282,7 @@ buys a working editor on the first checkout.
 
 ## Validating remote catalogs during a Vite build
 
-`etymaRemoteContract` reads the source catalog's keys and nothing else. `etymaRemoteValidation`
+`etymaRemoteContract` reads the source catalog's keys and variable names and nothing else. `etymaRemoteValidation`
 checks everything else a remote project ships: it fetches **every** locale's catalog and hands
 them, unchanged, to `validateCatalogs()` — so key parity, MessageFormat 2, variable parity and
 locale identifiers are judged by exactly the engine documented above, and a broken production

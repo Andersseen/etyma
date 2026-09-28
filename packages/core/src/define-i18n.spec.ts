@@ -77,6 +77,22 @@ describe('defineI18n', () => {
     );
   });
 
+  it('accepts a source made only of an array of messages, keyed by index', () => {
+    const definition = defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: { steps: ['One', 'Two'] },
+    });
+
+    expect(definition.keys).toEqual(['steps.0', 'steps.1']);
+  });
+
+  it('rejects a source whose only value is an empty array, naming the array', () => {
+    expect(() =>
+      defineI18n({ locales: ['en'], sourceLocale: 'en', source: { steps: [] } }),
+    ).toThrow(/"steps" is an empty array/);
+  });
+
   it('reports text direction, detected and overridden', () => {
     const definition = defineI18n({
       locales: ['en', 'he', 'uk'],

@@ -111,16 +111,16 @@ prerendered pages share is the loaded catalog content - see
 
 `createAstroI18n(astro, definition)` returns:
 
-| Member                     | What it does                                                            |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `locale`                   | The actual BCP 47 language code for this render, e.g. `"uk"`.           |
-| `sourceLocale` / `locales` | Read straight off the `I18nDefinition`.                                 |
-| `direction`                | `"ltr"` or `"rtl"`, from `@etyma/core`'s locale direction logic.        |
-| `t(key, params?)`          | The translated, formatted string. Typed against the source catalog.     |
-| `parts(key, params?)`      | The message as MessageFormat 2 parts, for structure `t()` cannot carry. |
-| `has(key)`                 | Whether `key` resolves in this locale or the source locale.             |
-| `path(to, locale?)`        | `to` localized for `locale`, defaulting to the current one.             |
-| `seo()`                    | SEO metadata for the current page - see below.                          |
+| Member                     | What it does                                                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `locale`                   | The actual BCP 47 language code for this render, e.g. `"uk"`.                                                                            |
+| `sourceLocale` / `locales` | Read straight off the `I18nDefinition`.                                                                                                  |
+| `direction`                | `"ltr"` or `"rtl"`, from `@etyma/core`'s locale direction logic.                                                                         |
+| `t(key, params?)`          | The translated, formatted string. Typed against the source catalog; params are required for a `defineMessages()` message with variables. |
+| `parts(key, params?)`      | The message as MessageFormat 2 parts, for structure `t()` cannot carry.                                                                  |
+| `has(key)`                 | Whether `key` resolves in this locale or the source locale.                                                                              |
+| `path(to, locale?)`        | `to` localized for `locale`, defaulting to the current one.                                                                              |
+| `seo()`                    | SEO metadata for the current page - see below.                                                                                           |
 
 ## Localized paths
 

@@ -288,8 +288,10 @@ output format, because no catalog was actually validated for it to describe.
 
 Malformed JSON is a `2`, not a `1`: a file or response that doesn't parse isn't a catalog yet,
 so it isn't a catalog diagnostic - see [`@etyma/tooling`'s README](../tooling#readme) for why
-that boundary matters. Valid JSON that is not a well-formed catalog (an array, a `null`, a
-number as a message) _is_ a catalog diagnostic, exit `1`.
+that boundary matters. Valid JSON that is not a well-formed catalog (an array as the root, a
+`null`, a number as a message, an empty array) _is_ a catalog diagnostic, exit `1`. A
+non-empty array of strings is a valid catalog value: each element is a message keyed by its
+index, and counts as one message in the summary.
 
 ## `etyma --version` / `etyma --help`
 

@@ -8,7 +8,7 @@
  * @packageDocumentation
  */
 
-export { EtymaI18n, type TranslateFn } from './lib/i18n.js';
+export { EtymaI18n, type PartsFn, type TranslateFn } from './lib/i18n.js';
 export { provideEtyma, type EtymaOptions } from './lib/provide.js';
 export { injectI18n, injectT } from './lib/inject.js';
 export { ETYMA_DEFINITION, ETYMA_LOCALE_SWITCH } from './lib/tokens.js';

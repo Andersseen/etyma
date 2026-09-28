@@ -77,15 +77,29 @@ function shapeDiagnostic(locale: Locale, problem: MessageSourceProblem): Catalog
         locale,
         key: problem.path,
         message:
-          `"${problem.path}" is ${describe(problem.value)}; message values must be strings ` +
-          'or nested objects of strings.',
+          `"${problem.path}" is ${describe(problem.value)}; message values must be strings, ` +
+          'nested objects of messages, or non-empty arrays of strings, and array elements ' +
+          'must be strings.',
+      };
+
+    case 'empty-array':
+      return {
+        code: 'catalog.empty-array',
+        severity: 'error',
+        locale,
+        key: problem.path,
+        message:
+          `"${problem.path}" is an empty array; an array of messages must contain at least ` +
+          'one string.',
       };
   }
 }
 
 function describe(value: unknown): string {
   if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
   if (Array.isArray(value)) return 'an array';
+  if (typeof value === 'object') return 'an object';
 
   return `a ${typeof value}`;
 }

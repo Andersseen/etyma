@@ -24,13 +24,21 @@ export {
   defineMessages,
   flattenMessages,
   walkMessageSource,
+  type MessageArgs,
   type MessageCatalog,
   type MessageContract,
+  type MessageContractParams,
+  type MessageContractVariables,
   type MessageKey,
   type MessageParams,
+  type MessageParamsMap,
+  type MessageParamsOf,
+  type MessageParamValue,
   type MessageSource,
   type MessageSourceLeaf,
   type MessageSourceProblem,
+  type MessageValue,
+  type MessageVariables,
 } from './messages.js';
 
 export { createLocaleRouter, type LocaleRouter, type LocaleRouterOptions } from './routing.js';

@@ -267,17 +267,22 @@ function usageError(message: string): CliResult {
  *
  * Deliberately not `@etyma/core`'s `flattenMessages`: that would pull `@etyma/core` into this
  * package's dependency graph for a number shown in a summary line, which is exactly the
- * dependency `@etyma/cli` is meant to avoid taking directly (see the README). Tolerant of a
- * malformed node (an array, `null`, a number) rather than throwing - `@etyma/tooling` already
- * reports those as `catalog.invalid-leaf` diagnostics; this only needs to not crash while
- * counting past one.
+ * dependency `@etyma/cli` is meant to avoid taking directly (see the README). An array of
+ * strings counts one message per string element, as it flattens to one key per index.
+ * Tolerant of a malformed node (`null`, a number, a non-string array element) rather than
+ * throwing - `@etyma/tooling` already reports those as `catalog.*` diagnostics; this only
+ * needs to not crash while counting past one.
  */
 function countMessages(node: unknown): number {
   if (typeof node === 'string') {
     return 1;
   }
 
-  if (typeof node !== 'object' || node === null || Array.isArray(node)) {
+  if (Array.isArray(node)) {
+    return node.filter(element => typeof element === 'string').length;
+  }
+
+  if (typeof node !== 'object' || node === null) {
     return 0;
   }
 

@@ -67,21 +67,31 @@ const pages = [
     lang: 'es',
     canonical: `${SITE}/about/`,
     xDefault: `${SITE}/about/`,
-    contains: ['Sobre mí', 'Escribo sobre Astro.'],
+    contains: [
+      'Sobre mí',
+      'Escribo sobre Astro.',
+      'Este sitio está hecho con Etyma.',
+      'Escrito por Andrii.',
+    ],
   },
   {
     path: 'en/about/index.html',
     lang: 'en',
     canonical: `${SITE}/en/about/`,
     xDefault: `${SITE}/about/`,
-    contains: ['About', 'I write about Astro.'],
+    contains: [
+      'About',
+      'I write about Astro.',
+      'This site is built with Etyma.',
+      'Written by Andrii.',
+    ],
   },
   {
     path: 'ua/about/index.html',
     lang: 'uk',
     canonical: `${SITE}/ua/about/`,
     xDefault: `${SITE}/about/`,
-    contains: ['Про мене', 'Я пишу про Astro.'],
+    contains: ['Про мене', 'Я пишу про Astro.', 'Цей сайт зроблено на Etyma.', 'Автор: Andrii.'],
   },
 ];
 
@@ -176,6 +186,7 @@ export function verifyAstroFixture(cwd) {
 
   verifyAstroMajor(cwd, assert);
   verifyPlainNodeImport(cwd, assert);
+  verifyPlainNodeCore(cwd, assert);
   verifyCatalogRequests(cwd, assert);
   verifyRemoteContract(cwd, assert);
 
@@ -217,6 +228,47 @@ function verifyPlainNodeImport(cwd, assert) {
     });
   } catch (error) {
     assert(false, `importing @etyma/astro from plain Node failed: ${error.stderr ?? error}`);
+  }
+}
+
+/**
+ * The packed `@etyma/core`, used from plain Node with no framework at all: a catalog with a
+ * string array flattens to exact indexed keys, and translates - MF2 parameters included -
+ * through the same translator as any other key. An empty array is still a definition error.
+ */
+function verifyPlainNodeCore(cwd, assert) {
+  const script = `
+    import { createMessageFormatter, createTranslator, defineI18n } from '@etyma/core';
+    const i18n = defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: JSON.parse('{"steps":["Create an account","Choose {$plan}"]}'),
+    });
+    const t = createTranslator({
+      locale: 'en',
+      catalog: i18n.sourceCatalog,
+      sourceLocale: 'en',
+      sourceCatalog: i18n.sourceCatalog,
+      formatter: createMessageFormatter(),
+    });
+    const actual = [i18n.keys.join(','), t.translate('steps.1', { plan: 'Pro' })].join(' | ');
+    if (actual !== 'steps.0,steps.1 | Choose Pro') throw new Error('got: ' + actual);
+    let rejected = false;
+    try {
+      defineI18n({ locales: ['en'], sourceLocale: 'en', source: { steps: [] } });
+    } catch (error) {
+      rejected = /empty array/.test(error.message);
+    }
+    if (!rejected) throw new Error('an empty array was not rejected');
+  `;
+
+  try {
+    execFileSync(process.execPath, ['--input-type=module', '--eval', script], {
+      cwd,
+      stdio: 'pipe',
+    });
+  } catch (error) {
+    assert(false, `string arrays through the packed @etyma/core failed: ${error.stderr ?? error}`);
   }
 }
 
@@ -266,8 +318,11 @@ function verifyRemoteContract(cwd, assert) {
   );
 
   const generated = readFileSync(join(cwd, 'contract.generated.ts'), 'utf8');
+  // `about.paragraphs` is an array in the remote source: the contract has its exact indexes.
   const expectedKeys = [
     'about.body',
+    'about.paragraphs.0',
+    'about.paragraphs.1',
     'about.title',
     'footer.rights',
     'home.greeting',
@@ -279,6 +334,26 @@ function verifyRemoteContract(cwd, assert) {
   for (const key of expectedKeys) {
     assert(generated.includes(`"${key}"`), `contract.generated.ts: expected key "${key}"`);
   }
+
+  // Each message's variables, as the `messageformat` parser read them from the remote source.
+  const expectedVariables = [
+    '"about.body": ["topic"]',
+    '"about.paragraphs.0": ["framework"]',
+    '"about.paragraphs.1": ["author"]',
+    '"footer.rights": ["year"]',
+    '"home.greeting": ["name"]',
+    '"posts.count": ["count"]',
+  ];
+
+  for (const entry of expectedVariables) {
+    assert(generated.includes(entry), `contract.generated.ts: expected variables ${entry}`);
+  }
+
+  assert(
+    !generated.includes('"about.paragraphs"') && !generated.includes('"about.paragraphs.2"'),
+    'contract.generated.ts: expected exactly about.paragraphs.0 and .1, not the array itself ' +
+      'or an index the source does not have',
+  );
 }
 
 function readCatalogRequests(cwd) {

@@ -1,6 +1,6 @@
 import type { MessageFormatter, MessagePart } from './format.js';
 import type { Locale } from './locale.js';
-import type { MessageCatalog, MessageParams } from './messages.js';
+import type { MessageArgs, MessageCatalog, MessageParams, MessageParamsMap } from './messages.js';
 
 export interface MissingMessageInfo {
   readonly key: string;
@@ -38,11 +38,19 @@ export interface TranslatorInput {
  * whenever the locale or the loaded catalogs change and never have to invalidate anything
  * by hand.
  */
-export interface Translator<TKey extends string = string> {
+export interface Translator<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> {
   readonly locale: Locale;
 
-  /** The translated, formatted string. Always text - never markup. */
-  translate(key: TKey, params?: MessageParams): string;
+  /**
+   * The translated, formatted string. Always text - never markup.
+   *
+   * `params` is required, and exact, for a key `TParams` records variables for; optional and
+   * untyped for every other key.
+   */
+  translate<K extends TKey>(key: K, ...params: MessageArgs<TParams, K>): string;
 
   /**
    * The message as MessageFormat 2 parts.
@@ -51,15 +59,19 @@ export interface Translator<TKey extends string = string> {
    * its own element, a date that should sit in a `<time>` - without ever handing a
    * translated string to `innerHTML`.
    */
-  translateToParts(key: TKey, params?: MessageParams): readonly MessagePart[];
+  translateToParts<K extends TKey>(
+    key: K,
+    ...params: MessageArgs<TParams, K>
+  ): readonly MessagePart[];
 
   /** Whether `key` resolves in this locale or in the source locale. */
   has(key: TKey): boolean;
 }
 
-export function createTranslator<TKey extends string = string>(
-  input: TranslatorInput,
-): Translator<TKey> {
+export function createTranslator<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+>(input: TranslatorInput): Translator<TKey, TParams> {
   const { locale, catalog, sourceLocale, sourceCatalog, formatter } = input;
   const onMissingMessage = input.onMissingMessage ?? returnMessageKey;
 
@@ -82,10 +94,10 @@ export function createTranslator<TKey extends string = string>(
     return fallback === undefined ? undefined : { source: fallback, locale: sourceLocale };
   };
 
-  return {
+  const translator = {
     locale,
 
-    translate(key, params) {
+    translate(key: string, params?: MessageParams): string {
       const resolved = resolve(key);
 
       if (resolved === undefined) {
@@ -95,7 +107,7 @@ export function createTranslator<TKey extends string = string>(
       return formatter.format(resolved.locale, key, resolved.source, params);
     },
 
-    translateToParts(key, params) {
+    translateToParts(key: string, params?: MessageParams): readonly MessagePart[] {
       const resolved = resolve(key);
 
       if (resolved === undefined) {
@@ -105,8 +117,13 @@ export function createTranslator<TKey extends string = string>(
       return formatter.formatToParts(resolved.locale, key, resolved.source, params);
     },
 
-    has(key) {
+    has(key: string): boolean {
       return resolve(key) !== undefined;
     },
   };
+
+  // `TParams` only ever narrows what a caller may pass, never what arrives: at runtime every
+  // key takes the same optional `MessageParams` record, which is what the untyped
+  // implementation above handles.
+  return translator as unknown as Translator<TKey, TParams>;
 }
