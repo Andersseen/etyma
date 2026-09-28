@@ -27,6 +27,8 @@ export {
   type MessageArgs,
   type MessageCatalog,
   type MessageContract,
+  type MessageContractParams,
+  type MessageContractVariables,
   type MessageKey,
   type MessageParams,
   type MessageParamsMap,

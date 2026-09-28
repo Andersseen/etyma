@@ -5,7 +5,11 @@ import { dirname } from 'node:path';
 
 import { EtymaError, type MessageSource } from '@etyma/core';
 
-import { extractContractKeys, renderContractModule } from './generate-contract.js';
+import {
+  extractContractKeys,
+  extractContractVariables,
+  renderContractModule,
+} from './generate-contract.js';
 
 export { etymaRemoteValidation } from './remote-validation.js';
 export type {
@@ -69,7 +73,10 @@ async function generate(options: EtymaRemoteContractOptions): Promise<void> {
     return;
   }
 
-  const rendered = renderContractModule(extractContractKeys(source));
+  const rendered = renderContractModule(
+    extractContractKeys(source),
+    extractContractVariables(source),
+  );
 
   if (rendered === existing) {
     return;

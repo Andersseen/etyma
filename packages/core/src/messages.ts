@@ -200,24 +200,70 @@ type MessageIndex<T extends readonly string[]> = number extends T['length']
  *
  * `defineI18n`'s type-level contract comes from the shape of a static `source` object; this
  * is the alternative for a definition whose source catalog is itself only available at
- * runtime - see `defineRemoteI18n`. It carries `TKey` at the type level and, at runtime,
- * only the sorted list of keys, never a message.
+ * runtime - see `defineRemoteI18n`. It carries `TKey` - and, when it lists them, each
+ * message's MessageFormat 2 variables as `TParams` - at the type level and, at runtime, only
+ * the sorted keys and variable names, never a message.
  */
-export interface MessageContract<TKey extends string = string> {
+export interface MessageContract<
+  TKey extends string = string,
+  TParams extends MessageParamsMap = Record<never, never>,
+> {
   readonly keys: readonly TKey[];
+
+  /**
+   * Each message's external variables, sorted, for the keys that have any. Absent from a
+   * contract built without them.
+   */
+  readonly variables?: Readonly<Record<string, readonly string[]>>;
+
+  /** Type-only, like `I18nDefinition['messageParams']`: never set at runtime. */
+  readonly messageParams?: TParams;
 }
 
 /**
- * Builds a {@link MessageContract} from a literal list of keys.
+ * The variables argument of {@link defineMessageContract}: for some of the contract's keys,
+ * the external variables that message declares.
+ */
+// A mapped type rather than `Readonly<Partial<Record<...>>>`: with a generic `TKey` only the
+// mapped form still accepts `defineMessageContract`'s `Record<never, never>` default.
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+export type MessageContractVariables<TKey extends string = string> = {
+  readonly [K in TKey]?: readonly string[];
+};
+
+/** The params map a {@link MessageContractVariables} literal describes. */
+export type MessageContractParams<TVariables> = {
+  [
+    K in keyof TVariables & string as TVariables[K] extends readonly [string, ...string[]]
+      ? K
+      : never
+  ]: Readonly<Record<VariableName<TVariables[K]>, MessageParamValue>>;
+};
+
+type VariableName<T> = T extends readonly (infer N extends string)[] ? N : never;
+
+/**
+ * Builds a {@link MessageContract} from a literal list of keys and, optionally, the external
+ * variables of the messages that have any.
  *
  * Typically not written by hand: `@etyma/tooling`'s Vite plugin generates the call this
- * wraps from a remote catalog's shape, so the list is deterministic and sorted the same way
- * `defineI18n`'s own `keys` are. Written by hand it works the same way, for a definition
- * that would rather list its keys directly than derive them from an object shape.
+ * wraps from a remote catalog, so both lists are deterministic and sorted the same way
+ * `defineI18n`'s own `keys` are. Written by hand it works the same way.
+ *
+ * With `variables`, `t()` requires exactly those params for those keys, the way it does for
+ * a literal `defineI18n` source; every other key keeps optional, untyped params.
+ *
+ * ```ts
+ * defineMessageContract(['nav.docs', 'welcome'] as const, { welcome: ['name'] } as const);
+ * ```
  */
-export function defineMessageContract<const TKeys extends readonly string[]>(
+export function defineMessageContract<
+  const TKeys extends readonly string[],
+  const TVariables extends MessageContractVariables<TKeys[number]> = Record<never, never>,
+>(
   keys: TKeys,
-): MessageContract<TKeys[number]> {
+  variables?: TVariables,
+): MessageContract<TKeys[number], MessageContractParams<TVariables>> {
   if (keys.length === 0) {
     throw new EtymaError('defineMessageContract: `keys` must list at least one key.');
   }
@@ -232,7 +278,62 @@ export function defineMessageContract<const TKeys extends readonly string[]>(
     seen.add(key);
   }
 
-  return { keys: Object.freeze([...keys].sort()) };
+  const contract: {
+    keys: readonly TKeys[number][];
+    variables?: Record<string, readonly string[]>;
+  } = { keys: Object.freeze([...keys].sort()) };
+
+  if (variables !== undefined) {
+    contract.variables = Object.freeze(validateContractVariables(seen, variables));
+  }
+
+  return Object.freeze(contract);
+}
+
+function validateContractVariables(
+  keys: ReadonlySet<string>,
+  variables: MessageContractVariables,
+): Record<string, readonly string[]> {
+  const validated: Record<string, readonly string[]> = {};
+
+  for (const key of Object.keys(variables).sort()) {
+    const names: unknown = variables[key];
+
+    if (!keys.has(key)) {
+      throw new EtymaError(
+        `defineMessageContract: variables are listed for "${key}", which is not in \`keys\`.`,
+      );
+    }
+
+    if (!Array.isArray(names) || names.length === 0) {
+      throw new EtymaError(
+        `defineMessageContract: variables for "${key}" must be a non-empty array of names; ` +
+          'leave a message without variables out.',
+      );
+    }
+
+    const unique = new Set<string>();
+
+    for (const name of names) {
+      if (typeof name !== 'string' || name.length === 0) {
+        throw new EtymaError(
+          `defineMessageContract: variables for "${key}" must be non-empty strings.`,
+        );
+      }
+
+      if (unique.has(name)) {
+        throw new EtymaError(
+          `defineMessageContract: variable "${name}" is listed twice for "${key}".`,
+        );
+      }
+
+      unique.add(name);
+    }
+
+    validated[key] = Object.freeze([...unique].sort());
+  }
+
+  return validated;
 }
 
 /**

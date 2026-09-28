@@ -108,6 +108,26 @@ describe('etymaRemoteContract', () => {
     );
   });
 
+  it('writes each remote message’s variables into the contract, so params are typed too', async () => {
+    const output = join(dir, 'contract.generated.ts');
+    const server = await startFixtureServer({
+      '/en.json': json({ welcome: 'Hello, {$name}!', steps: ['One', 'Choose {$plan}'] }),
+    });
+
+    try {
+      await etymaRemoteContract({ source: `${server.origin}/en.json`, output }).buildStart();
+    } finally {
+      await server.close();
+    }
+
+    const generated = readFileSync(output, 'utf8');
+
+    expect(generated).toContain(
+      '    "steps.1": ["plan"],\n    "welcome": ["name"],\n  } as const,',
+    );
+    expect(generated).not.toContain('"steps.0": [');
+  });
+
   it('throws when loading fails and no previously generated contract exists', async () => {
     const output = join(dir, 'contract.generated.ts');
     const plugin = etymaRemoteContract({

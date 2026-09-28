@@ -260,4 +260,38 @@ describe('defineMessageContract', () => {
       /key "nav.docs" is listed twice/,
     );
   });
+
+  it('has no variables unless it is given some', () => {
+    expect(defineMessageContract(['welcome'])).toEqual({ keys: ['welcome'] });
+  });
+
+  it('keeps variables sorted and frozen, by key', () => {
+    const contract = defineMessageContract(['welcome', 'footer.rights'], {
+      welcome: ['name'],
+      'footer.rights': ['year', 'author'],
+    });
+
+    expect(contract.variables).toEqual({ 'footer.rights': ['author', 'year'], welcome: ['name'] });
+    expect(Object.keys(contract.variables ?? {})).toEqual(['footer.rights', 'welcome']);
+    expect(Object.isFrozen(contract.variables)).toBe(true);
+    expect(Object.isFrozen(contract.variables?.['footer.rights'])).toBe(true);
+  });
+
+  it('rejects variables for a key it does not list', () => {
+    expect(() =>
+      defineMessageContract(['welcome'], { nope: ['name'] } as unknown as never),
+    ).toThrow(/variables are listed for "nope", which is not in `keys`/);
+  });
+
+  it('rejects an empty, repeated or non-string variable list', () => {
+    expect(() => defineMessageContract(['welcome'], { welcome: [] })).toThrow(
+      /must be a non-empty array/,
+    );
+    expect(() => defineMessageContract(['welcome'], { welcome: ['name', 'name'] })).toThrow(
+      /variable "name" is listed twice for "welcome"/,
+    );
+    expect(() => defineMessageContract(['welcome'], { welcome: [1] } as unknown as never)).toThrow(
+      /must be non-empty strings/,
+    );
+  });
 });

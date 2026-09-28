@@ -9,17 +9,30 @@
  */
 import { createHttpMessageLoader, defineMessageContract, defineRemoteI18n } from '@etyma/core';
 
-const contract = defineMessageContract([
-  'nav.blog',
-  'home.title',
-  'home.greeting',
-  'footer.rights',
-  'posts.count',
-  'about.title',
-  'about.body',
-  'about.paragraphs.0',
-  'about.paragraphs.1',
-] as const);
+// The same keys and variables `etymaRemoteContract` generates into `contract.generated.ts`
+// (which `verify-astro-fixture.mjs` checks), written out so `astro check` can type-check
+// against them before the build that generates it has run.
+const contract = defineMessageContract(
+  [
+    'nav.blog',
+    'home.title',
+    'home.greeting',
+    'footer.rights',
+    'posts.count',
+    'about.title',
+    'about.body',
+    'about.paragraphs.0',
+    'about.paragraphs.1',
+  ] as const,
+  {
+    'home.greeting': ['name'],
+    'footer.rights': ['year'],
+    'posts.count': ['count'],
+    'about.body': ['topic'],
+    'about.paragraphs.0': ['framework'],
+    'about.paragraphs.1': ['author'],
+  } as const,
+);
 
 const load = createHttpMessageLoader(locale => `${__ETYMA_COMPAT_CATALOGS__}/${locale}.json`);
 

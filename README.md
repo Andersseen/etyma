@@ -365,11 +365,15 @@ declarations and variable option values (`minimumFractionDigits=$digits`); names
 number, bigint, boolean or `Date`; the check is on the names, not on which `:function`
 formats them.
 
+**Remote catalogs** get typed params from their generated contract: `etymaRemoteContract`
+reads each source message's variables with the MessageFormat 2 parser and writes them next
+to the keys — see [Remote catalogs](#remote-catalogs).
+
 **Where it does not reach.** A `.json` import types every message as plain `string`, so
-TypeScript never sees the text, and a remote contract carries only keys. For those
-messages params stay optional and untyped, exactly as before — nothing breaks, and nothing
-is claimed that is not known. Mix the two freely: `source: { ...json, ...defineMessages({…}) }`
-types params for the `defineMessages` part only.
+TypeScript never sees the text. For those messages params stay optional and untyped, exactly
+as before — nothing breaks, and nothing is claimed that is not known. Mix the two freely:
+`source: { ...json, ...defineMessages({…}) }` types params for the `defineMessages` part
+only.
 
 ### Arrays of messages
 
@@ -486,7 +490,7 @@ therefore separates the two concerns `defineI18n` used to merge into one static 
 
 ```
 remote catalog        = the content authority — the actual messages, always
-generated contract    = a build-time type artifact — keys only, never messages
+generated contract    = a build-time type artifact — keys and variable names, never messages
 ```
 
 `@etyma/tooling/vite` generates that contract automatically, from the remote catalog's shape,

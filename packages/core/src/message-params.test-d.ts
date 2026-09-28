@@ -5,6 +5,7 @@ import { defineI18n, type I18nDefinition } from './define-i18n.js';
 import {
   defineMessageContract,
   defineMessages,
+  type MessageContract,
   type MessageParamsMap,
   type MessageParamsOf,
   type MessageParamValue,
@@ -144,5 +145,56 @@ describe('typed params through a definition', () => {
     // @ts-expect-error - `welcome` might be the key, so its `name` is still required.
     t.translate(mixed);
     t.translate(mixed, { name: 'Ada' });
+  });
+});
+
+describe('typed params through a remote contract', () => {
+  const contract = defineMessageContract(
+    ['footer.rights', 'nav.docs', 'steps.0', 'steps.1', 'welcome'],
+    { 'footer.rights': ['author', 'year'], 'steps.1': ['plan'], welcome: ['name'] },
+  );
+  const t = translatorFor(
+    defineRemoteI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      contract,
+      loaders: { en: () => ({ welcome: 'Hello, {$name}!' }) },
+    }),
+  );
+
+  it('carries the listed variables as params', () => {
+    expectTypeOf(contract.messageParams).toEqualTypeOf<
+      | {
+          'footer.rights': Readonly<Record<'author' | 'year', MessageParamValue>>;
+          'steps.1': Readonly<Record<'plan', MessageParamValue>>;
+          welcome: Readonly<Record<'name', MessageParamValue>>;
+        }
+      | undefined
+    >();
+  });
+
+  it('requires exactly those params, and keeps other keys optional', () => {
+    t.translate('welcome', { name: 'Ada' });
+    t.translate('footer.rights', { author: 'Andrii', year: 2026 });
+    t.translate('nav.docs');
+    t.translate('steps.0');
+
+    // @ts-expect-error - `welcome` needs `name`.
+    t.translate('welcome');
+    // @ts-expect-error - `steps.1` needs `plan`, not `name`.
+    t.translate('steps.1', { name: 'Ada' });
+    // @ts-expect-error - `footer.rights` needs `author` too.
+    t.translate('footer.rights', { year: 2026 });
+  });
+
+  it('only lists variables for keys the contract has', () => {
+    // @ts-expect-error - `nope` is not one of the keys.
+    defineMessageContract(['welcome'], { nope: ['name'] });
+  });
+
+  it('is untyped for a contract without variables, as before', () => {
+    const keysOnly = defineMessageContract(['welcome']);
+
+    expectTypeOf(keysOnly).toEqualTypeOf<MessageContract<'welcome'>>();
   });
 });

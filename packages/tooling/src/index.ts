@@ -9,7 +9,11 @@
  * @packageDocumentation
  */
 
-export { extractContractKeys, renderContractModule } from './generate-contract.js';
+export {
+  extractContractKeys,
+  extractContractVariables,
+  renderContractModule,
+} from './generate-contract.js';
 export { validateCatalog } from './validate-catalog.js';
 export { validateCatalogs } from './validate-catalogs.js';
 

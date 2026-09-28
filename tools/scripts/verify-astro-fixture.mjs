@@ -335,6 +335,20 @@ function verifyRemoteContract(cwd, assert) {
     assert(generated.includes(`"${key}"`), `contract.generated.ts: expected key "${key}"`);
   }
 
+  // Each message's variables, as the `messageformat` parser read them from the remote source.
+  const expectedVariables = [
+    '"about.body": ["topic"]',
+    '"about.paragraphs.0": ["framework"]',
+    '"about.paragraphs.1": ["author"]',
+    '"footer.rights": ["year"]',
+    '"home.greeting": ["name"]',
+    '"posts.count": ["count"]',
+  ];
+
+  for (const entry of expectedVariables) {
+    assert(generated.includes(entry), `contract.generated.ts: expected variables ${entry}`);
+  }
+
   assert(
     !generated.includes('"about.paragraphs"') && !generated.includes('"about.paragraphs.2"'),
     'contract.generated.ts: expected exactly about.paragraphs.0 and .1, not the array itself ' +
