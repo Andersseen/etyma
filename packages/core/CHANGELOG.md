@@ -1,5 +1,126 @@
 # @etyma/core
 
+## 0.3.0
+
+### Minor Changes
+
+- [#76](https://github.com/Andersseen/etyma/pull/76) [`f8edbfe`](https://github.com/Andersseen/etyma/commit/f8edbfe75fcbabaa339c941226475f2cd008e141) Thanks [@Andersseen](https://github.com/Andersseen)! - Remote definitions can type `t()`'s params too. `defineMessageContract` takes an optional
+  second argument listing the external variables of the messages that have any:
+  
+  ```ts
+  defineMessageContract(['nav.docs', 'welcome'] as const, { welcome: ['name'] } as const);
+  ```
+  
+  `defineRemoteI18n` carries them to `t()` the way `defineI18n` does for a literal source:
+  `t('welcome')` without `{ name }` is a compile error, and keys with no listed variables keep
+  optional, untyped params. At runtime the contract gains a sorted, frozen `variables` record;
+  variables for a key the contract does not list, an empty list, or a repeated name throw.
+  A contract built with keys only is unchanged. New types: `MessageContractVariables`,
+  `MessageContractParams`; `MessageContract` and `RemoteI18nOptions` take a defaulted `TParams`.
+
+- [#87](https://github.com/Andersseen/etyma/pull/87) [`8d1a1a2`](https://github.com/Andersseen/etyma/commit/8d1a1a2751d21f8fa8343760f915ec57299dd473) Thanks [@Andersseen](https://github.com/Andersseen)! - `defineI18n` takes an optional `contract`, so a JSON source catalog can have typed `t()` params
+  too. Generate it from the same file with `etyma contract` (`@etyma/cli`) and pass it next to
+  `source`:
+  
+  ```ts
+  import en from './en.json';
+  import contract from './etyma.generated';
+  
+  export const i18n = defineI18n({
+    locales: ['en', 'es'],
+    sourceLocale: 'en',
+    source: en,
+    contract,
+    loaders,
+  });
+  
+  t('welcome', { name: 'Ada' }); // ok
+  t('welcome'); // error: `name` is required
+  ```
+  
+  It is the same `MessageContract` `defineRemoteI18n` reads. `source` stays the runtime catalog
+  and fallback; the contract only adds types:
+  
+  - **Params** for the keys it lists variables for, merged with any a `defineMessages()` literal
+    already declares - a literal and a disagreeing contract both apply, so a stale contract is a
+    compile error rather than a silent pass.
+  - **Exact keys.** `definition.keys` is typed by the contract's keys, which must be keys of
+    the source type: an array from a `.json` import gets `'steps.0' | 'steps.1'` instead of
+    `` `steps.${number}` ``.
+  - **Key drift fails at definition time.** If the contract's keys are not exactly the source's,
+    `defineI18n` throws an `EtymaError` listing the keys each side lacks, sorted. Variables are
+    not re-checked at runtime - that would mean parsing every message - so regenerate the
+    contract whenever the source changes.
+  
+  Without `contract`, nothing changes: typed keys, optional untyped params for a JSON source,
+  and literal params for `defineMessages()`. `I18nOptions` gains two defaulted type parameters,
+  `TKey` and `TParams`.
+
+- [#76](https://github.com/Andersseen/etyma/pull/76) [`0775ec1`](https://github.com/Andersseen/etyma/commit/0775ec1b70508c5067cc6cf91a16926e9c29d12f) Thanks [@Andersseen](https://github.com/Andersseen)! - Catalogs can now contain arrays of strings. Each element is an ordinary message, keyed by its
+  zero-based index:
+  
+  ```json
+  { "onboarding": { "steps": ["Create an account", "Choose {$plan}", "Invite your team"] } }
+  ```
+  
+  flattens to `onboarding.steps.0`, `onboarding.steps.1` and `onboarding.steps.2` - the same
+  catalog numbered object keys (`{"0": …, "1": …}`) give. Translation stays one key at a time,
+  `t('onboarding.steps.1', { plan: 'Pro' })`: there is no list-returning API. Fallback,
+  MessageFormat 2, catalog snapshots and remote contract drift all see plain indexed keys, with
+  no array-specific behaviour.
+  
+  - `MessageSource` values are now `string | MessageSource | readonly string[]`, exported as
+    `MessageValue`. Loaders, `MessageModule` and `createHttpMessageLoader` accept the new shape
+    unchanged.
+  - `MessageKey` understands arrays. A tuple - what `defineMessages()` and `defineI18n()` infer
+    for an array literal - gives exact keys (`'steps.0' | 'steps.1'`). An array from an imported
+    `.json` file is typed `string[]` by TypeScript, with no known length, so its keys are
+    `` `steps.${number}` ``: any index type-checks, and one past the end renders the
+    missing-message fallback at runtime.
+  - An array must be non-empty and hold only strings. An empty array is reported as the new
+    `MessageSourceProblem` kind `'empty-array'`; a non-string element - a number, an object, a
+    nested array, or a hole in a sparse array - is an `'invalid-leaf'` at its own indexed path
+    (`steps.1`). `flattenMessages` and `defineI18n` throw for either. A catalog root that is an
+    array is still `'invalid-root'`.
+  
+  Code that switches exhaustively over `MessageSourceProblem['kind']` needs a case for
+  `'empty-array'`.
+
+- [#76](https://github.com/Andersseen/etyma/pull/76) [`1d8bf9e`](https://github.com/Andersseen/etyma/commit/1d8bf9e02d92ea25361ed44e76330d50b9a5c8df) Thanks [@Andersseen](https://github.com/Andersseen)! - `t()` now checks params for messages whose text TypeScript knows. For a source catalog
+  written with `defineMessages()` - or as an object literal passed to `defineI18n` - each
+  message's MessageFormat 2 variables are read from its literal type, and `t()` requires
+  exactly those:
+  
+  ```ts
+  const source = defineMessages({ welcome: 'Hello, {$name}!', nav: { docs: 'Docs' } });
+  
+  t('welcome', { name: 'Ada' }); // ok
+  t('welcome'); // error: `name` is required
+  t('welcome', { nmae: 'Ada' }); // error
+  t('nav.docs'); // ok: no variables, params stay optional
+  ```
+  
+  Placeholders, `.input` declarations and variable option values (`=$digits`) count; names
+  bound by `.local` do not. Array elements are typed per index. A key typed as a union needs
+  the params of every member. Param values keep the existing `MessageParamValue` type.
+  
+  Messages typed as plain `string` - every message in an imported `.json` file - keep optional,
+  untyped params unless a generated `MessageContract` lists their variables: `defineRemoteI18n`
+  and, optionally, `defineI18n` take one (see the contract changesets).
+  
+  - `@etyma/core`: new types `MessageVariables`, `MessageParamsOf`, `MessageArgs`,
+    `MessageParamsMap` and `MessageParamValue`. `I18nDefinition`, `Translator` and
+    `createTranslator` take a second, defaulted type parameter, `TParams`; `defineI18n`
+    infers it from `source`. The type-level reading is checked against the `messageformat`
+    parser in `@etyma/tooling`'s tests.
+  - `@etyma/angular`: `EtymaI18n`, `TranslateFn`, `injectI18n` and `injectT` carry `TParams`,
+    so strict templates check params too. New `PartsFn` type for `parts`.
+  - `@etyma/astro`: `AstroI18n` and `createAstroI18n` carry `TParams`.
+  
+  This can surface new compile errors in code that calls `t()` on a `defineMessages()` message
+  without the params it declares. That call already rendered a `{$name}` fallback at runtime,
+  so the error points at an existing bug.
+
 ## 0.2.0
 
 ### Minor Changes

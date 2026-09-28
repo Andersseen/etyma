@@ -1,5 +1,31 @@
 # @etyma/cli
 
+## 0.3.0
+
+### Minor Changes
+
+- [#87](https://github.com/Andersseen/etyma/pull/87) [`c429cb0`](https://github.com/Andersseen/etyma/commit/c429cb03d40bc7afcaa84c418480f98a08183c5d) Thanks [@Andersseen](https://github.com/Andersseen)! - New command: `etyma contract <source.json> --output <file>` generates the `defineMessageContract`
+  module for a local JSON source catalog - its exact keys, array indexes included, and each
+  message's MessageFormat 2 variable names, never its text. Pass it to `defineI18n` as `contract`
+  to type `t()` params for a JSON source.
+  
+  It uses `@etyma/tooling`'s `extractContractKeys`, `extractContractVariables` and
+  `renderContractModule`, so the module is byte-identical to what `etymaRemoteContract` generates
+  for the same catalog. Output is deterministic and only written when its content changes;
+  missing directories are created. Malformed JSON, an invalid catalog shape, or a source message
+  that is not valid MessageFormat 2 exits 2 and writes nothing. It describes the source catalog
+  only - other locales are still `etyma validate`'s job.
+  
+  `etyma --help` lists it, and `etyma contract --help` documents it. No configuration file.
+
+### Patch Changes
+
+- [#76](https://github.com/Andersseen/etyma/pull/76) [`0775ec1`](https://github.com/Andersseen/etyma/commit/0775ec1b70508c5067cc6cf91a16926e9c29d12f) Thanks [@Andersseen](https://github.com/Andersseen)! - `etyma validate` accepts catalogs with arrays of strings, locally and with `--remote`, through
+  `@etyma/tooling`'s array support: a translated array with a missing or extra element is
+  reported at that element's index. The summary counts each array element as one message.
+- Updated dependencies [[`c75acfa`](https://github.com/Andersseen/etyma/commit/c75acfac36970edfc880c287ff661c60eddc712e), [`f8edbfe`](https://github.com/Andersseen/etyma/commit/f8edbfe75fcbabaa339c941226475f2cd008e141), [`347e657`](https://github.com/Andersseen/etyma/commit/347e657ccdd47b5feb97a429c0122d7045912dbe), [`0775ec1`](https://github.com/Andersseen/etyma/commit/0775ec1b70508c5067cc6cf91a16926e9c29d12f)]:
+  - @etyma/tooling@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
