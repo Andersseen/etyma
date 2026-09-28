@@ -59,7 +59,7 @@
     "@etyma/angular": "workspace:^",
     "@types/node": "26.4.0",
     "front-matter": "4.0.2",
-    "jsdom": "30.0.1",
+    "jsdom": "30.1.1",
     "marked": "15.0.12",
     "marked-gfm-heading-id": "4.1.4",
     "marked-highlight": "2.2.4",
