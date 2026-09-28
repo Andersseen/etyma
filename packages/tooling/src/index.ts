@@ -1,10 +1,10 @@
 /**
- * Static validation for Etyma message catalogs.
+ * Static validation and contract generation for Etyma message catalogs.
  *
  * A development-time package: nothing here reads a filesystem, spawns a process, or prints
  * to a console. It takes catalog objects already in memory and returns structured
- * diagnostics — the same shape a future `@etyma/cli`, an MCP tool, a Vite plugin or Forge
- * CMS can all build on without validating catalogs a second way each.
+ * diagnostics, or the text of a generated contract module — what `@etyma/cli`, a Vite plugin,
+ * an MCP tool or a CMS can all build on without validating catalogs a second way each.
  *
  * @packageDocumentation
  */
@@ -24,3 +24,4 @@ export type {
   ValidateCatalogOptions,
   ValidateCatalogsOptions,
 } from './types.js';
+export type { ExtractContractVariablesOptions } from './generate-contract.js';
