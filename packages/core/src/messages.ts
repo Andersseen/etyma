@@ -57,8 +57,8 @@ export type MessageVariables<S extends string> = string extends S
  *
  * Only messages whose literal text declares at least one variable get an entry. A message
  * with no variables, and any message typed as plain `string` - every value in an imported
- * `.json` file, every message behind a remote contract - has none, and `t()` keeps taking
- * optional, untyped {@link MessageParams} for it.
+ * `.json` file - has none, and `t()` keeps taking optional, untyped {@link MessageParams} for
+ * it unless a {@link MessageContract} lists its variables.
  */
 export type MessageParamsOf<T> = ParamMap<MessageParamEntry<T, ''>>;
 
@@ -199,10 +199,11 @@ type MessageIndex<T extends readonly string[]> = number extends T['length']
  * A message-key contract, independent of any translation values.
  *
  * `defineI18n`'s type-level contract comes from the shape of a static `source` object; this
- * is the alternative for a definition whose source catalog is itself only available at
- * runtime - see `defineRemoteI18n`. It carries `TKey` - and, when it lists them, each
- * message's MessageFormat 2 variables as `TParams` - at the type level and, at runtime, only
- * the sorted keys and variable names, never a message.
+ * describes a catalog without holding it. `defineRemoteI18n` needs one, since its source
+ * catalog only exists at runtime; `defineI18n` takes one optionally, to type what a `.json`
+ * import cannot - params, and exact array indexes. It carries `TKey` - and, when it lists
+ * them, each message's MessageFormat 2 variables as `TParams` - at the type level and, at
+ * runtime, only the sorted keys and variable names, never a message.
  */
 export interface MessageContract<
   TKey extends string = string,
@@ -246,9 +247,10 @@ type VariableName<T> = T extends readonly (infer N extends string)[] ? N : never
  * Builds a {@link MessageContract} from a literal list of keys and, optionally, the external
  * variables of the messages that have any.
  *
- * Typically not written by hand: `@etyma/tooling`'s Vite plugin generates the call this
- * wraps from a remote catalog, so both lists are deterministic and sorted the same way
- * `defineI18n`'s own `keys` are. Written by hand it works the same way.
+ * Typically not written by hand: `etyma contract` generates the call this wraps from a local
+ * source `.json` file, and `@etyma/tooling`'s `etymaRemoteContract` Vite plugin from a remote
+ * one, so both lists are deterministic and sorted the same way `defineI18n`'s own `keys` are.
+ * Written by hand it works the same way.
  *
  * With `variables`, `t()` requires exactly those params for those keys, the way it does for
  * a literal `defineI18n` source; every other key keeps optional, untyped params.
@@ -334,6 +336,27 @@ function validateContractVariables(
   }
 
   return validated;
+}
+
+/**
+ * Compares a contract's keys with a catalog's: `missing` are the contract keys the catalog
+ * lacks, `extra` the catalog keys the contract does not declare. Both sorted.
+ *
+ * Internal: shared by `defineI18n`'s definition-time contract check and the catalog
+ * registry's remote contract-drift report, which differ in what they do about a difference
+ * (throw, or report once) but not in what a difference is.
+ */
+export function compareKeys(
+  contractKeys: Iterable<string>,
+  catalogKeys: Iterable<string>,
+): { readonly missing: readonly string[]; readonly extra: readonly string[] } {
+  const contract = new Set(contractKeys);
+  const catalog = new Set(catalogKeys);
+
+  return {
+    missing: [...contract].filter(key => !catalog.has(key)).sort(),
+    extra: [...catalog].filter(key => !contract.has(key)).sort(),
+  };
 }
 
 /**

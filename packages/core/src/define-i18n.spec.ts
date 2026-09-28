@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { defineI18n } from './define-i18n.js';
 import { EtymaError } from './errors.js';
+import { defineMessageContract } from './messages.js';
 
 const source = { nav: { docs: 'Docs' }, welcome: 'Hello, {$name}!' };
 const loaders = { es: () => ({ nav: { docs: 'Documentación' } }) };
@@ -106,4 +107,110 @@ describe('defineI18n', () => {
     expect(definition.directionOf('he')).toBe('rtl');
     expect(definition.directionOf('uk')).toBe('rtl');
   });
+
+  describe('with a contract', () => {
+    const contract = defineMessageContract(['nav.docs', 'welcome'], { welcome: ['name'] });
+
+    it('accepts a contract whose keys match the source exactly', () => {
+      const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source, contract });
+
+      expect(definition.keys).toEqual(['nav.docs', 'welcome']);
+    });
+
+    it('keeps the source as the runtime catalog', () => {
+      const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source, contract });
+
+      expect(definition.sourceCatalog.get('welcome')).toBe('Hello, {$name}!');
+      expect(definition).not.toHaveProperty('contract');
+    });
+
+    it('rejects a stale contract missing a key the source has added', () => {
+      expect(() =>
+        defineI18n({
+          locales: ['en'],
+          sourceLocale: 'en',
+          source: { ...source, nav: { docs: 'Docs', home: 'Home' } },
+          contract: contract,
+        }),
+      ).toThrow(
+        'defineI18n: `contract` does not match the source catalog - it was probably generated ' +
+          'from an older version of it. Regenerate it (for example with `etyma contract`).\n' +
+          '  In the source catalog but not the contract: nav.home',
+      );
+    });
+
+    it('rejects a contract naming a key the source does not have', () => {
+      expect(() =>
+        defineI18n({
+          locales: ['en'],
+          sourceLocale: 'en',
+          source,
+          contract: defineMessageContract(['nav.docs', 'old.key', 'welcome']) as never,
+        }),
+      ).toThrow(/In the contract but not the source catalog: old\.key$/);
+    });
+
+    it('reports both directions, each sorted, source-only keys first', () => {
+      const error = captureError(() =>
+        defineI18n({
+          locales: ['en'],
+          sourceLocale: 'en',
+          source: { b: 'B', a: 'A', keep: 'K' },
+          contract: defineMessageContract(['z', 'keep', 'y']) as never,
+        }),
+      );
+
+      expect(error).toBeInstanceOf(EtymaError);
+      expect(error.message.split('\n').slice(1)).toEqual([
+        '  In the source catalog but not the contract: a, b',
+        '  In the contract but not the source catalog: y, z',
+      ]);
+    });
+
+    it('names at most ten keys of each kind', () => {
+      const keys = Array.from({ length: 12 }, (_, index) => `k${String(index).padStart(2, '0')}`);
+      const error = captureError(() =>
+        defineI18n({
+          locales: ['en'],
+          sourceLocale: 'en',
+          source: Object.fromEntries(keys.map(key => [key, key])),
+          contract: defineMessageContract(['other']),
+        }),
+      );
+
+      expect(error.message).toContain(
+        'k00, k01, k02, k03, k04, k05, k06, k07, k08, k09 (and 2 more)',
+      );
+    });
+
+    it('matches array elements by their indexed keys', () => {
+      expect(() =>
+        defineI18n({
+          locales: ['en'],
+          sourceLocale: 'en',
+          source: { steps: ['One', 'Two'] },
+          contract: defineMessageContract(['steps.0', 'steps.1']),
+        }),
+      ).not.toThrow();
+
+      expect(() =>
+        defineI18n({
+          locales: ['en'],
+          sourceLocale: 'en',
+          source: { steps: ['One', 'Two', 'Three'] },
+          contract: defineMessageContract(['steps.0', 'steps.1']),
+        }),
+      ).toThrow(/In the source catalog but not the contract: steps\.2$/);
+    });
+  });
 });
+
+function captureError(run: () => unknown): Error {
+  try {
+    run();
+  } catch (error) {
+    return error as Error;
+  }
+
+  throw new Error('expected a throw');
+}

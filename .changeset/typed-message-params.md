@@ -22,8 +22,9 @@ Placeholders, `.input` declarations and variable option values (`=$digits`) coun
 bound by `.local` do not. Array elements are typed per index. A key typed as a union needs
 the params of every member. Param values keep the existing `MessageParamValue` type.
 
-Messages typed as plain `string` are unchanged: every message in an imported `.json` file,
-and every message behind a `defineRemoteI18n` contract, keeps optional, untyped params.
+Messages typed as plain `string` - every message in an imported `.json` file - keep optional,
+untyped params unless a generated `MessageContract` lists their variables: `defineRemoteI18n`
+and, optionally, `defineI18n` take one (see the contract changesets).
 
 - `@etyma/core`: new types `MessageVariables`, `MessageParamsOf`, `MessageArgs`,
   `MessageParamsMap` and `MessageParamValue`. `I18nDefinition`, `Translator` and

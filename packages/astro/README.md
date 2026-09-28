@@ -228,7 +228,7 @@ without any Astro-specific remote-catalog handling:
 
 ```ts
 import { createHttpMessageLoader, defineRemoteI18n } from '@etyma/core';
-import { contract } from './contract.generated';
+import contract from './contract.generated';
 
 export const i18n = defineRemoteI18n({
   locales: ['es', 'en', 'uk'],

@@ -36,6 +36,7 @@ re-implementing catalog validation a second way:
 | `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables. |
 | `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.          |
 | [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                               |
+| [`etyma contract`](../cli) (`@etyma/cli`)         | Typed contract generation for a local JSON source catalog, with the same functions `etymaRemoteContract` uses.           |
 
 ## Install
 
@@ -194,12 +195,16 @@ directly — the comparison is skipped for that variable in that message rather 
 which annotation is "the" type. Correct narrow validation beats confident wrong validation;
 see [Limitations](#limitations).
 
-## Generating a remote message contract
+## Generating a message contract
 
-`defineRemoteI18n` (in `@etyma/core`) lets every locale, including the source locale, load
-asynchronously — but TypeScript cannot infer literal translation keys from JSON fetched only
-at runtime. `@etyma/tooling` closes that gap with two pure functions, exported from the main
-entry point, plus a Vite plugin that automates running them.
+A message contract is a source catalog's keys and each message's MessageFormat 2 variable
+names, as a `defineMessageContract` module — never its text. `defineRemoteI18n` (in
+`@etyma/core`) needs one, since TypeScript cannot infer keys from JSON fetched only at
+runtime; `defineI18n` takes one optionally, to type `t()` params for a `.json` source whose
+messages TypeScript only knows as `string`. The same module serves both. `@etyma/tooling`
+builds it with three pure functions, exported from the main entry point; `etymaRemoteContract`
+runs them for a remote catalog during a Vite build, and [`etyma contract`](../cli) for a local
+file from a terminal or script.
 
 ```ts
 import {
@@ -214,11 +219,13 @@ const moduleSource = renderContractModule(keys, variables); // a `defineMessageC
 ```
 
 `extractContractKeys` reuses `@etyma/core`'s own `flattenMessages` rather than a second
-catalog walker, so a malformed remote catalog is rejected exactly the same way a malformed
-local one is. `extractContractVariables` reads each message's external variables with the
-`messageformat` parser — the same analysis variable parity uses — and lists only messages
-that have any. A message that is not valid MessageFormat 2 gets no entry, so its params stay
-untyped rather than guessed; `etymaRemoteValidation` is what reports the syntax error.
+catalog walker, so a malformed catalog is rejected exactly as `defineI18n` rejects it.
+`extractContractVariables` reads each message's external variables with the `messageformat`
+parser — the same analysis variable parity uses — and lists only messages that have any. A
+message that is not valid MessageFormat 2 syntax has no knowable variables, so it is never
+guessed at: by default it gets no entry and keeps untyped params — `etymaRemoteContract` does
+this, and leaves the syntax error to `etymaRemoteValidation`. `extractContractVariables(source,
+{ strict: true })` throws instead, naming every such key; `etyma contract` uses it.
 
 With variables, the generated module types `t()`'s params as well as its keys:
 
@@ -233,7 +240,7 @@ so `t('welcome')` without `{ name }` is a compile error, exactly as for a `defin
 source. The names are types only - a param still accepts any `MessageParamValue`.
 `renderContractModule` is byte-stable for a given input — no timestamp, no random id, no
 machine-specific path — so the file it produces is safe to commit and diffs only when the
-remote catalog's keys or variables actually change. A catalog with no variables renders
+source catalog's keys or variables actually change. A catalog with no variables renders
 exactly the keys-only module earlier versions generated.
 
 ### `@etyma/tooling/vite`
@@ -411,7 +418,7 @@ it and `loaders` must name every locale — leaving one out does not compile:
 ```ts
 // src/i18n/i18n.ts
 import { createHttpMessageLoader, defineRemoteI18n } from '@etyma/core';
-import { contract } from './contract.generated';
+import contract from './contract.generated';
 import { catalogUrl, I18N_PROJECT } from './project';
 
 const load = createHttpMessageLoader(catalogUrl);
@@ -520,7 +527,8 @@ Deliberately not implemented yet:
   point operates only on catalog objects already in memory; `@etyma/tooling/vite` is the one
   deliberate, scoped exception — `etymaRemoteContract` reads and writes exactly one file and
   fetches one catalog, `etymaRemoteValidation` fetches catalogs and writes nothing. Directory
-  discovery and `*.json` reading live in [`@etyma/cli`](../cli), which builds on this engine
+  discovery, `*.json` reading and writing a local contract live in [`@etyma/cli`](../cli),
+  which builds on this engine
   rather than duplicating it. A future MCP
   tool and Forge CMS integration are meant to do the same.
 - **No project configuration file.** No `etyma.config.ts` or config discovery; see the

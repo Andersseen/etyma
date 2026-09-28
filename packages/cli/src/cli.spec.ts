@@ -11,7 +11,8 @@ describe('runCli', () => {
     const result = await runCli([], '/');
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('etyma validate --help');
+    expect(result.stdout).toContain('etyma <command> --help');
+    expect(result.stdout).toContain('contract    Generate');
   });
 
   it('shows top-level help for --help and -h', async () => {
@@ -45,5 +46,12 @@ describe('runCli', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Catalogs are valid');
+  });
+
+  it('dispatches "contract" to the contract command', async () => {
+    const result = await runCli(['contract', '--help'], '/');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('etyma contract <source.json> --output <file>');
   });
 });

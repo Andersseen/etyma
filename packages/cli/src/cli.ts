@@ -1,3 +1,4 @@
+import { runContractCommand } from './commands/contract.js';
 import { runValidateCommand } from './commands/validate.js';
 import { TOP_LEVEL_HELP } from './help.js';
 import { EXIT_USAGE_ERROR, EXIT_VALID } from './types.js';
@@ -7,10 +8,10 @@ import { readOwnVersion } from './version.js';
 /**
  * Top-level dispatch, ahead of `node:util`'s `parseArgs`.
  *
- * `parseArgs` has no notion of subcommands, and one command doesn't need it to fake one: the
+ * `parseArgs` has no notion of subcommands, and two commands don't need it to fake one: the
  * first token is either a flag handled here (`--help`, `--version`) or the command name, and
  * everything after it belongs to that command's own `parseArgs` call - see
- * `commands/validate.ts`.
+ * `commands/validate.ts` and `commands/contract.ts`.
  */
 export async function runCli(argv: readonly string[], cwd: string): Promise<CliResult> {
   const [command, ...rest] = argv;
@@ -25,6 +26,10 @@ export async function runCli(argv: readonly string[], cwd: string): Promise<CliR
 
   if (command === 'validate') {
     return runValidateCommand(rest, cwd);
+  }
+
+  if (command === 'contract') {
+    return runContractCommand(rest, cwd);
   }
 
   return {
