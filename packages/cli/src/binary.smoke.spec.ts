@@ -1,5 +1,14 @@
 import { execFile, execFileSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -140,6 +149,127 @@ describe('the packed etyma binary', () => {
       expect(failure.status).toBe(1);
       expect(failure.stdout).toContain('catalog.missing-key');
     }
+  });
+
+  describe('contract', () => {
+    /**
+     * The whole local-JSON path, from the packed artifacts only: the packed binary generates
+     * the contract from a real `en.json`, and TypeScript - resolving `@etyma/core` from the
+     * installed tarball, with the bundler resolution Vite, Angular and Astro projects use -
+     * checks `t()` params against it through a plain `.json` import. `@ts-expect-error` lines
+     * that no longer error fail the compile too, so this proves both directions.
+     */
+    it('generates a contract that types t() params for an imported JSON source', () => {
+      const project = join(consumerDir, 'contract-app');
+      const i18n = join(project, 'src', 'i18n');
+      mkdirSync(i18n, { recursive: true });
+      cpSync(join(here, '__fixtures__/contract/en.json'), join(i18n, 'en.json'));
+
+      const stdout = execFileSync(
+        binPath,
+        ['contract', 'src/i18n/en.json', '--output', 'src/i18n/etyma.generated.ts'],
+        { cwd: project, encoding: 'utf8' },
+      );
+      const output = join(i18n, 'etyma.generated.ts');
+      const generated = readFileSync(output, 'utf8');
+
+      expect(stdout).toBe('✓ Wrote src/i18n/etyma.generated.ts (5 keys)\n');
+      expect(generated).toContain("import { defineMessageContract } from '@etyma/core';");
+      expect(generated).toContain('"onboarding.steps.1": ["plan"],');
+      expect(generated).not.toContain(consumerDir);
+      expect(generated).not.toContain('Hello');
+
+      const { mtimeMs } = statSync(output);
+      const again = execFileSync(
+        binPath,
+        ['contract', 'src/i18n/en.json', '--output', 'src/i18n/etyma.generated.ts'],
+        { cwd: project, encoding: 'utf8' },
+      );
+
+      expect(again).toBe('✓ src/i18n/etyma.generated.ts is up to date (5 keys)\n');
+      expect(statSync(output).mtimeMs).toBe(mtimeMs);
+
+      writeFileSync(
+        join(project, 'tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: {
+            strict: true,
+            noEmit: true,
+            target: 'ES2022',
+            module: 'ESNext',
+            moduleResolution: 'Bundler',
+            resolveJsonModule: true,
+            skipLibCheck: true,
+            types: [],
+          },
+          include: ['src'],
+        }),
+      );
+      writeFileSync(
+        join(project, 'src', 'check.ts'),
+        [
+          "import { defineI18n, type I18nDefinition, type MessageParamsMap, type Translator } from '@etyma/core';",
+          '',
+          "import en from './i18n/en.json';",
+          "import contract from './i18n/etyma.generated';",
+          '',
+          'declare function translatorFor<K extends string, P extends MessageParamsMap>(d: I18nDefinition<K, P>): Translator<K, P>;',
+          '',
+          "const t = translatorFor(defineI18n({ locales: ['en'], sourceLocale: 'en', source: en, contract }));",
+          '',
+          "t.translate('welcome', { name: 'Ada' });",
+          "t.translate('footer.rights', { year: 2026 });",
+          "t.translate('nav.docs');",
+          "t.translate('onboarding.steps.1', { plan: 'Pro' });",
+          '// @ts-expect-error - `welcome` needs `name`.',
+          "t.translate('welcome');",
+          '// @ts-expect-error - a misspelt param.',
+          "t.translate('welcome', { nmae: 'Ada' });",
+          '// @ts-expect-error - `footer.rights` needs `year`.',
+          "t.translate('footer.rights');",
+          '// @ts-expect-error - `onboarding.steps.1` needs `plan`.',
+          "t.translate('onboarding.steps.1');",
+          '// @ts-expect-error - the contract knows the array has two steps.',
+          "t.translate('onboarding.steps.2');",
+          '',
+          '// Without a contract: typed keys, optional untyped params, as before.',
+          "const plain = translatorFor(defineI18n({ locales: ['en'], sourceLocale: 'en', source: en }));",
+          "plain.translate('welcome');",
+          "plain.translate('onboarding.steps.2');",
+          '// @ts-expect-error - keys are still checked.',
+          "plain.translate('nav.nope');",
+          '',
+        ].join('\n'),
+      );
+
+      const tsc = join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
+      const result = execFileSync(process.execPath, [tsc, '--project', project], {
+        encoding: 'utf8',
+      });
+
+      expect(result).toBe('');
+    });
+
+    it('exits 2 through a real process for a source with invalid MessageFormat 2', () => {
+      const project = join(consumerDir, 'contract-broken');
+      mkdirSync(project, { recursive: true });
+      writeFileSync(join(project, 'en.json'), '{"welcome": "Hello, {$name"}');
+
+      expect.assertions(3);
+
+      try {
+        execFileSync(binPath, ['contract', 'en.json', '-o', 'contract.ts'], {
+          cwd: project,
+          encoding: 'utf8',
+          stdio: 'pipe',
+        });
+      } catch (error) {
+        const failure = error as { status: number; stderr: string };
+        expect(failure.status).toBe(2);
+        expect(failure.stderr).toContain('welcome: Invalid MessageFormat 2 syntax');
+        expect(readdirSync(project)).toEqual(['en.json']);
+      }
+    });
   });
 
   describe('remote mode', () => {

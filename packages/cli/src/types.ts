@@ -14,10 +14,10 @@ export interface CliResult {
  * accept this without a cast at the call site.
  */
 export interface CatalogSource {
-  readonly [key: string]: string | CatalogSource;
+  readonly [key: string]: string | CatalogSource | readonly string[];
 }
 
-/** Exit codes `etyma validate` (and the CLI boundary) may return. See the package README. */
+/** Exit codes the CLI's commands may return. See the package README. */
 export const EXIT_VALID = 0;
 export const EXIT_VALIDATION_FAILED = 1;
 export const EXIT_USAGE_ERROR = 2;

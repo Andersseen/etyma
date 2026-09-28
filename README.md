@@ -59,8 +59,9 @@ hydration fix it later. Etyma keeps those pieces in one contract:
   addressed as `nav.docs`; arrays of strings, addressed by index as `steps.0`.
 - **Typed keys.** `t('footer.foo')` does not compile when the source catalog has no
   `footer.foo`. Inferred from the source catalog's type — no code generator, no build step.
-  For messages written in `defineMessages()`, params are typed too: `t('welcome')` does not
-  compile when the message is `'Hello, {$name}!'`.
+- **Typed params, when you want them.** `t('welcome')` does not compile when the message is
+  `'Hello, {$name}!'`: inferred for `defineMessages()` catalogs, and available for JSON
+  catalogs through an optional generated contract — see [Typed params](#typed-params).
 - **MessageFormat 2**, through the [`messageformat`](https://messageformat.github.io/)
   reference implementation. Plurals, selects, numbers and dates come from CLDR and `Intl`,
   not from anything Etyma invented.
@@ -365,15 +366,65 @@ declarations and variable option values (`minimumFractionDigits=$digits`); names
 number, bigint, boolean or `Date`; the check is on the names, not on which `:function`
 formats them.
 
-**Remote catalogs** get typed params from their generated contract: `etymaRemoteContract`
-reads each source message's variables with the MessageFormat 2 parser and writes them next
-to the keys — see [Remote catalogs](#remote-catalogs).
+Param _names_ are typed; param _value types_ are not inferred from the `:function` that
+formats them — `{$count :number}` requires `count`, but accepts any value above, not only a
+number.
 
-**Where it does not reach.** A `.json` import types every message as plain `string`, so
-TypeScript never sees the text. For those messages params stay optional and untyped, exactly
-as before — nothing breaks, and nothing is claimed that is not known. Mix the two freely:
-`source: { ...json, ...defineMessages({…}) }` types params for the `defineMessages` part
-only.
+**JSON catalogs.** A `.json` import types every message as plain `string`, so TypeScript
+never sees the text, and by default those messages take optional, untyped params — typed
+keys, no generation step. If you want per-message params for a JSON source too, generate a
+contract from it with [`@etyma/cli`](packages/cli) and pass it next to `source`:
+
+```sh
+etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts
+```
+
+```ts
+import en from './en.json';
+import contract from './etyma.generated';
+
+export const i18n = defineI18n({
+  locales: ['en', 'es'],
+  sourceLocale: 'en',
+  source: en,
+  contract,
+  loaders: { es: () => import('./es.json') },
+});
+
+t('welcome', { name: 'Ada' }); // ok
+t('welcome'); // error: `name` is required
+```
+
+The contract holds each message's key and variable names, never its text: `en.json` stays
+the runtime catalog and the fallback. It also knows each array's real length, so
+`onboarding.steps.2` stops compiling when the source has two steps. `defineI18n` throws if the
+contract's keys differ from the source's in any way, so a stale contract cannot describe
+another catalog. It cannot check variables at runtime without parsing every message, so
+regenerate the contract whenever the source changes — a `package.json` script is enough:
+
+```json
+{
+  "scripts": {
+    "i18n:contract": "etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts",
+    "pretypecheck": "pnpm i18n:contract"
+  }
+}
+```
+
+Commit the generated file, so editors and a fresh checkout type-check before anything has
+run, and run [`etyma validate`](#validating-catalogs) in CI for the translated locales.
+
+**Remote catalogs** get the same contract, generated from the remote source catalog by
+`etymaRemoteContract` — see [Remote catalogs](#remote-catalogs).
+
+In short:
+
+| Source              | Keys                                             | Params            | Generation            |
+| ------------------- | ------------------------------------------------ | ----------------- | --------------------- |
+| JSON                | typed (array indexes as `` `steps.${number}` ``) | optional, untyped | none                  |
+| JSON + `contract`   | typed, exact                                     | typed             | `etyma contract`      |
+| `defineMessages()`  | typed, exact                                     | typed             | none                  |
+| remote + `contract` | typed, exact                                     | typed             | `etymaRemoteContract` |
 
 ### Arrays of messages
 
@@ -403,8 +454,9 @@ translation one element short is a `catalog.missing-key` for the last index, and
   is a tuple, so its keys are exact: `'steps.0' | 'steps.1' | 'steps.2'`. An array in an
   imported `.json` file is typed `string[]`, which has no length, so its key type is
   `` `onboarding.steps.${number}` `` — `t('onboarding.steps.9')` compiles and renders the
-  missing-message fallback. The generated contract of a [remote catalog](#remote-catalogs) is
-  built from the real catalog, so it lists the exact indexes.
+  missing-message fallback. A [generated contract](#typed-params) — for a JSON source or a
+  [remote catalog](#remote-catalogs) — is built from the real catalog, so it lists the exact
+  indexes.
 
 ## Migrating from simple interpolation
 
@@ -449,6 +501,9 @@ etyma validate --remote "https://cdn.example.com/i18n/{locale}.json" \
   --locales en,es,uk --source en
 ```
 
+The same CLI's `etyma contract` generates the optional contract that types `t()` params for a
+JSON source — see [Typed params](#typed-params).
+
 See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes. For
 remote catalogs, `etymaRemoteValidation` from `@etyma/tooling/vite` makes the same check part
 of `vite build` itself — see [Remote catalogs](#remote-catalogs).
@@ -463,7 +518,7 @@ locale. `defineRemoteI18n` is Etyma's second, opt-in mode for exactly that:
 ```ts
 // src/app/i18n/i18n.ts
 import { createHttpMessageLoader, defineRemoteI18n } from '@etyma/core';
-import { contract } from './contract.generated';
+import contract from './contract.generated';
 
 const base = 'https://cdn.example.com/i18n';
 
@@ -516,7 +571,8 @@ project, before any dev server has run, so a fresh checkout needs the file alrea
 show correct types immediately. See the [`@etyma/tooling` README](packages/tooling#readme)
 for the full generation, error and fallback behavior.
 
-`etymaRemoteContract` reads the source catalog's _keys_ and nothing else. It does not check
+`etymaRemoteContract` reads the source catalog's keys and variable names and nothing else. It
+does not check
 that the other locales are complete, that their MessageFormat 2 parses, or that they kept the
 source's variables. `etymaRemoteValidation`, from the same subpath, does: it fetches every
 locale from a `{locale}` URL template and runs them through the same `validateCatalogs()`
@@ -583,11 +639,11 @@ Not planned for `0.x`, and not partially implemented anywhere:
   entry was added
 - A CMS integration, a translation management UI, or automatic machine translation
 - Source-message extraction, hardcoded-copy scanning or unused-key scanning
-- A general compiler or code-generation pipeline for message content — no per-key
-  MessageFormat parameter types, no source-code scanning. `@etyma/tooling/vite` generates one
-  narrow artifact from a remote catalog's shape — a sorted list of message keys, for the one
-  case where no local source file can supply that type information at all — and generates
-  nothing from message content itself; see [Remote catalogs](#remote-catalogs)
+- A general compiler or code-generation pipeline for message content, or source-code
+  scanning. The one generated artifact is a message contract — sorted keys and each message's
+  variable names, never message text — from `etyma contract` for a JSON source or
+  `etymaRemoteContract` for a remote one; it is optional for JSON sources, and nothing
+  generates param _value_ types from MessageFormat 2 functions
 - CommonJS output, NgModule APIs, an RxJS-first API, or Angular 20 and below
 - A localization platform in `@etyma/cli`: no config file, no authenticated remote sources, no
   pull or sync, no translation editing, no MCP server or CMS integration — see the

@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "docs": "Docs"
+  },
+  "welcome": "Hello, {$name}!",
+  "footer": {
+    "rights": "© {$year :number useGrouping=never}"
+  },
+  "onboarding": {
+    "steps": ["Create an account", "Choose {$plan}"]
+  }
+}
