@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
 import arrayCatalog from './__fixtures__/array-catalog.json' with { type: 'json' };
+import contractCatalog from './__fixtures__/contract-catalog.json' with { type: 'json' };
 import { defineI18n, type I18nDefinition } from './define-i18n.js';
 import {
   defineMessageContract,
@@ -117,7 +118,7 @@ describe('typed params through a definition', () => {
     json.translate('about.paragraphs.1', { author: 'Andrii' });
   });
 
-  it('stays untyped for a remote definition, whose contract has only keys', () => {
+  it('stays untyped for a remote definition whose contract has only keys', () => {
     const remote = translatorFor(
       defineRemoteI18n({
         locales: ['en'],
@@ -196,5 +197,115 @@ describe('typed params through a remote contract', () => {
     const keysOnly = defineMessageContract(['welcome']);
 
     expectTypeOf(keysOnly).toEqualTypeOf<MessageContract<'welcome'>>();
+  });
+});
+
+describe('typed params through a static contract', () => {
+  // The contract `etyma contract` generates for `contract-catalog.json`.
+  const contract = defineMessageContract(
+    ['footer.rights', 'nav.docs', 'onboarding.steps.0', 'onboarding.steps.1', 'welcome'] as const,
+    { 'footer.rights': ['year'], 'onboarding.steps.1': ['plan'], welcome: ['name'] } as const,
+  );
+
+  it('types a JSON source with no contract by keys only (case A)', () => {
+    const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source: contractCatalog });
+    const t = translatorFor(definition);
+
+    expectTypeOf(definition.keys).toEqualTypeOf<
+      readonly ('nav.docs' | 'welcome' | 'footer.rights' | `onboarding.steps.${number}`)[]
+    >();
+    t.translate('welcome');
+    t.translate('onboarding.steps.7');
+  });
+
+  it('types a JSON source with a contract by keys and params (case B)', () => {
+    const t = translatorFor(
+      defineI18n({ locales: ['en'], sourceLocale: 'en', source: contractCatalog, contract }),
+    );
+
+    t.translate('welcome', { name: 'Ada' });
+    t.translate('footer.rights', { year: 2026 });
+    t.translate('nav.docs');
+    t.translate('onboarding.steps.0');
+    t.translate('onboarding.steps.1', { plan: 'Pro' });
+
+    // @ts-expect-error - `welcome` needs `name`.
+    t.translate('welcome');
+    // @ts-expect-error - a misspelt param.
+    t.translate('welcome', { nmae: 'Ada' });
+    // @ts-expect-error - `footer.rights` needs `year`.
+    t.translate('footer.rights');
+    // @ts-expect-error - `onboarding.steps.1` needs `plan`.
+    t.translate('onboarding.steps.1');
+  });
+
+  it('narrows array keys to the exact indexes the contract lists', () => {
+    const definition = defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: contractCatalog,
+      contract,
+    });
+    const t = translatorFor(definition);
+
+    expectTypeOf(definition.keys).toEqualTypeOf<
+      readonly (
+        'footer.rights' | 'nav.docs' | 'onboarding.steps.0' | 'onboarding.steps.1' | 'welcome'
+      )[]
+    >();
+    // @ts-expect-error - the source has two steps.
+    t.translate('onboarding.steps.2');
+  });
+
+  it('rejects a contract naming a key the source type does not have', () => {
+    defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: contractCatalog,
+      // @ts-expect-error - `old.key` is not a key of the source.
+      contract: defineMessageContract(['nav.docs', 'old.key']),
+    });
+  });
+
+  it('keeps literal inference without a contract (case C) and with one (case D)', () => {
+    const source = defineMessages({ welcome: 'Hello, {$name}!', nav: { docs: 'Docs' } });
+    const plain = translatorFor(defineI18n({ locales: ['en'], sourceLocale: 'en', source }));
+    const withContract = translatorFor(
+      defineI18n({
+        locales: ['en'],
+        sourceLocale: 'en',
+        source,
+        contract: defineMessageContract(['nav.docs', 'welcome'], { welcome: ['name'] }),
+      }),
+    );
+    const keysOnly = translatorFor(
+      defineI18n({
+        locales: ['en'],
+        sourceLocale: 'en',
+        source,
+        contract: defineMessageContract(['nav.docs', 'welcome']),
+      }),
+    );
+
+    for (const t of [plain, withContract, keysOnly]) {
+      t.translate('welcome', { name: 'Ada' });
+      t.translate('nav.docs');
+      // @ts-expect-error - `welcome` needs `name`, from the literal or the contract.
+      t.translate('welcome');
+    }
+  });
+
+  it('requires both when a literal and its contract disagree', () => {
+    const t = translatorFor(
+      defineI18n({
+        locales: ['en'],
+        sourceLocale: 'en',
+        source: defineMessages({ welcome: 'Hello, {$user}!' }),
+        contract: defineMessageContract(['welcome'], { welcome: ['name'] }),
+      }),
+    );
+
+    // @ts-expect-error - a stale contract surfaces as a compile error, not a silent pass.
+    t.translate('welcome', { user: 'Ada' });
   });
 });

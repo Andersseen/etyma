@@ -2,7 +2,7 @@ import type { I18nDefinition } from './define-i18n.js';
 import { EtymaError } from './errors.js';
 import type { Locale } from './locale.js';
 import { loadMessageCatalog } from './loader.js';
-import type { MessageCatalog } from './messages.js';
+import { compareKeys, type MessageCatalog } from './messages.js';
 
 /**
  * Loaded catalogs in a form that survives a JSON round trip.
@@ -29,8 +29,8 @@ export interface CatalogRegistryOptions {
   /**
    * Called once, the first time a remote source catalog is adopted, if its keys do not
    * exactly match the definition's contract. Never called in static mode, where the source
-   * catalog's shape *is* the contract by construction, and never called more than once per
-   * registry.
+   * catalog is in memory at definition time and `defineI18n` already rejects a contract that
+   * does not match it, and never called more than once per registry.
    */
   readonly onContractDrift?: ((info: ContractDriftInfo) => void) | undefined;
 }
@@ -76,7 +76,6 @@ export function createCatalogRegistry(
   );
   const inFlight = new Map<Locale, Promise<MessageCatalog>>();
   const { onChange, onContractDrift } = options;
-  const contractKeys = new Set<string>(definition.keys);
   let contractChecked = false;
 
   const checkContractDrift = (locale: Locale, catalog: MessageCatalog): void => {
@@ -90,9 +89,7 @@ export function createCatalogRegistry(
 
     contractChecked = true;
 
-    const catalogKeys = new Set(catalog.keys());
-    const missing = [...contractKeys].filter(key => !catalogKeys.has(key)).sort();
-    const extra = [...catalogKeys].filter(key => !contractKeys.has(key)).sort();
+    const { missing, extra } = compareKeys(definition.keys, catalog.keys());
 
     if (missing.length > 0 || extra.length > 0) {
       onContractDrift?.({ locale, missing, extra });

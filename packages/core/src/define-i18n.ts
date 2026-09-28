@@ -8,8 +8,10 @@ import {
 } from './locale.js';
 import type { MessageLoader } from './loader.js';
 import {
+  compareKeys,
   flattenMessages,
   type MessageCatalog,
+  type MessageContract,
   type MessageKey,
   type MessageParamsMap,
   type MessageParamsOf,
@@ -20,7 +22,22 @@ import { returnMessageKey, type MissingMessageHandler } from './translator.js';
 
 export type LocaleTuple = readonly [Locale, ...Locale[]];
 
-export interface I18nOptions<TSource extends MessageSource, TLocales extends LocaleTuple> {
+/**
+ * The params a static definition types `t()` with: what the literal source declares, and what
+ * the contract lists, both - so a contract adds params a `.json` import cannot carry, never
+ * drops the ones a `defineMessages()` literal already has, and a stale contract that disagrees
+ * with a literal surfaces as a compile error. Without contract params, exactly the source's.
+ */
+type StaticParams<TSource, TParams> = [keyof TParams] extends [never]
+  ? MessageParamsOf<TSource>
+  : MessageParamsOf<TSource> & TParams;
+
+export interface I18nOptions<
+  TSource extends MessageSource,
+  TLocales extends LocaleTuple,
+  TKey extends MessageKey<TSource> = MessageKey<TSource>,
+  TParams extends MessageParamsMap = Record<never, never>,
+> {
   /** Every locale the application publishes, as BCP 47 tags. */
   readonly locales: TLocales;
 
@@ -40,6 +57,18 @@ export interface I18nOptions<TSource extends MessageSource, TLocales extends Loc
    * loaded through {@link I18nOptions.loaders} and never reaches the initial bundle.
    */
   readonly source: TSource;
+
+  /**
+   * Optional compile-time metadata for `source`: its exact keys and each message's
+   * MessageFormat 2 variables, typically generated from the same file with `etyma contract`.
+   *
+   * Never read for content - `source` stays the runtime catalog and the fallback. It only
+   * sharpens types where a `.json` import cannot: `t()` requires the params the contract lists,
+   * and an array's keys are its exact indexes rather than `` `steps.${number}` ``. Its keys
+   * must match `source`'s exactly, or `defineI18n` throws; its variables are not re-checked at
+   * runtime - regenerate the contract, and run `etyma validate`, when the source changes.
+   */
+  readonly contract?: MessageContract<TKey, TParams>;
 
   /** How to fetch each non-source locale. Required for all of them. */
   readonly loaders?: Readonly<Partial<Record<TLocales[number], MessageLoader>>>;
@@ -84,9 +113,9 @@ export interface I18nDefinition<
   /**
    * Every message key the definition's contract carries, sorted. Also carries the key type.
    *
-   * From the source catalog's own shape for `defineI18n`; from an explicit
-   * `MessageContract` for `defineRemoteI18n`, which has no static catalog to read a shape
-   * from.
+   * From the source catalog's own shape for `defineI18n` - typed by `contract`'s exact keys
+   * when one is given, which it must match; from an explicit `MessageContract` for
+   * `defineRemoteI18n`, which has no static catalog to read a shape from.
    */
   readonly keys: readonly TKey[];
 
@@ -112,8 +141,8 @@ export interface I18nDefinition<
   directionOf(locale: Locale): TextDirection;
 
   /**
-   * Type-only: the params each message key needs, as {@link MessageParamsOf} reads them from
-   * a literal source catalog. Never set at runtime. It exists so a framework layer can infer
+   * Type-only: the params each message key needs - as {@link MessageParamsOf} reads them from
+   * a literal source catalog, together with any a `contract` lists. Never set at runtime. It exists so a framework layer can infer
    * `TParams` from the definition it is given, the way `keys` carries `TKey`.
    */
   readonly messageParams?: TParams;
@@ -127,9 +156,14 @@ export interface I18nDefinition<
  * addressed. All of those are configuration bugs, and the useful moment to fail is the one
  * where the file that caused it is on screen.
  */
-export function defineI18n<const TSource extends MessageSource, const TLocales extends LocaleTuple>(
-  options: I18nOptions<TSource, TLocales>,
-): I18nDefinition<MessageKey<TSource>, MessageParamsOf<TSource>> & {
+export function defineI18n<
+  const TSource extends MessageSource,
+  const TLocales extends LocaleTuple,
+  TKey extends MessageKey<TSource> = MessageKey<TSource>,
+  TParams extends MessageParamsMap = Record<never, never>,
+>(
+  options: I18nOptions<TSource, TLocales, TKey, TParams>,
+): I18nDefinition<TKey, StaticParams<TSource, TParams>> & {
   readonly sourceCatalog: MessageCatalog;
 } {
   const locales: readonly Locale[] = [...options.locales];
@@ -191,19 +225,23 @@ export function defineI18n<const TSource extends MessageSource, const TLocales e
     throw new EtymaError('defineI18n: the source catalog is empty.');
   }
 
+  if (options.contract !== undefined) {
+    assertContractMatchesSource(options.contract, sourceCatalog);
+  }
+
   const directions = new Map<Locale, TextDirection>(
     Object.entries(options.textDirection ?? {}).filter(
       (entry): entry is [Locale, TextDirection] => entry[1] !== undefined,
     ),
   );
 
-  const definition: I18nDefinition<MessageKey<TSource>, MessageParamsOf<TSource>> & {
+  const definition: I18nDefinition<TKey, StaticParams<TSource, TParams>> & {
     readonly sourceCatalog: MessageCatalog;
   } = {
     id: options.id ?? 'etyma',
     locales,
     sourceLocale,
-    keys: Object.freeze([...sourceCatalog.keys()].sort()) as readonly MessageKey<TSource>[],
+    keys: Object.freeze([...sourceCatalog.keys()].sort()) as readonly TKey[],
     sourceCatalog,
     router: createLocaleRouter({ locales, sourceLocale }),
     formatting: options.formatting ?? {},
@@ -213,6 +251,46 @@ export function defineI18n<const TSource extends MessageSource, const TLocales e
   };
 
   return Object.freeze(definition);
+}
+
+/** How many keys of each kind a drift error names before summarising the rest. */
+const DRIFT_KEYS_SHOWN = 10;
+
+/**
+ * Checks that a static definition's `contract` describes its `source` - the same key set,
+ * exactly. Only keys: they are already known from the flattened catalog, so the check is a set
+ * comparison. Variables would need a MessageFormat 2 parse of every message, which is
+ * `@etyma/tooling`'s job at build time, not this one's at startup.
+ */
+function assertContractMatchesSource(contract: MessageContract, sourceCatalog: MessageCatalog) {
+  const { missing, extra } = compareKeys(contract.keys, sourceCatalog.keys());
+
+  if (missing.length === 0 && extra.length === 0) {
+    return;
+  }
+
+  const lines = [
+    'defineI18n: `contract` does not match the source catalog - it was probably generated ' +
+      'from an older version of it. Regenerate it (for example with `etyma contract`).',
+  ];
+
+  if (extra.length > 0) {
+    lines.push(`  In the source catalog but not the contract: ${listKeys(extra)}`);
+  }
+
+  if (missing.length > 0) {
+    lines.push(`  In the contract but not the source catalog: ${listKeys(missing)}`);
+  }
+
+  throw new EtymaError(lines.join('\n'));
+}
+
+function listKeys(keys: readonly string[]): string {
+  const shown = keys.slice(0, DRIFT_KEYS_SHOWN).join(', ');
+
+  return keys.length > DRIFT_KEYS_SHOWN
+    ? `${shown} (and ${keys.length - DRIFT_KEYS_SHOWN} more)`
+    : shown;
 }
 
 /**
