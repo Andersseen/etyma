@@ -1,5 +1,16 @@
 # @etyma/cli
 
+## 0.3.1
+
+### Patch Changes
+
+- [#88](https://github.com/Andersseen/etyma/pull/88) [`9983bb9`](https://github.com/Andersseen/etyma/commit/9983bb9e5f2eff785e7c6e6e4d2d5a2a0a0bacf5) Thanks [@Andersseen](https://github.com/Andersseen)! - `etyma contract` writes the functions each variable's value reaches as a third
+  `defineMessageContract` argument, so `defineI18n({ source, contract })` narrows param values
+  (`{$year :number}` → `number | bigint | string`) the way a `defineMessages()` source does. No new
+  flag; regenerate and commit the contract. Still strict: invalid MessageFormat 2 writes nothing.
+- Updated dependencies [[`9983bb9`](https://github.com/Andersseen/etyma/commit/9983bb9e5f2eff785e7c6e6e4d2d5a2a0a0bacf5)]:
+  - @etyma/tooling@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

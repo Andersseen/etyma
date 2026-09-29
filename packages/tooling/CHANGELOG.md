@@ -1,5 +1,38 @@
 # @etyma/tooling
 
+## 0.4.0
+
+### Minor Changes
+
+- [#88](https://github.com/Andersseen/etyma/pull/88) [`9983bb9`](https://github.com/Andersseen/etyma/commit/9983bb9e5f2eff785e7c6e6e4d2d5a2a0a0bacf5) Thanks [@Andersseen](https://github.com/Andersseen)! - Generated contracts now carry the MessageFormat 2 functions each variable's value reaches, so
+  `@etyma/core` can type param values as well as names — for remote catalogs through
+  `etymaRemoteContract`, and for local ones through `etyma contract`:
+  
+  ```ts
+  export default defineMessageContract(
+    ['footer.rights', 'welcome'] as const,
+    { 'footer.rights': ['year'], welcome: ['name'] } as const,
+    { 'footer.rights': { year: ['number'] } } as const,
+  );
+  ```
+  
+  - New `extractContractParams(source, options?)` returns `{ variables, functions }` from one
+    parse per message; `extractContractVariables` is unchanged.
+  - `renderContractModule(keys, variables?, functions?)` takes the functions as an optional third
+    argument; without it, or with none to list, the output is byte-identical to before.
+  - `MessageAnalysis` gains `parameterFunctions`: per external variable, the functions the caller's
+    value reaches. An annotated `.input` is its variable's only evidence.
+  
+  Names are recorded raw, as the source wrote them — including custom functions and disagreeing
+  annotations, which `@etyma/core` leaves broad. Invalid MessageFormat 2 is handled as before:
+  tolerated (no entry) by `etymaRemoteContract`, rejected by `etyma contract`. Commit the
+  regenerated contract; it changes wherever a source variable is annotated.
+
+### Patch Changes
+
+- Updated dependencies [[`9983bb9`](https://github.com/Andersseen/etyma/commit/9983bb9e5f2eff785e7c6e6e4d2d5a2a0a0bacf5)]:
+  - @etyma/core@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

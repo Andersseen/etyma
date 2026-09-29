@@ -1,5 +1,12 @@
 # @etyma/angular
 
+## 0.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`9983bb9`](https://github.com/Andersseen/etyma/commit/9983bb9e5f2eff785e7c6e6e4d2d5a2a0a0bacf5)]:
+  - @etyma/core@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
