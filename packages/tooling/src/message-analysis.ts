@@ -38,6 +38,18 @@ export interface MessageAnalysis {
    */
   readonly variableFunctions: ReadonlyMap<string, ReadonlySet<string>>;
 
+  /**
+   * For each external variable, the functions the caller's value is passed to - the evidence
+   * a generated contract records for typing that param's value.
+   *
+   * Derived from {@link variableFunctions}, with one rule of MessageFormat 2's own: an
+   * annotated `.input` declaration rebinds its variable, so every later use - annotated or
+   * not - receives the declaration's resolved value, not the caller's. For such a variable
+   * the declaration's function is the only evidence. A variable with no annotation that
+   * reaches the caller's value is absent. Empty when the message did not parse.
+   */
+  readonly parameterFunctions: ReadonlyMap<string, ReadonlySet<string>>;
+
   /** Diagnostics this message produces on its own, with no `locale` or `key` set yet. */
   readonly diagnostics: readonly Omit<CatalogDiagnostic, 'locale' | 'key'>[];
 }
@@ -84,6 +96,7 @@ export function analyzeMessage(source: string): MessageAnalysis {
       message: undefined,
       variables: undefined,
       variableFunctions: new Map(),
+      parameterFunctions: new Map(),
       diagnostics: [
         {
           code: 'message.invalid-syntax',
@@ -106,12 +119,42 @@ export function analyzeMessage(source: string): MessageAnalysis {
     });
   });
 
+  const variableFunctions = collectVariableFunctions(message);
+
   return {
     message,
     variables,
-    variableFunctions: collectVariableFunctions(message),
+    variableFunctions,
+    parameterFunctions: collectParameterFunctions(message, variables, variableFunctions),
     diagnostics,
   };
+}
+
+function collectParameterFunctions(
+  message: Model.Message,
+  variables: ReadonlySet<string>,
+  variableFunctions: ReadonlyMap<string, ReadonlySet<string>>,
+): Map<string, ReadonlySet<string>> {
+  const inputs = new Map<string, string>();
+
+  for (const declaration of message.declarations) {
+    if (declaration.type === 'input' && declaration.value.functionRef) {
+      inputs.set(declaration.name, declaration.value.functionRef.name);
+    }
+  }
+
+  const map = new Map<string, ReadonlySet<string>>();
+
+  for (const name of variables) {
+    const input = inputs.get(name);
+    const functions = input === undefined ? variableFunctions.get(name) : new Set([input]);
+
+    if (functions !== undefined && functions.size > 0) {
+      map.set(name, functions);
+    }
+  }
+
+  return map;
 }
 
 /**

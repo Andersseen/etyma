@@ -26,7 +26,9 @@ export {
   walkMessageSource,
   type MessageArgs,
   type MessageCatalog,
+  type DateTimeMessageParam,
   type MessageContract,
+  type MessageContractFunctions,
   type MessageContractParams,
   type MessageContractVariables,
   type MessageKey,
@@ -39,6 +41,7 @@ export {
   type MessageSourceProblem,
   type MessageValue,
   type MessageVariables,
+  type NumericMessageParam,
 } from './messages.js';
 
 export { createLocaleRouter, type LocaleRouter, type LocaleRouterOptions } from './routing.js';

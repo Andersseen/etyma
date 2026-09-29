@@ -358,6 +358,27 @@ describe('typed params', () => {
     // @ts-expect-error - a misspelt param.
     expect(t('welcome', { nmae: 'Ada' })).toBe('Hello, {$name}!');
   });
+
+  it('narrows a param value by the built-in function annotating it', () => {
+    const typed = defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: { total: '{$count :number} items', updated: 'Updated {$when :date}' },
+    });
+    TestBed.configureTestingModule({ providers: [provideEtyma(typed)] });
+
+    const t = TestBed.runInInjectionContext(() => injectT(typed));
+    const i18n = TestBed.runInInjectionContext(() => injectI18n(typed));
+
+    expect(t('total', { count: 3 })).toBe('3 items');
+    expect(i18n.t('total', { count: 3n })).toBe('3 items');
+    expect(i18n.parts('updated', { when: new Date(0) }).length).toBeGreaterThan(0);
+
+    // @ts-expect-error - `{$count :number}` does not take a Date.
+    void t('total', { count: new Date(0) });
+    // @ts-expect-error - `{$when :date}` does not take a bigint.
+    void i18n.parts('updated', { when: 1n });
+  });
 });
 
 describe('injectI18n', () => {
