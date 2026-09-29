@@ -17,7 +17,7 @@ export function extractContractKeys(source: MessageSource): readonly string[] {
   return [...flattenMessages(source).keys()].sort();
 }
 
-/** Options for {@link extractContractVariables}. */
+/** Options for {@link extractContractVariables} and {@link extractContractParams}. */
 export interface ExtractContractVariablesOptions {
   /**
    * Throw for a message that is not valid MessageFormat 2 syntax, naming every such key,
@@ -26,6 +26,21 @@ export interface ExtractContractVariablesOptions {
    * it.
    */
   readonly strict?: boolean;
+}
+
+/**
+ * What {@link extractContractParams} reads from a catalog: the two optional arguments
+ * `renderContractModule` and `defineMessageContract` take after the keys.
+ */
+export interface ContractParams {
+  /** Each message's external variables, sorted - as {@link extractContractVariables}. */
+  readonly variables: Readonly<Record<string, readonly string[]>>;
+
+  /**
+   * For each message, the variables whose value reaches a `:function`, and the sorted raw
+   * names of those functions. Only messages and variables with any get an entry.
+   */
+  readonly functions: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
 }
 
 /**
@@ -40,13 +55,36 @@ export interface ExtractContractVariablesOptions {
  * that parses but breaks a data-model rule (a missing fallback variant, say) still has exact
  * variables and gets its entry either way - `validateCatalog` reports those.
  *
- * Throws on a malformed catalog shape exactly as {@link extractContractKeys} does.
+ * Throws on a malformed catalog shape exactly as {@link extractContractKeys} does. The
+ * `variables` half of {@link extractContractParams}, which reads both from one parse.
  */
 export function extractContractVariables(
   source: MessageSource,
   options: ExtractContractVariablesOptions = {},
 ): Readonly<Record<string, readonly string[]>> {
+  return extractContractParams(source, options).variables;
+}
+
+/**
+ * Extracts each message's external variables and, for each variable, the MessageFormat 2
+ * functions its value is passed to - everything a generated contract needs to type `t()`'s
+ * params by name and, where a built-in function proves it, by value. One parse per message.
+ *
+ * The functions are evidence, recorded by raw name: `@etyma/core` decides what they prove,
+ * so a custom function or two disagreeing annotations are listed here and simply leave the
+ * param broad there. An annotated `.input` declaration is its variable's only evidence,
+ * because later uses see its resolved value rather than the caller's. A variable used only
+ * bare, or only as an option value (`minimumFractionDigits=$digits`), has no entry.
+ *
+ * Invalid MessageFormat 2 is handled exactly as in {@link extractContractVariables}: left
+ * out - no variables, no functions, nothing guessed - or, with `strict`, thrown.
+ */
+export function extractContractParams(
+  source: MessageSource,
+  options: ExtractContractVariablesOptions = {},
+): ContractParams {
   const variables: Record<string, readonly string[]> = {};
+  const functions: Record<string, Readonly<Record<string, readonly string[]>>> = {};
   const invalid: string[] = [];
 
   for (const [key, message] of [...flattenMessages(source)].sort(([a], [b]) =>
@@ -57,8 +95,19 @@ export function extractContractVariables(
 
     if (names === undefined) {
       invalid.push(`  ${key}: ${analysis.diagnostics[0]?.message ?? 'invalid syntax'}`);
-    } else if (names.size > 0) {
+      continue;
+    }
+
+    if (names.size > 0) {
       variables[key] = [...names].sort();
+    }
+
+    const annotated = [...analysis.parameterFunctions.keys()].sort();
+
+    if (annotated.length > 0) {
+      functions[key] = Object.fromEntries(
+        annotated.map(name => [name, [...(analysis.parameterFunctions.get(name) ?? [])].sort()]),
+      );
     }
   }
 
@@ -70,7 +119,7 @@ export function extractContractVariables(
     );
   }
 
-  return variables;
+  return { variables, functions };
 }
 
 const GENERATED_HEADER = [
@@ -80,27 +129,31 @@ const GENERATED_HEADER = [
 
 /**
  * Renders a {@link https://www.npmjs.com/package/@etyma/core `defineMessageContract`} module
- * from a key list and, optionally, each message's variables - the one artifact both
- * `defineI18n({ contract })` and `defineRemoteI18n` read. It imports only `@etyma/core`.
+ * from a key list and, optionally, each message's variables and the functions those
+ * variables' values reach - the one artifact both `defineI18n({ contract })` and
+ * `defineRemoteI18n` read. It imports only `@etyma/core`, and holds no message text.
  *
  * Byte-stable for a given input: no timestamp, no random id, no machine-specific path -
  * running this twice against the same catalog produces the same file, so committing the
  * output never causes churn the catalog itself did not cause. Without variables (or with
- * none to list) the module is exactly the keys-only one earlier versions generated.
+ * none to list) the module is exactly the keys-only one earlier versions generated; without
+ * functions, exactly the keys-and-variables one.
  */
 export function renderContractModule(
   keys: readonly string[],
   variables: Readonly<Record<string, readonly string[]>> = {},
+  functions: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {},
 ): string {
   const sortedKeys = [...keys].sort();
   const variableKeys = Object.keys(variables).sort();
+  const functionKeys = Object.keys(functions).sort();
   const header =
     `${GENERATED_HEADER}\n` +
     `\n` +
     `import { defineMessageContract } from '@etyma/core';\n` +
     `\n`;
 
-  if (variableKeys.length === 0) {
+  if (variableKeys.length === 0 && functionKeys.length === 0) {
     const literal = sortedKeys.map(key => `  ${JSON.stringify(key)},`).join('\n');
 
     return `${header}export default defineMessageContract([\n${literal}\n] as const);\n`;
@@ -108,10 +161,16 @@ export function renderContractModule(
 
   const keyLiteral = sortedKeys.map(key => `    ${JSON.stringify(key)},`).join('\n');
   const variableLiteral = variableKeys
+    .map(key => `    ${JSON.stringify(key)}: ${nameList(variables[key])},`)
+    .join('\n');
+  const functionLiteral = functionKeys
     .map(key => {
-      const names = [...(variables[key] ?? [])].sort().map(name => JSON.stringify(name));
+      const byVariable = functions[key] ?? {};
+      const entries = Object.keys(byVariable)
+        .sort()
+        .map(name => `${JSON.stringify(name)}: ${nameList(byVariable[name])}`);
 
-      return `    ${JSON.stringify(key)}: [${names.join(', ')}],`;
+      return `    ${JSON.stringify(key)}: { ${entries.join(', ')} },`;
     })
     .join('\n');
 
@@ -119,6 +178,14 @@ export function renderContractModule(
     `${header}export default defineMessageContract(\n` +
     `  [\n${keyLiteral}\n  ] as const,\n` +
     `  {\n${variableLiteral}\n  } as const,\n` +
+    (functionKeys.length > 0 ? `  {\n${functionLiteral}\n  } as const,\n` : '') +
     `);\n`
   );
+}
+
+function nameList(names: readonly string[] | undefined): string {
+  return `[${[...(names ?? [])]
+    .sort()
+    .map(name => JSON.stringify(name))
+    .join(', ')}]`;
 }

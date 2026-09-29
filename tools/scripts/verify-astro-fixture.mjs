@@ -349,6 +349,16 @@ function verifyRemoteContract(cwd, assert) {
     assert(generated.includes(entry), `contract.generated.ts: expected variables ${entry}`);
   }
 
+  // And the functions those variables' values reach - what types them by value.
+  const expectedFunctions = [
+    '"footer.rights": { "year": ["number"] },',
+    '"posts.count": { "count": ["number"] },',
+  ];
+
+  for (const entry of expectedFunctions) {
+    assert(generated.includes(entry), `contract.generated.ts: expected functions ${entry}`);
+  }
+
   assert(
     !generated.includes('"about.paragraphs"') && !generated.includes('"about.paragraphs.2"'),
     'contract.generated.ts: expected exactly about.paragraphs.0 and .1, not the array itself ' +

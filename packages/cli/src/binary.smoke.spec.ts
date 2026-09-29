@@ -173,9 +173,10 @@ describe('the packed etyma binary', () => {
       const output = join(i18n, 'etyma.generated.ts');
       const generated = readFileSync(output, 'utf8');
 
-      expect(stdout).toBe('✓ Wrote src/i18n/etyma.generated.ts (5 keys)\n');
+      expect(stdout).toBe('✓ Wrote src/i18n/etyma.generated.ts (6 keys)\n');
       expect(generated).toContain("import { defineMessageContract } from '@etyma/core';");
       expect(generated).toContain('"onboarding.steps.1": ["plan"],');
+      expect(generated).toContain('"footer.rights": { "year": ["number"] },');
       expect(generated).not.toContain(consumerDir);
       expect(generated).not.toContain('Hello');
 
@@ -186,7 +187,7 @@ describe('the packed etyma binary', () => {
         { cwd: project, encoding: 'utf8' },
       );
 
-      expect(again).toBe('✓ src/i18n/etyma.generated.ts is up to date (5 keys)\n');
+      expect(again).toBe('✓ src/i18n/etyma.generated.ts is up to date (6 keys)\n');
       expect(statSync(output).mtimeMs).toBe(mtimeMs);
 
       writeFileSync(
@@ -231,6 +232,19 @@ describe('the packed etyma binary', () => {
           "t.translate('onboarding.steps.1');",
           '// @ts-expect-error - the contract knows the array has two steps.',
           "t.translate('onboarding.steps.2');",
+          '',
+          '// Param values, narrowed by the built-in functions the source annotates them with.',
+          "t.translate('footer.rights', { year: 2026n });",
+          "t.translate('footer.rights', { year: '2026' });",
+          "t.translate('activity.updated', { when: new Date() });",
+          "t.translate('activity.updated', { when: Date.now() });",
+          "t.translate('welcome', { name: true });",
+          '// @ts-expect-error - :number does not take a Date.',
+          "t.translate('footer.rights', { year: new Date() });",
+          '// @ts-expect-error - :number does not take a boolean.',
+          "t.translate('footer.rights', { year: true });",
+          '// @ts-expect-error - :datetime does not take a bigint.',
+          "t.translate('activity.updated', { when: 1n });",
           '',
           '// Without a contract: typed keys, optional untyped params, as before.',
           "const plain = translatorFor(defineI18n({ locales: ['en'], sourceLocale: 'en', source: en }));",

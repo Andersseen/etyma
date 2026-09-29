@@ -30,11 +30,77 @@ export type MessageValue = string | MessageSource | readonly string[];
  */
 export type MessageCatalog = ReadonlyMap<string, string>;
 
-/** One value substituted into a message's `{$placeholder}` slot. */
+/**
+ * One value substituted into a message's `{$placeholder}` slot.
+ *
+ * Every param has this type unless its message proves a narrower one - see
+ * {@link NumericMessageParam} and {@link DateTimeMessageParam}. A bare `{$name}`, `:string`,
+ * a custom function, an option value (`minimumFractionDigits=$digits`) and annotations that
+ * disagree all stay this broad.
+ */
 export type MessageParamValue = string | number | bigint | boolean | Date;
+
+/**
+ * What a param annotated with a built-in numeric function - `:number`, `:integer`, `:offset`,
+ * `:currency`, `:percent`, `:unit` - accepts at compile time.
+ *
+ * A semantic contract, deliberately stricter than `messageformat`'s coercion. A string stays
+ * in because the runtime reads one holding a JSON number (`'12'`); whether a given string
+ * does is only known at runtime, which reports a `bad-operand` issue for `'hello'` - this is
+ * a type, not a validator. A `Date` is left out although the runtime would unwrap it through
+ * `valueOf()` and format its epoch milliseconds: that is never a meaningful number to show.
+ */
+export type NumericMessageParam = number | bigint | string;
+
+/**
+ * What a param annotated with a built-in date/time function - `:date`, `:time`,
+ * `:datetime` - accepts at compile time: a `Date`, epoch milliseconds, or a string the
+ * runtime passes to `new Date()`. As with {@link NumericMessageParam}, an unparseable string
+ * type-checks and is reported at runtime.
+ */
+export type DateTimeMessageParam = Date | number | string;
 
 /** Values substituted into a message's `{$placeholder}` slots. */
 export type MessageParams = Readonly<Record<string, MessageParamValue>>;
+
+/**
+ * The built-in functions whose operand is a number. Internal: `format.spec.ts` checks this
+ * list, and the values it accepts, against the installed `messageformat`.
+ */
+export type NumericMessageFunction =
+  'number' | 'integer' | 'offset' | 'currency' | 'percent' | 'unit';
+
+/** The built-in functions whose operand is a date. Internal, checked the same way. */
+export type DateTimeMessageFunction = 'date' | 'time' | 'datetime';
+
+/**
+ * The param type the function annotations on one variable prove, from their names.
+ *
+ * No annotation (`never`) is {@link MessageParamValue}. Otherwise every annotation has to
+ * fall in one category for the param to narrow: two numeric functions narrow it; a numeric
+ * and a date/time one do not, and neither does `:string` - which stringifies anything - or a
+ * function Etyma has no operand contract for, such as a custom one.
+ */
+export type MessageParamValueFor<F extends string> = [F] extends [never]
+  ? MessageParamValue
+  : CategoryValue<FunctionCategory<F>>;
+
+type FunctionCategory<F extends string> = F extends NumericMessageFunction
+  ? 'numeric'
+  : F extends DateTimeMessageFunction
+    ? 'datetime'
+    : F extends 'string'
+      ? 'string'
+      : 'unknown';
+
+// `[C] extends [UnionToIntersection<C>]` holds only for a single category.
+type CategoryValue<C> = [C] extends [UnionToIntersection<C>]
+  ? C extends 'numeric'
+    ? NumericMessageParam
+    : C extends 'datetime'
+      ? DateTimeMessageParam
+      : MessageParamValue
+  : MessageParamValue;
 
 /**
  * The external variables of a MessageFormat 2 message, read from its literal type.
@@ -92,11 +158,11 @@ type UnionToIntersection<U> = (U extends unknown ? (union: U) => void : never) e
 
 interface ParamEntryShape {
   readonly key: string;
-  readonly variables: string;
+  readonly params: MessageParams;
 }
 
 type ParamMap<E extends ParamEntryShape> = {
-  [X in E as X['key']]: Readonly<Record<X['variables'], MessageParamValue>>;
+  [X in E as X['key']]: X['params'];
 };
 
 type MessageParamEntry<T, P extends string> = {
@@ -112,8 +178,61 @@ type MessageParamEntry<T, P extends string> = {
 type ParamEntry<K extends string, S> = S extends string
   ? [MessageVariables<S>] extends [never]
     ? never
-    : { readonly key: K; readonly variables: MessageVariables<S> }
+    : { readonly key: K; readonly params: LiteralParams<Unescape<S>, MessageVariables<S>> }
   : never;
+
+type LiteralParams<S extends string, V extends string> = {
+  readonly [N in V]: MessageParamValueFor<ParamFunctions<S, N>>;
+};
+
+/**
+ * The functions a caller's `$name` is passed to. An annotated `.input` declaration rebinds
+ * the name, so every later use - annotated or bare - sees its resolved value, never the
+ * caller's: the declaration is then the only evidence. Otherwise every annotation on the
+ * variable's own placeholders and `.local` values; a bare use constrains nothing, and an
+ * option value (`=$digits`) is not an operand at all.
+ */
+type ParamFunctions<S extends string, N extends string> = [
+  Extract<InputAnnotations<Declarations<S>>, { readonly name: N }>,
+] extends [never]
+  ? Extract<Annotations<S>, { readonly name: N }>['fn']
+  : Extract<InputAnnotations<Declarations<S>>, { readonly name: N }>['fn'];
+
+/** A variable operand and the function annotating it, from one trimmed expression body. */
+type Annotation<B extends string> = B extends `$${infer After}`
+  ? After extends `${Word<After>}${infer Tail}`
+    ? Trim<Tail> extends `:${infer Fn}`
+      ? { readonly name: Word<After>; readonly fn: FunctionName<Fn> }
+      : never
+    : never
+  : never;
+
+/** Every `{$name :function ...}` expression, declarations and placeholders alike. */
+type Annotations<S extends string> = S extends `${string}{${infer Body}}${infer Rest}`
+  ? Annotation<Trim<Body>> | Annotations<Rest>
+  : never;
+
+/** Every annotated `.input {$name :function}` declaration. */
+type InputAnnotations<S extends string> = S extends `${string}.input${infer Rest}`
+  ? Annotation<Trim<Rest>> | InputAnnotations<Rest>
+  : never;
+
+/**
+ * A complex message's declarations - the text before its first quoted pattern - so `.input`
+ * written as text in a simple message or inside a variant is not read as a declaration.
+ */
+type Declarations<S extends string> =
+  TrimSpace<S> extends `.${string}` ? (S extends `${infer D}{{${string}` ? D : S) : '';
+
+/** A function name - `number`, or a namespaced `ns:fn` - ends at whitespace or `}`. */
+type FunctionName<S extends string> = S extends `${infer Head}${
+  ' ' | '\n' | '\t' | '\r' | '}'}${string}`
+  ? FunctionName<Head>
+  : S;
+
+type TrimSpace<S extends string> = S extends ` ${infer R}` | `\n${infer R}` | `\t${infer R}`
+  ? TrimSpace<R>
+  : S;
 
 /** Drops escaped braces, so `\{$x}` is text rather than a placeholder. */
 type Unescape<S extends string> = S extends `${infer A}\\{${infer B}` ? `${A}${Unescape<B>}` : S;
@@ -217,6 +336,13 @@ export interface MessageContract<
    */
   readonly variables?: Readonly<Record<string, readonly string[]>>;
 
+  /**
+   * For the variables that have any, the MessageFormat 2 functions the caller's value is
+   * passed to, sorted - raw names, as the source message wrote them. Absent from a contract
+   * built without them.
+   */
+  readonly functions?: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
+
   /** Type-only, like `I18nDefinition['messageParams']`: never set at runtime. */
   readonly messageParams?: TParams;
 }
@@ -232,16 +358,44 @@ export type MessageContractVariables<TKey extends string = string> = {
   readonly [K in TKey]?: readonly string[];
 };
 
-/** The params map a {@link MessageContractVariables} literal describes. */
-export type MessageContractParams<TVariables> = {
+/**
+ * The functions argument of {@link defineMessageContract}: for some of a key's variables,
+ * the MessageFormat 2 functions its value is passed to, by raw name (`['number']`).
+ *
+ * Evidence, not a verdict - the names are what the source message wrote, and `@etyma/core`
+ * decides what they prove: a known built-in narrows the param, anything else, or
+ * annotations that disagree, leave it {@link MessageParamValue}.
+ */
+export type MessageContractFunctions<TVariables = MessageContractVariables> = {
+  readonly [K in keyof TVariables]?: Readonly<
+    Partial<Record<VariableName<TVariables[K]>, readonly string[]>>
+  >;
+};
+
+/**
+ * The params map a {@link MessageContractVariables} literal describes, with each value typed
+ * by the {@link MessageContractFunctions} listed for it, and {@link MessageParamValue} when
+ * there are none.
+ */
+export type MessageContractParams<TVariables, TFunctions = Record<never, never>> = {
   [
     K in keyof TVariables & string as TVariables[K] extends readonly [string, ...string[]]
       ? K
       : never
-  ]: Readonly<Record<VariableName<TVariables[K]>, MessageParamValue>>;
+  ]: {
+    readonly [V in VariableName<TVariables[K]>]: MessageParamValueFor<
+      ContractFunctionName<TFunctions, K, V>
+    >;
+  };
 };
 
 type VariableName<T> = T extends readonly (infer N extends string)[] ? N : never;
+
+type ContractFunctionName<F, K extends string, V extends string> = K extends keyof F
+  ? V extends keyof F[K]
+    ? VariableName<F[K][V]>
+    : never
+  : never;
 
 /**
  * Builds a {@link MessageContract} from a literal list of keys and, optionally, the external
@@ -253,19 +407,28 @@ type VariableName<T> = T extends readonly (infer N extends string)[] ? N : never
  * Written by hand it works the same way.
  *
  * With `variables`, `t()` requires exactly those params for those keys, the way it does for
- * a literal `defineI18n` source; every other key keeps optional, untyped params.
+ * a literal `defineI18n` source; every other key keeps optional, untyped params. With
+ * `functions` too, a param whose functions are all built-in numeric ones is a
+ * {@link NumericMessageParam}, all date/time ones a {@link DateTimeMessageParam}; a variable
+ * with no functions listed, or any other combination, stays {@link MessageParamValue}.
  *
  * ```ts
- * defineMessageContract(['nav.docs', 'welcome'] as const, { welcome: ['name'] } as const);
+ * defineMessageContract(
+ *   ['nav.docs', 'total', 'welcome'] as const,
+ *   { total: ['count'], welcome: ['name'] } as const,
+ *   { total: { count: ['number'] } } as const,
+ * );
  * ```
  */
 export function defineMessageContract<
   const TKeys extends readonly string[],
   const TVariables extends MessageContractVariables<TKeys[number]> = Record<never, never>,
+  const TFunctions extends MessageContractFunctions<TVariables> = Record<never, never>,
 >(
   keys: TKeys,
   variables?: TVariables,
-): MessageContract<TKeys[number], MessageContractParams<TVariables>> {
+  functions?: TFunctions,
+): MessageContract<TKeys[number], MessageContractParams<TVariables, TFunctions>> {
   if (keys.length === 0) {
     throw new EtymaError('defineMessageContract: `keys` must list at least one key.');
   }
@@ -283,13 +446,95 @@ export function defineMessageContract<
   const contract: {
     keys: readonly TKeys[number][];
     variables?: Record<string, readonly string[]>;
+    functions?: Record<string, Readonly<Record<string, readonly string[]>>>;
   } = { keys: Object.freeze([...keys].sort()) };
 
   if (variables !== undefined) {
     contract.variables = Object.freeze(validateContractVariables(seen, variables));
   }
 
+  if (functions !== undefined) {
+    contract.functions = Object.freeze(
+      validateContractFunctions(contract.variables ?? {}, functions),
+    );
+  }
+
   return Object.freeze(contract);
+}
+
+function validateContractFunctions(
+  variables: Readonly<Record<string, readonly string[]>>,
+  functions: MessageContractFunctions,
+): Record<string, Readonly<Record<string, readonly string[]>>> {
+  const validated: Record<string, Readonly<Record<string, readonly string[]>>> = {};
+
+  for (const key of Object.keys(functions).sort()) {
+    const known = variables[key];
+    const byVariable: unknown = functions[key];
+
+    if (known === undefined) {
+      throw new EtymaError(
+        `defineMessageContract: functions are listed for "${key}", which has no variables listed.`,
+      );
+    }
+
+    if (
+      byVariable === null ||
+      typeof byVariable !== 'object' ||
+      Array.isArray(byVariable) ||
+      Object.keys(byVariable).length === 0
+    ) {
+      throw new EtymaError(
+        `defineMessageContract: functions for "${key}" must be a non-empty object of variable ` +
+          'names; leave a message without annotated variables out.',
+      );
+    }
+
+    const entry: Record<string, readonly string[]> = {};
+
+    for (const name of Object.keys(byVariable).sort()) {
+      const names: unknown = (byVariable as Record<string, unknown>)[name];
+
+      if (!known.includes(name)) {
+        throw new EtymaError(
+          `defineMessageContract: functions are listed for variable "${name}" of "${key}", ` +
+            'which is not one of its variables.',
+        );
+      }
+
+      if (!Array.isArray(names) || names.length === 0) {
+        throw new EtymaError(
+          `defineMessageContract: functions for "${key}" variable "${name}" must be a ` +
+            'non-empty array of function names; leave an unannotated variable out.',
+        );
+      }
+
+      const unique = new Set<string>();
+
+      for (const fn of names) {
+        if (typeof fn !== 'string' || fn.length === 0) {
+          throw new EtymaError(
+            `defineMessageContract: functions for "${key}" variable "${name}" must be ` +
+              'non-empty strings.',
+          );
+        }
+
+        if (unique.has(fn)) {
+          throw new EtymaError(
+            `defineMessageContract: function "${fn}" is listed twice for "${key}" variable "${name}".`,
+          );
+        }
+
+        unique.add(fn);
+      }
+
+      entry[name] = Object.freeze([...unique].sort());
+    }
+
+    validated[key] = Object.freeze(entry);
+  }
+
+  return validated;
 }
 
 function validateContractVariables(

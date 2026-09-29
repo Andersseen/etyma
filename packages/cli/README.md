@@ -300,8 +300,9 @@ index, and counts as one message in the summary.
 etyma contract <source.json> --output <file>
 ```
 
-Generates the optional message contract for a local JSON source catalog: its exact keys and
-each message's MessageFormat 2 variable names, as a `defineMessageContract` module. Passed to
+Generates the optional message contract for a local JSON source catalog: its exact keys, each
+message's MessageFormat 2 variable names and the functions their values reach, as a
+`defineMessageContract` module. Passed to
 `defineI18n` next to the same file, it types `t()` params that a `.json` import cannot:
 
 ```ts
@@ -318,6 +319,7 @@ export const i18n = defineI18n({
 
 t('welcome', { name: 'Ada' }); // ok
 t('welcome'); // compile error: `name` is required
+t('footer.rights', { year: new Date() }); // compile error: `{$year :number}` is numeric
 ```
 
 Without it, a JSON source still has typed keys and optional, untyped params, with nothing to
@@ -349,6 +351,9 @@ export default defineMessageContract(
     'onboarding.steps.1': ['plan'],
     welcome: ['name'],
   } as const,
+  {
+    'footer.rights': { year: ['number'] },
+  } as const,
 );
 ```
 
@@ -359,8 +364,11 @@ export default defineMessageContract(
   rebuild or editor reload. Missing output directories are created.
 - **Exact array keys.** `onboarding.steps.0` and `.1`, where a `.json` import only knows
   `` `onboarding.steps.${number}` ``.
-- **Strict about the source.** Keys and variables are read by `@etyma/tooling` - the same
-  `extractContractKeys`, `extractContractVariables` and `renderContractModule` behind
+- **Value types too.** The third argument lists the MessageFormat 2 functions each variable's
+  value reaches, so `year` is typed as `number | bigint | string` rather than any param value.
+  Only built-in numeric and date/time functions narrow a param; see the root README.
+- **Strict about the source.** Keys, variables and functions are read by `@etyma/tooling` - the
+  same `extractContractKeys`, `extractContractParams` and `renderContractModule` behind
   `etymaRemoteContract`. A malformed catalog, or a source message that is not valid
   MessageFormat 2 (whose variables are unknowable), fails the command and writes nothing.
 - **Source only.** It does not look at other locales; `etyma validate` does.

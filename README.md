@@ -362,13 +362,47 @@ t('nav.docs'); // ok: no variables, params stay optional
 
 Variables are read from placeholders (`{$name}`, `{$count :number}`), `.input`
 declarations and variable option values (`minimumFractionDigits=$digits`); names bound by
-`.local` are not asked for. Each param accepts any value `t()` always accepted — a string,
-number, bigint, boolean or `Date`; the check is on the names, not on which `:function`
-formats them.
+`.local` are not asked for.
 
-Param _names_ are typed; param _value types_ are not inferred from the `:function` that
-formats them — `{$count :number}` requires `count`, but accepts any value above, not only a
-number.
+**Param values.** Param _names_ are always typed when Etyma knows the message. Param _values_
+are narrowed only where a built-in MessageFormat 2 function proves a narrower input; everything
+else accepts any `MessageParamValue` — a string, number, bigint, boolean or `Date`:
+
+```ts
+const source = defineMessages({
+  total: 'Total: {$count :number}',
+  updated: 'Updated {$when :datetime}',
+  greeting: 'Hello, {$name}!',
+});
+
+t('total', { count: 12 }); // ok — also 12n or '12'
+t('total', { count: new Date() }); // error: not a numeric input
+t('updated', { when: new Date() }); // ok — also epoch ms or a date string
+t('greeting', { name: true }); // ok: a bare {$name} stays broad
+```
+
+| Annotation                                                    | Param type                                           |
+| ------------------------------------------------------------- | ---------------------------------------------------- |
+| `:number` `:integer` `:offset` `:currency` `:percent` `:unit` | `NumericMessageParam` — `number \| bigint \| string` |
+| `:date` `:time` `:datetime`                                   | `DateTimeMessageParam` — `Date \| number \| string`  |
+| none, `:string`, a custom function                            | `MessageParamValue`                                  |
+
+- An annotated `.input {$count :number}` types `count`, and later uses of `$count` — bare or
+  annotated — do not change it: they see the declaration's resolved value, not yours.
+- Annotations that agree (`:number` and `:integer`) narrow; annotations that disagree
+  (`:number` and `:datetime`, or `:number` and `:string`) fall back to `MessageParamValue`.
+- A variable used only as a function option (`minimumFractionDigits=$digits`) stays broad:
+  option values are not typed.
+- The source locale's annotations define the types. A translation that formats the same
+  variable with another function does not change `t()`'s signature; `etyma validate` warns
+  about it.
+
+These are **semantic** types, deliberately stricter than the coercions `messageformat` performs:
+its numeric functions would unwrap a `Date` through `valueOf()` and format its epoch
+milliseconds, but a `Date` is not a meaningful number, so Etyma rejects it. They are compile-time
+types, not a validator: `t('total', { count: 'hello' })` type-checks, because some strings are
+numbers, and is reported through `onIssue` at runtime. Custom functions, option values and
+function _return_ types are not typed yet.
 
 **JSON catalogs.** A `.json` import types every message as plain `string`, so TypeScript
 never sees the text, and by default those messages take optional, untyped params — typed
@@ -395,7 +429,9 @@ t('welcome', { name: 'Ada' }); // ok
 t('welcome'); // error: `name` is required
 ```
 
-The contract holds each message's key and variable names, never its text: `en.json` stays
+The contract holds each message's key, its variable names and the MessageFormat 2 functions
+each variable's value reaches (`{ total: { count: ['number'] } }`) — never its text — so a
+JSON source gets the same value narrowing as a `defineMessages()` literal. `en.json` stays
 the runtime catalog and the fallback. It also knows each array's real length, so
 `onboarding.steps.2` stops compiling when the source has two steps. `defineI18n` throws if the
 contract's keys differ from the source's in any way, so a stale contract cannot describe
@@ -422,9 +458,11 @@ In short:
 | Source              | Keys                                             | Params            | Generation            |
 | ------------------- | ------------------------------------------------ | ----------------- | --------------------- |
 | JSON                | typed (array indexes as `` `steps.${number}` ``) | optional, untyped | none                  |
-| JSON + `contract`   | typed, exact                                     | typed             | `etyma contract`      |
-| `defineMessages()`  | typed, exact                                     | typed             | none                  |
-| remote + `contract` | typed, exact                                     | typed             | `etymaRemoteContract` |
+| JSON + `contract`   | typed, exact                                     | typed¹            | `etyma contract`      |
+| `defineMessages()`  | typed, exact                                     | typed¹            | none                  |
+| remote + `contract` | typed, exact                                     | typed¹            | `etymaRemoteContract` |
+
+¹ Names always; values where a built-in function proves them — see **Param values** above.
 
 ### Arrays of messages
 

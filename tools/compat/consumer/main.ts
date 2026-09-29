@@ -20,6 +20,7 @@ const source = defineMessages({
   nav: { docs: 'Docs' },
   footer: { rights: 'MIT licensed. {$year :number useGrouping=never}' },
   features: ['Typed keys', 'Hello, {$name}!'],
+  updated: 'Updated {$when :datetime}',
 });
 
 const i18n = defineI18n({
@@ -39,6 +40,7 @@ const known: Key = 'footer.rights';
     <p>{{ t('nav.docs') }}</p>
     <p>{{ t('footer.rights', { year: 2026 }) }}</p>
     <p>{{ t('features.0') }} / {{ t('features.1', { name: 'Ada' }) }}</p>
+    <p>{{ t('updated', { when: builtAt }) }} / {{ t('footer.rights', { year: '2026' }) }}</p>
     <p>{{ i18n.path('/docs') }}</p>
     <p>{{ i18n.locale() }} / {{ i18n.direction() }} / {{ i18n.ready() }}</p>
     <button type="button" (click)="switchTo('es')">es</button>
@@ -47,6 +49,7 @@ const known: Key = 'footer.rights';
 export class CompatRoot {
   protected readonly i18n: EtymaI18n<Key> = injectI18n(i18n);
   protected readonly t = injectT(i18n);
+  protected readonly builtAt = new Date(0);
 
   constructor() {
     // @ts-expect-error - the source catalog has no `nav.nope`, and the published types
@@ -58,6 +61,10 @@ export class CompatRoot {
     // @ts-expect-error - `footer.rights` declares `{$year}`, so its params are required -
     // typed params have to survive packaging just as typed keys do.
     this.t('footer.rights');
+    // @ts-expect-error - `{$year :number}` narrows the value: a Date is not a numeric input.
+    this.t('footer.rights', { year: new Date() });
+    // @ts-expect-error - `{$when :datetime}` does not take a boolean.
+    this.t('updated', { when: true });
     void known;
   }
 

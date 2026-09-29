@@ -294,4 +294,64 @@ describe('defineMessageContract', () => {
       /must be non-empty strings/,
     );
   });
+
+  describe('functions', () => {
+    const keys = ['total', 'welcome'];
+    const variables = { total: ['label', 'count'], welcome: ['name'] };
+
+    it('has none unless it is given some', () => {
+      expect(defineMessageContract(keys, variables)).not.toHaveProperty('functions');
+    });
+
+    it('keeps them sorted and frozen, by key and variable', () => {
+      const contract = defineMessageContract(keys, variables, {
+        total: { label: ['string'], count: ['number', 'integer'] },
+      });
+
+      expect(contract.functions).toEqual({
+        total: { count: ['integer', 'number'], label: ['string'] },
+      });
+      expect(Object.keys(contract.functions?.['total'] ?? {})).toEqual(['count', 'label']);
+      expect(Object.isFrozen(contract.functions)).toBe(true);
+      expect(Object.isFrozen(contract.functions?.['total'])).toBe(true);
+      expect(Object.isFrozen(contract.functions?.['total']?.['count'])).toBe(true);
+    });
+
+    it('rejects functions for a key with no variables listed', () => {
+      expect(() =>
+        defineMessageContract(keys, { total: ['count'] }, {
+          welcome: { name: ['number'] },
+        } as unknown as never),
+      ).toThrow(/functions are listed for "welcome", which has no variables listed/);
+      expect(() =>
+        defineMessageContract(keys, undefined, { total: { count: ['number'] } } as never),
+      ).toThrow(/functions are listed for "total", which has no variables listed/);
+    });
+
+    it('rejects functions for an unknown variable of a key', () => {
+      expect(() =>
+        defineMessageContract(keys, variables, {
+          total: { nope: ['number'] },
+        } as unknown as never),
+      ).toThrow(/variable "nope" of "total", which is not one of its variables/);
+    });
+
+    it('rejects an empty, malformed, repeated or empty-named entry', () => {
+      expect(() => defineMessageContract(keys, variables, { total: {} })).toThrow(
+        /functions for "total" must be a non-empty object/,
+      );
+      expect(() =>
+        defineMessageContract(keys, variables, { total: ['number'] } as unknown as never),
+      ).toThrow(/functions for "total" must be a non-empty object/);
+      expect(() => defineMessageContract(keys, variables, { total: { count: [] } })).toThrow(
+        /"total" variable "count" must be a non-empty array/,
+      );
+      expect(() =>
+        defineMessageContract(keys, variables, { total: { count: ['number', 'number'] } }),
+      ).toThrow(/function "number" is listed twice for "total" variable "count"/);
+      expect(() => defineMessageContract(keys, variables, { total: { count: [''] } })).toThrow(
+        /must be non-empty strings/,
+      );
+    });
+  });
 });

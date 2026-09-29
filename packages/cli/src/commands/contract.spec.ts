@@ -23,6 +23,7 @@ import { defineMessageContract } from '@etyma/core';
 
 export default defineMessageContract(
   [
+    "activity.updated",
     "footer.rights",
     "nav.docs",
     "onboarding.steps.0",
@@ -30,9 +31,14 @@ export default defineMessageContract(
     "welcome",
   ] as const,
   {
+    "activity.updated": ["when"],
     "footer.rights": ["year"],
     "onboarding.steps.1": ["plan"],
     "welcome": ["name"],
+  } as const,
+  {
+    "activity.updated": { "when": ["datetime"] },
+    "footer.rights": { "year": ["number"] },
   } as const,
 );
 `;
@@ -59,7 +65,7 @@ describe('runContractCommand', () => {
 
     expect(result).toEqual({
       exitCode: 0,
-      stdout: '✓ Wrote etyma.generated.ts (5 keys)\n',
+      stdout: '✓ Wrote etyma.generated.ts (6 keys)\n',
       stderr: '',
     });
     expect(readFileSync(join(dir, 'etyma.generated.ts'), 'utf8')).toBe(EXPECTED);
@@ -98,7 +104,7 @@ describe('runContractCommand', () => {
     const result = await runContractCommand([fixture, '--output', output], dir);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe('✓ etyma.generated.ts is up to date (5 keys)\n');
+    expect(result.stdout).toBe('✓ etyma.generated.ts is up to date (6 keys)\n');
     expect(statSync(output).mtime.getTime()).toBe(past.getTime());
   });
 
@@ -108,7 +114,7 @@ describe('runContractCommand', () => {
 
     const result = await runContractCommand([fixture, '--output', output], dir);
 
-    expect(result.stdout).toBe('✓ Wrote etyma.generated.ts (5 keys)\n');
+    expect(result.stdout).toBe('✓ Wrote etyma.generated.ts (6 keys)\n');
     expect(readFileSync(output, 'utf8')).toBe(EXPECTED);
   });
 
@@ -120,6 +126,7 @@ describe('runContractCommand', () => {
         onboarding: { steps: ['Create an account', 'Choose {$plan}'] },
         footer: { rights: '© {$year :number useGrouping=never}' },
         nav: { docs: 'Docs' },
+        activity: { updated: 'Updated {$when :datetime}' },
       }),
     );
 

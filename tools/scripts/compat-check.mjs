@@ -47,6 +47,9 @@ const families = [
     prefix: 'astro-',
     consumer: join(compatRoot, 'consumer-astro'),
     verify: cwd => verifyAstroFixture(cwd),
+    // `etymaRemoteContract` writes `contract.generated.ts` during the build, and the consumer
+    // type-checks `t()` against that generated file - so `astro check` has to run after it.
+    typecheckAfterBuild: true,
   },
 ];
 
@@ -97,8 +100,9 @@ for (const { name: fixture, family } of fixtures) {
   // npm rather than pnpm: a fixture that resolved through the workspace store would be
   // testing the repository again instead of the package.
   run('npm', ['install', '--no-audit', '--no-fund', '--loglevel', 'error'], cwd);
-  run('npm', ['run', 'typecheck'], cwd);
+  if (!family.typecheckAfterBuild) run('npm', ['run', 'typecheck'], cwd);
   run('npm', ['run', 'build'], cwd);
+  if (family.typecheckAfterBuild) run('npm', ['run', 'typecheck'], cwd);
 
   if (!existsSync(join(cwd, 'dist'))) {
     console.error(`${fixture} produced no build output.`);

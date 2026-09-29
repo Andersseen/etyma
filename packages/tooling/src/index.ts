@@ -11,6 +11,7 @@
 
 export {
   extractContractKeys,
+  extractContractParams,
   extractContractVariables,
   renderContractModule,
 } from './generate-contract.js';
@@ -24,4 +25,4 @@ export type {
   ValidateCatalogOptions,
   ValidateCatalogsOptions,
 } from './types.js';
-export type { ExtractContractVariablesOptions } from './generate-contract.js';
+export type { ContractParams, ExtractContractVariablesOptions } from './generate-contract.js';

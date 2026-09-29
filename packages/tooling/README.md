@@ -207,25 +207,35 @@ runs them for a remote catalog during a Vite build, and [`etyma contract`](../cl
 file from a terminal or script.
 
 ```ts
-import {
-  extractContractKeys,
-  extractContractVariables,
-  renderContractModule,
-} from '@etyma/tooling';
+import { extractContractKeys, extractContractParams, renderContractModule } from '@etyma/tooling';
 
 const keys = extractContractKeys(sourceCatalog); // sorted dotted keys
-const variables = extractContractVariables(sourceCatalog); // { welcome: ['name'], … }
-const moduleSource = renderContractModule(keys, variables); // a `defineMessageContract` module
+const { variables, functions } = extractContractParams(sourceCatalog);
+// variables: { total: ['count'], welcome: ['name'], … }
+// functions: { total: { count: ['number'] }, … }
+const moduleSource = renderContractModule(keys, variables, functions);
 ```
+
+`extractContractParams` parses each message once and returns both halves;
+`extractContractVariables(source, options?)` is still there, returning only `variables`.
 
 `extractContractKeys` reuses `@etyma/core`'s own `flattenMessages` rather than a second
 catalog walker, so a malformed catalog is rejected exactly as `defineI18n` rejects it.
-`extractContractVariables` reads each message's external variables with the `messageformat`
+`extractContractParams` reads each message's external variables with the `messageformat`
 parser — the same analysis variable parity uses — and lists only messages that have any. A
 message that is not valid MessageFormat 2 syntax has no knowable variables, so it is never
 guessed at: by default it gets no entry and keeps untyped params — `etymaRemoteContract` does
 this, and leaves the syntax error to `etymaRemoteValidation`. `extractContractVariables(source,
-{ strict: true })` throws instead, naming every such key; `etyma contract` uses it.
+{ strict: true })` (or `extractContractParams`) throws instead, naming every such key;
+`etyma contract` uses it.
+
+`functions` records, for each variable, the functions the caller's value reaches, by raw name
+— evidence, not a verdict. An annotated `.input` declaration is its variable's only evidence,
+since later uses see the declaration's resolved value. A variable used only bare, or only as an
+option value, has no entry. `@etyma/core` decides what the names prove: built-in numeric and
+date/time functions narrow the param; `:string`, custom functions and disagreeing annotations
+leave it `MessageParamValue`. Only the source catalog is read, so a translation's annotations
+never change the contract.
 
 With variables, the generated module types `t()`'s params as well as its keys:
 
@@ -233,15 +243,18 @@ With variables, the generated module types `t()`'s params as well as its keys:
 export default defineMessageContract(
   ['footer.rights', 'nav.docs', 'welcome'] as const,
   { 'footer.rights': ['author', 'year'], welcome: ['name'] } as const,
+  { 'footer.rights': { year: ['number'] } } as const,
 );
 ```
 
-so `t('welcome')` without `{ name }` is a compile error, exactly as for a `defineMessages()`
-source. The names are types only - a param still accepts any `MessageParamValue`.
+so `t('welcome')` without `{ name }` is a compile error, and `year` takes a
+`NumericMessageParam` (`number | bigint | string`), exactly as for a `defineMessages()` source.
+`author`, with no function listed, accepts any `MessageParamValue`.
 `renderContractModule` is byte-stable for a given input — no timestamp, no random id, no
 machine-specific path — so the file it produces is safe to commit and diffs only when the
-source catalog's keys or variables actually change. A catalog with no variables renders
-exactly the keys-only module earlier versions generated.
+source catalog's keys, variables or annotations actually change. A catalog with no variables
+renders exactly the keys-only module earlier versions generated, and one where no variable
+reaches a function, exactly the keys-and-variables one.
 
 ### `@etyma/tooling/vite`
 

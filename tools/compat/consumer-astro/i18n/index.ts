@@ -9,9 +9,9 @@
  */
 import { createHttpMessageLoader, defineMessageContract, defineRemoteI18n } from '@etyma/core';
 
-// The same keys and variables `etymaRemoteContract` generates into `contract.generated.ts`
-// (which `verify-astro-fixture.mjs` checks), written out so `astro check` can type-check
-// against them before the build that generates it has run.
+// The same keys, variables and functions `etymaRemoteContract` generates into
+// `contract.generated.ts` - `generated-contract-types.ts` checks the two type identically -
+// written out so the pages do not depend on a file the build itself produces.
 const contract = defineMessageContract(
   [
     'nav.blog',
@@ -31,6 +31,10 @@ const contract = defineMessageContract(
     'about.body': ['topic'],
     'about.paragraphs.0': ['framework'],
     'about.paragraphs.1': ['author'],
+  } as const,
+  {
+    'footer.rights': { year: ['number'] },
+    'posts.count': { count: ['number'] },
   } as const,
 );
 

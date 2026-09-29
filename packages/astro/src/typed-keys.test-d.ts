@@ -1,6 +1,6 @@
 import type { APIContext } from 'astro';
 import { describe, expectTypeOf, it } from 'vitest';
-import { defineI18n, defineMessages, type MessageParamValue } from '@etyma/core';
+import { defineI18n, defineMessages, type NumericMessageParam } from '@etyma/core';
 
 import { createAstroI18n } from './create-astro-i18n.js';
 import type { AstroI18n, AstroI18nContext } from './types.js';
@@ -26,7 +26,7 @@ describe('AstroI18n typed keys', () => {
     expectTypeOf(etyma).toEqualTypeOf<
       AstroI18n<
         'home.title' | 'footer.rights',
-        { 'footer.rights': { readonly year: MessageParamValue } }
+        { 'footer.rights': { readonly year: NumericMessageParam } }
       >
     >();
 
@@ -49,6 +49,18 @@ describe('AstroI18n typed keys', () => {
     etyma.t('footer.rights');
     // @ts-expect-error - and nothing but `year`.
     etyma.parts('footer.rights', { year: 2026, month: 9 });
+  });
+
+  it('narrows a param value by its built-in function, for t() and parts()', async () => {
+    const etyma = await createAstroI18n(astro, definition);
+
+    etyma.t('footer.rights', { year: 2026n });
+    etyma.parts('footer.rights', { year: '2026' });
+
+    // @ts-expect-error - `{$year :number}` does not take a Date.
+    etyma.t('footer.rights', { year: new Date() });
+    // @ts-expect-error - nor a boolean.
+    etyma.parts('footer.rights', { year: true });
   });
 
   it('leaves keys as plain strings when the definition is untyped', () => {

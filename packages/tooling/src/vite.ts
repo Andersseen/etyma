@@ -7,7 +7,7 @@ import { EtymaError, type MessageSource } from '@etyma/core';
 
 import {
   extractContractKeys,
-  extractContractVariables,
+  extractContractParams,
   renderContractModule,
 } from './generate-contract.js';
 
@@ -73,10 +73,10 @@ async function generate(options: EtymaRemoteContractOptions): Promise<void> {
     return;
   }
 
-  const rendered = renderContractModule(
-    extractContractKeys(source),
-    extractContractVariables(source),
-  );
+  // Tolerant: a message that is not valid MF2 gets no variables or functions here, and
+  // `etymaRemoteValidation` reports it.
+  const { variables, functions } = extractContractParams(source);
+  const rendered = renderContractModule(extractContractKeys(source), variables, functions);
 
   if (rendered === existing) {
     return;

@@ -2,11 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import {
-  extractContractKeys,
-  extractContractVariables,
-  renderContractModule,
-} from '@etyma/tooling';
+import { extractContractKeys, extractContractParams, renderContractModule } from '@etyma/tooling';
 
 import { CONTRACT_HELP } from '../help.js';
 import { EXIT_USAGE_ERROR, EXIT_VALID } from '../types.js';
@@ -18,10 +14,11 @@ import type { CatalogSource, CliResult } from '../types.js';
  * Generates the `defineMessageContract` module for one local source catalog - the file
  * `defineI18n({ source, contract })` reads for typed params, and exact array keys, that a
  * `.json` import cannot give. An adapter like `validate`: reading keys, reading MessageFormat
- * 2 variables and rendering the module are `@etyma/tooling`'s `extractContractKeys`,
- * `extractContractVariables` and `renderContractModule` - the same three
- * `etymaRemoteContract` uses for a remote catalog - so both produce byte-identical modules
- * for the same catalog. Everything here is arguments and files.
+ * 2 variables and the functions their values reach, and rendering the module are
+ * `@etyma/tooling`'s `extractContractKeys`, `extractContractParams` and
+ * `renderContractModule` - the same three `etymaRemoteContract` uses for a remote catalog -
+ * so both produce byte-identical modules for the same catalog. Everything here is arguments
+ * and files.
  *
  * It describes the source catalog and nothing else: translated catalogs are `etyma
  * validate`'s job. It does refuse a source message that is not valid MessageFormat 2, since it
@@ -94,10 +91,9 @@ export async function runContractCommand(argv: readonly string[], cwd: string): 
       return failure(`"${shownSource}" has no messages; a contract needs at least one key.`);
     }
 
-    rendered = renderContractModule(
-      keys,
-      extractContractVariables(source.catalog, { strict: true }),
-    );
+    const { variables, functions } = extractContractParams(source.catalog, { strict: true });
+
+    rendered = renderContractModule(keys, variables, functions);
     keyCount = keys.length;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

@@ -13,6 +13,7 @@ import {
   type MessageCatalog,
   type MessageContract,
   type MessageKey,
+  type MessageParamValue,
   type MessageParamsMap,
   type MessageParamsOf,
   type MessageSource,
@@ -28,9 +29,53 @@ export type LocaleTuple = readonly [Locale, ...Locale[]];
  * drops the ones a `defineMessages()` literal already has, and a stale contract that disagrees
  * with a literal surfaces as a compile error. Without contract params, exactly the source's.
  */
-type StaticParams<TSource, TParams> = [keyof TParams] extends [never]
-  ? MessageParamsOf<TSource>
-  : MessageParamsOf<TSource> & TParams;
+type StaticParams<TSource, TParams> =
+  // Bounded through `infer` so a generic `TSource` does not make TypeScript expand the
+  // param map to check it against the constraint.
+  (
+    [keyof TParams] extends [never]
+      ? MessageParamsOf<TSource>
+      : MergeParams<MessageParamsOf<TSource>, TParams>
+  ) extends infer M extends MessageParamsMap
+    ? M
+    : never;
+
+type MergeParams<A, B> = {
+  [K in keyof A | keyof B]: K extends keyof A
+    ? K extends keyof B
+      ? MergeMessageParams<A[K], B[K]>
+      : A[K]
+    : K extends keyof B
+      ? B[K]
+      : never;
+};
+
+/** Every variable either side names is required; a variable both name gets both's evidence. */
+type MergeMessageParams<A, B> = {
+  readonly [V in keyof A | keyof B]: V extends keyof A
+    ? V extends keyof B
+      ? MergeParamValue<A[V], B[V]>
+      : A[V]
+    : V extends keyof B
+      ? B[V]
+      : never;
+};
+
+/**
+ * A broad side yields to a narrow one, and two equal types are that type. Two different
+ * narrow types - a literal `:number` against a contract's `:datetime` - mean the contract is
+ * stale; `never` makes every call to that key a compile error rather than quietly accepting
+ * whatever the two happen to share.
+ */
+type MergeParamValue<A, B> = [MessageParamValue] extends [A]
+  ? B
+  : [MessageParamValue] extends [B]
+    ? A
+    : [A] extends [B]
+      ? [B] extends [A]
+        ? A
+        : never
+      : never;
 
 export interface I18nOptions<
   TSource extends MessageSource,

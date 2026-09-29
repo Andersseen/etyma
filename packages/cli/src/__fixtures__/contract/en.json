@@ -3,6 +3,9 @@
     "docs": "Docs"
   },
   "welcome": "Hello, {$name}!",
+  "activity": {
+    "updated": "Updated {$when :datetime}"
+  },
   "footer": {
     "rights": "© {$year :number useGrouping=never}"
   },

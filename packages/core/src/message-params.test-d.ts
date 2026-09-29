@@ -6,11 +6,13 @@ import { defineI18n, type I18nDefinition } from './define-i18n.js';
 import {
   defineMessageContract,
   defineMessages,
+  type DateTimeMessageParam,
   type MessageContract,
   type MessageParamsMap,
   type MessageParamsOf,
   type MessageParamValue,
   type MessageVariables,
+  type NumericMessageParam,
 } from './messages.js';
 import { defineRemoteI18n } from './remote-i18n.js';
 import type { Translator } from './translator.js';
@@ -307,5 +309,219 @@ describe('typed params through a static contract', () => {
 
     // @ts-expect-error - a stale contract surfaces as a compile error, not a silent pass.
     t.translate('welcome', { user: 'Ada' });
+  });
+});
+
+describe('param value types from built-in function annotations', () => {
+  const t = translatorFor(
+    defineI18n({
+      locales: ['en'],
+      sourceLocale: 'en',
+      source: defineMessages({
+        total: 'Total: {$count :number}',
+        updated: 'Updated {$when :datetime}',
+        raw: '{$value}',
+        label: '{$value :string}',
+        avatar: '{$user :avatar}',
+        plural: '.input {$count :number}\n.match $count\none {{One item}}\n*   {{{$count} items}}',
+        reused: '.input {$count :number}\n{{There are {$count} items}}',
+        compatible: '{$n :number} and {$n :integer}',
+        conflicting: '{$v :number} or {$v :datetime}',
+        withString: '{$v :number} or {$v :string}',
+        option: '{$amount :number minimumFractionDigits=$digits}',
+        mixed: 'Hello {$name}, you have {$count :number} items',
+        local: '.local $sum = {$price :number}\n{{Total: {$sum}}}',
+        steps: ['Create account', 'Pay {$amount :number}'],
+        dates: '{$d :date} {$t :time}',
+        money: '{$a :currency currency=EUR} {$p :percent} {$u :unit unit=meter} {$o :offset add=1}',
+      }),
+    }),
+  );
+
+  it('narrows a :number param to number | bigint | string', () => {
+    t.translate('total', { count: 12 });
+    t.translate('total', { count: 12n });
+    t.translate('total', { count: '12' });
+    t.translateToParts('total', { count: 12 });
+    // @ts-expect-error - a Date is not a numeric message input, even though messageformat's
+    // `valueOf()` coercion would format its epoch milliseconds.
+    t.translate('total', { count: new Date() });
+    // @ts-expect-error - :number rejects a boolean.
+    t.translate('total', { count: true });
+  });
+
+  it('narrows the other numeric built-ins the same way', () => {
+    t.translate('money', { a: 1, p: 0.5, u: 3n, o: '2' });
+    // @ts-expect-error - :currency is numeric.
+    t.translate('money', { a: new Date(), p: 0.5, u: 3, o: 2 });
+  });
+
+  it('narrows a :datetime param to Date | number | string', () => {
+    t.translate('updated', { when: new Date() });
+    t.translate('updated', { when: 0 });
+    t.translate('updated', { when: '2026-09-29' });
+    // @ts-expect-error - :datetime rejects a bigint.
+    t.translate('updated', { when: 1n });
+    // @ts-expect-error - :datetime rejects a boolean.
+    t.translate('updated', { when: false });
+    t.translate('dates', { d: new Date(), t: 0 });
+  });
+
+  it('keeps bare, :string and custom-function params broad', () => {
+    expectTypeOf<MessageParamsOf<{ raw: '{$value}' }>>().toEqualTypeOf<{
+      raw: { readonly value: MessageParamValue };
+    }>();
+    t.translate('raw', { value: true });
+    t.translate('label', { value: new Date() });
+    t.translate('avatar', { user: false });
+  });
+
+  it('types an .input param from its declaration, and a later bare use keeps it', () => {
+    t.translate('plural', { count: 1 });
+    t.translate('reused', { count: 1 });
+    // @ts-expect-error - the declaration is :number.
+    t.translate('plural', { count: new Date() });
+    // @ts-expect-error - the bare `{$count}` does not widen the declaration.
+    t.translate('reused', { count: true });
+  });
+
+  it('narrows agreeing annotations, and falls back for disagreeing ones', () => {
+    expectTypeOf<MessageParamsOf<{ m: '{$n :number} and {$n :integer}' }>>().toEqualTypeOf<{
+      m: { readonly n: NumericMessageParam };
+    }>();
+    t.translate('conflicting', { v: true });
+    t.translate('withString', { v: new Date() });
+  });
+
+  it('keeps an option-only variable broad, and a local out', () => {
+    expectTypeOf<
+      MessageParamsOf<{ m: '{$amount :number minimumFractionDigits=$digits}' }>
+    >().toEqualTypeOf<{
+      m: { readonly amount: NumericMessageParam; readonly digits: MessageParamValue };
+    }>();
+    t.translate('option', { amount: 1, digits: true });
+    t.translate('local', { price: 1 });
+    // @ts-expect-error - `sum` is local; `price` is required.
+    t.translate('local', { sum: 1 });
+  });
+
+  it('does not let a broad param widen a narrow one', () => {
+    t.translate('mixed', { name: true, count: 3 });
+    // @ts-expect-error - `count` is :number.
+    t.translate('mixed', { name: 'Ada', count: new Date() });
+  });
+
+  it('types an indexed message', () => {
+    t.translate('steps.1', { amount: 9.99 });
+    // @ts-expect-error - `steps.1` is :number.
+    t.translate('steps.1', { amount: new Date() });
+  });
+
+  it('requires, for a union key, a value every member accepts', () => {
+    const key = 'total' as 'total' | 'updated';
+
+    t.translate(key, { count: 1, when: new Date() });
+    // @ts-expect-error - `total` might be the key, and its `count` rejects a Date.
+    t.translate(key, { count: new Date(), when: new Date() });
+
+    const both = 'total' as 'total' | 'reused';
+
+    t.translate(both, { count: 1 });
+    // @ts-expect-error - both are numeric.
+    t.translate(both, { count: false });
+  });
+
+  it('reads escaped braces as text', () => {
+    expectTypeOf<MessageParamsOf<{ m: 'Use \\{$x :number} and {$y :number}' }>>().toEqualTypeOf<{
+      m: { readonly y: NumericMessageParam };
+    }>();
+  });
+});
+
+describe('param value types through a contract', () => {
+  it('keeps the one- and two-argument forms exactly as before', () => {
+    expectTypeOf(defineMessageContract(['welcome'])).toEqualTypeOf<MessageContract<'welcome'>>();
+    expectTypeOf(
+      defineMessageContract(['welcome'], { welcome: ['name'] }).messageParams,
+    ).toEqualTypeOf<{ welcome: { readonly name: MessageParamValue } } | undefined>();
+  });
+
+  it('narrows the params the functions argument annotates, and only those', () => {
+    const contract = defineMessageContract(
+      ['conflict', 'custom', 'total', 'updated', 'welcome'] as const,
+      {
+        conflict: ['v'],
+        custom: ['user'],
+        total: ['count', 'label'],
+        updated: ['when'],
+        welcome: ['name'],
+      } as const,
+      {
+        conflict: { v: ['datetime', 'number'] },
+        custom: { user: ['avatar'] },
+        total: { count: ['number'] },
+        updated: { when: ['datetime'] },
+      } as const,
+    );
+
+    expectTypeOf(contract.messageParams).toEqualTypeOf<
+      | {
+          conflict: { readonly v: MessageParamValue };
+          custom: { readonly user: MessageParamValue };
+          total: { readonly count: NumericMessageParam; readonly label: MessageParamValue };
+          updated: { readonly when: DateTimeMessageParam };
+          welcome: { readonly name: MessageParamValue };
+        }
+      | undefined
+    >();
+
+    const t = translatorFor(
+      defineRemoteI18n({
+        locales: ['en'],
+        sourceLocale: 'en',
+        contract,
+        loaders: { en: () => ({}) },
+      }),
+    );
+
+    t.translate('total', { count: 1, label: true });
+    t.translate('updated', { when: new Date() });
+    // @ts-expect-error - `count` is :number.
+    t.translate('total', { count: new Date(), label: 'x' });
+    // @ts-expect-error - `when` is :datetime.
+    t.translate('updated', { when: 1n });
+  });
+
+  it('only lists functions for listed variables', () => {
+    // @ts-expect-error - `nope` is not a variable of `welcome`.
+    defineMessageContract(['welcome'], { welcome: ['name'] }, { welcome: { nope: ['number'] } });
+  });
+
+  it('merges a literal source and its contract: broad yields, equal agrees, a conflict is never', () => {
+    const source = defineMessages({
+      total: '{$count :number}',
+      raw: '{$value}',
+      when: '{$at :datetime}',
+    });
+    const t = translatorFor(
+      defineI18n({
+        locales: ['en'],
+        sourceLocale: 'en',
+        source,
+        contract: defineMessageContract(
+          ['raw', 'total', 'when'],
+          { raw: ['value'], total: ['count'], when: ['at'] },
+          { raw: { value: ['number'] }, total: { count: ['number'] }, when: { at: ['number'] } },
+        ),
+      }),
+    );
+
+    // Broad literal + narrow contract, and equal narrow on both sides: narrow.
+    t.translate('raw', { value: 1 });
+    t.translate('total', { count: 1 });
+    // @ts-expect-error - the contract narrowed `value`.
+    t.translate('raw', { value: true });
+    // @ts-expect-error - a stale contract (:number) contradicts the literal (:datetime).
+    t.translate('when', { at: 0 });
   });
 });
