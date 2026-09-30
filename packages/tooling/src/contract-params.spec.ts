@@ -202,8 +202,13 @@ describe('renderContractModule with variables', () => {
  * The generated module is only useful if `@etyma/core` reads it back as typed params. This
  * compiles a real generated contract with the TypeScript compiler, next to a file that
  * asserts what `t()` must and must not accept for it.
+ *
+ * Each test runs a whole `ts.createProgram`, and the first one pays the compiler's cold start
+ * (loading `lib.*.d.ts` and `@etyma/core`'s types). That regularly exceeds Vitest's 5s default
+ * under `pnpm run check`, where turbo runs typecheck, test and build concurrently on one CI
+ * runner - which failed the release workflow's quality gates, and with them every publish.
  */
-describe('a generated contract, compiled', () => {
+describe('a generated contract, compiled', { timeout: 60_000 }, () => {
   const packageRoot = fileURLToPath(new URL('..', import.meta.url));
   let dir: string | undefined;
 
