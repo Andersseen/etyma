@@ -2,8 +2,8 @@
 
 The command-line entry point to [Etyma](https://github.com/Andersseen/etyma)'s catalog
 tooling: run `etyma validate` against local JSON catalogs, or against public catalogs served
-over HTTP, and `etyma contract` to generate typed `t()` params for a local JSON source - in CI
-or on your own machine, without writing a script around `@etyma/tooling` yourself.
+over HTTP, and `etyma contract` to generate - or, with `--check`, verify - the contract that
+types `t()` params for a local JSON source - in CI or on your own machine, without writing a script around `@etyma/tooling` yourself.
 
 > **Pre-1.0, and deliberately narrow.** Two explicit commands, no configuration file. See
 > [Non-goals](#non-goals) before assuming it does more.
@@ -298,6 +298,7 @@ index, and counts as one message in the summary.
 
 ```sh
 etyma contract <source.json> --output <file>
+etyma contract <source.json> --output <file> --check
 ```
 
 Generates the optional message contract for a local JSON source catalog: its exact keys, each
@@ -374,26 +375,54 @@ export default defineMessageContract(
 - **Source only.** It does not look at other locales; `etyma validate` does.
 
 Commit the generated file - editors and a fresh checkout need it before anything has run - and
-regenerate it whenever the source changes, for example from a script:
+regenerate it whenever the source changes.
+
+### Verifying it in CI: `--check`
+
+`defineI18n` throws if the contract's keys are not exactly the source's, so a contract left
+behind after a key was added, removed or renamed fails at startup. A change with the same keys
+is not caught at runtime - that would mean parsing every message: `{$name}` renamed to
+`{$user}`, or `{$count :number}` changed to `{$count :datetime}`, leaves a committed contract
+that still types the old param. `--check` catches it. It renders the module exactly as the
+normal command would and compares it byte for byte with `<file>`:
+
+```sh
+etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts --check
+```
+
+```
+✗ src/i18n/etyma.generated.ts is out of date.
+  Regenerate it with: etyma contract src/i18n/en.json --output src/i18n/etyma.generated.ts
+```
+
+It never writes: no file, no directory, no timestamp, no hash or cache file, and no Git. Any
+difference fails it - a renamed variable, an added or removed annotation, `:number` changed to
+`:integer` (the same type today, but different recorded metadata), or an array that gained an
+element - so the fix is always to regenerate and review the `git diff`.
 
 ```json
 {
   "scripts": {
     "i18n:contract": "etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts",
-    "pretypecheck": "pnpm i18n:contract"
+    "i18n:contract:check": "etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts --check"
   }
 }
 ```
 
-`defineI18n` throws if the contract's keys are not exactly the source's, so a contract left
-behind after a key was added, removed or renamed fails at startup. A changed _variable_ with
-the same keys is not caught at runtime - that would mean parsing every message - so regenerate
-the contract as part of your normal scripts.
+A CI job then runs independent checks, in order:
 
-| Exit code | Meaning                                                                                                                    |
-| --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `0`       | Contract written, or already up to date.                                                                                   |
-| `2`       | Nothing written: a usage or filesystem error, malformed JSON, an invalid catalog shape, or invalid MessageFormat 2 syntax. |
+```sh
+pnpm i18n:contract:check
+etyma validate ./src/i18n --source en   # when the translated locales are local too
+pnpm typecheck
+pnpm build
+```
+
+| Exit code | Meaning                                                                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`       | Contract written, or already up to date. With `--check`: up to date.                                                                            |
+| `1`       | `--check` only: the contract is missing or out of date. Nothing was written.                                                                    |
+| `2`       | Nothing written: a usage or filesystem error (including an unreadable output), malformed JSON, an invalid catalog shape, or invalid MF2 syntax. |
 
 ## `etyma --version` / `etyma --help`
 

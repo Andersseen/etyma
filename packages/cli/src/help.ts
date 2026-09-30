@@ -56,28 +56,37 @@ Examples:
 
 export const CONTRACT_HELP = `Usage:
   etyma contract <source.json> --output <file>
+  etyma contract <source.json> --output <file> --check
 
 Generates a defineMessageContract module from one local source catalog: its
-exact message keys and each message's MessageFormat 2 variable names. Pass it to
-defineI18n({ source, contract }) and t() checks params for a JSON source too.
-The source JSON stays the runtime catalog; the module holds no message text.
+exact message keys, each message's MessageFormat 2 variable names, and the
+MF2 functions each variable's value reaches (e.g. {$count :number}), which
+narrow param value types. Pass it to defineI18n({ source, contract }) and t()
+checks params for a JSON source too. The source JSON stays the runtime
+catalog; the module holds no message text.
 
 The output is deterministic and only written when it changes. Commit it, and
-regenerate it whenever the source catalog changes. It does not check other
-locales - run "etyma validate" for that.
+regenerate it whenever the source catalog changes. With --check, nothing is
+written: the command only verifies that <file> is exactly what it would
+generate - run that in CI. It does not check other locales - run
+"etyma validate" for that.
 
 Arguments:
   <source.json>        The source locale's catalog, e.g. ./src/i18n/en.json
 
 Options:
   -o, --output <file>  Required. The .ts module to write; directories are created.
+  --check              Verify <file> is current instead of writing it. Never
+                        writes, creates or touches any file or directory.
   -h, --help           Show this help
 
 Exit codes:
-  0  contract written, or already up to date
+  0  contract written, or already up to date (with --check: up to date)
+  1  --check only: <file> is missing or out of date
   2  usage, filesystem or JSON error, an invalid catalog shape, or a source
      message that is not valid MessageFormat 2 (nothing was written)
 
-Example:
+Examples:
   etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts
+  etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts --check
 `;

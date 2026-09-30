@@ -435,14 +435,16 @@ JSON source gets the same value narrowing as a `defineMessages()` literal. `en.j
 the runtime catalog and the fallback. It also knows each array's real length, so
 `onboarding.steps.2` stops compiling when the source has two steps. `defineI18n` throws if the
 contract's keys differ from the source's in any way, so a stale contract cannot describe
-another catalog. It cannot check variables at runtime without parsing every message, so
-regenerate the contract whenever the source changes — a `package.json` script is enough:
+another catalog. It cannot check variables or functions at runtime without parsing every
+message, so regenerate the contract whenever the source changes, and verify it in CI with
+`--check`, which writes nothing and exits 1 when the committed file is missing or is not
+exactly what the source generates — `{$count :number}` becoming `{$count :datetime}` included:
 
 ```json
 {
   "scripts": {
     "i18n:contract": "etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts",
-    "pretypecheck": "pnpm i18n:contract"
+    "i18n:contract:check": "etyma contract ./src/i18n/en.json --output ./src/i18n/etyma.generated.ts --check"
   }
 }
 ```
@@ -583,7 +585,7 @@ therefore separates the two concerns `defineI18n` used to merge into one static 
 
 ```
 remote catalog        = the content authority — the actual messages, always
-generated contract    = a build-time type artifact — keys and variable names, never messages
+generated contract    = a build-time type artifact — keys, variables, functions, never messages
 ```
 
 `@etyma/tooling/vite` generates that contract automatically, from the remote catalog's shape,
@@ -609,7 +611,8 @@ project, before any dev server has run, so a fresh checkout needs the file alrea
 show correct types immediately. See the [`@etyma/tooling` README](packages/tooling#readme)
 for the full generation, error and fallback behavior.
 
-`etymaRemoteContract` reads the source catalog's keys and variable names and nothing else. It
+`etymaRemoteContract` reads the source catalog's keys, variable names and the MessageFormat 2
+functions those variables reach, and nothing else. It
 does not check
 that the other locales are complete, that their MessageFormat 2 parses, or that they kept the
 source's variables. `etymaRemoteValidation`, from the same subpath, does: it fetches every
@@ -678,10 +681,10 @@ Not planned for `0.x`, and not partially implemented anywhere:
 - A CMS integration, a translation management UI, or automatic machine translation
 - Source-message extraction, hardcoded-copy scanning or unused-key scanning
 - A general compiler or code-generation pipeline for message content, or source-code
-  scanning. The one generated artifact is a message contract — sorted keys and each message's
-  variable names, never message text — from `etyma contract` for a JSON source or
-  `etymaRemoteContract` for a remote one; it is optional for JSON sources, and nothing
-  generates param _value_ types from MessageFormat 2 functions
+  scanning. The one generated artifact is a message contract — sorted keys, each message's
+  variable names and the raw MessageFormat 2 function names their values reach, never message
+  text — from `etyma contract` for a JSON source or `etymaRemoteContract` for a remote one; it
+  is optional for JSON sources
 - CommonJS output, NgModule APIs, an RxJS-first API, or Angular 20 and below
 - A localization platform in `@etyma/cli`: no config file, no authenticated remote sources, no
   pull or sync, no translation editing, no MCP server or CMS integration — see the
