@@ -302,7 +302,7 @@ buys a working editor on the first checkout.
 
 ## Validating remote catalogs during a Vite build
 
-`etymaRemoteContract` reads the source catalog's keys and variable names and nothing else. `etymaRemoteValidation`
+`etymaRemoteContract` reads the source catalog's keys, variable names and the functions those variables reach, and nothing else. `etymaRemoteValidation`
 checks everything else a remote project ships: it fetches **every** locale's catalog and hands
 them, unchanged, to `validateCatalogs()` — so key parity, MessageFormat 2, variable parity and
 locale identifiers are judged by exactly the engine documented above, and a broken production

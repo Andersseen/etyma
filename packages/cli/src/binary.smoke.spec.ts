@@ -264,6 +264,114 @@ describe('the packed etyma binary', () => {
       expect(result).toBe('');
     });
 
+    /**
+     * `--check` from the packed binary: a same-key, same-variable change to one function
+     * annotation - invisible to `defineI18n`'s key comparison - fails the check without
+     * touching the committed contract, and regenerating makes TypeScript see the new type.
+     */
+    it('--check catches same-key function drift and never writes', () => {
+      const project = join(consumerDir, 'contract-check');
+      const i18n = join(project, 'src', 'i18n');
+      const sourcePath = join(i18n, 'en.json');
+      const output = join(i18n, 'etyma.generated.ts');
+      const generate = ['contract', 'src/i18n/en.json', '--output', 'src/i18n/etyma.generated.ts'];
+      const check = [...generate, '--check'];
+      mkdirSync(i18n, { recursive: true });
+
+      function etyma(args: readonly string[]): { status: number; stdout: string; stderr: string } {
+        try {
+          const stdout = execFileSync(binPath, [...args], {
+            cwd: project,
+            encoding: 'utf8',
+            stdio: 'pipe',
+          });
+
+          return { status: 0, stdout, stderr: '' };
+        } catch (error) {
+          const failure = error as { status: number; stdout: string; stderr: string };
+
+          return { status: failure.status, stdout: failure.stdout, stderr: failure.stderr };
+        }
+      }
+
+      writeFileSync(sourcePath, JSON.stringify({ total: 'Total: {$count :number}' }));
+
+      expect(etyma(check)).toMatchObject({ status: 1, stdout: expect.stringContaining('missing') });
+      expect(readdirSync(i18n)).toEqual(['en.json']);
+
+      expect(etyma(generate).status).toBe(0);
+      expect(etyma(check)).toEqual({
+        status: 0,
+        stdout: '✓ src/i18n/etyma.generated.ts is up to date (1 key)\n',
+        stderr: '',
+      });
+
+      writeFileSync(sourcePath, JSON.stringify({ total: 'Total: {$count :datetime}' }));
+      const committed = readFileSync(output, 'utf8');
+      const { mtimeMs } = statSync(output);
+
+      expect(etyma(check)).toEqual({
+        status: 1,
+        stdout:
+          '✗ src/i18n/etyma.generated.ts is out of date.\n' +
+          '  Regenerate it with: etyma contract src/i18n/en.json --output src/i18n/etyma.generated.ts\n',
+        stderr: '',
+      });
+      expect(readFileSync(output, 'utf8')).toBe(committed);
+      expect(statSync(output).mtimeMs).toBe(mtimeMs);
+
+      writeFileSync(sourcePath, '{"total": "{$count"}');
+      expect(etyma(check).status).toBe(2);
+      writeFileSync(sourcePath, JSON.stringify({ total: 'Total: {$count :datetime}' }));
+
+      expect(etyma(generate).stdout).toBe('✓ Wrote src/i18n/etyma.generated.ts (1 key)\n');
+      expect(etyma(check).status).toBe(0);
+      expect(readFileSync(output, 'utf8')).toContain('"total": { "count": ["datetime"] },');
+
+      writeFileSync(
+        join(project, 'tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: {
+            strict: true,
+            noEmit: true,
+            target: 'ES2022',
+            module: 'ESNext',
+            moduleResolution: 'Bundler',
+            resolveJsonModule: true,
+            skipLibCheck: true,
+            types: [],
+          },
+          include: ['src'],
+        }),
+      );
+      writeFileSync(
+        join(project, 'src', 'check.ts'),
+        [
+          "import { defineI18n, type I18nDefinition, type MessageParamsMap, type Translator } from '@etyma/core';",
+          '',
+          "import en from './i18n/en.json';",
+          "import contract from './i18n/etyma.generated';",
+          '',
+          'declare function translatorFor<K extends string, P extends MessageParamsMap>(d: I18nDefinition<K, P>): Translator<K, P>;',
+          '',
+          "const t = translatorFor(defineI18n({ locales: ['en'], sourceLocale: 'en', source: en, contract }));",
+          '',
+          '// The regenerated contract says :datetime now.',
+          "t.translate('total', { count: new Date() });",
+          '// @ts-expect-error - :datetime does not take a bigint, which :number did.',
+          "t.translate('total', { count: 1n });",
+          '',
+        ].join('\n'),
+      );
+
+      const tsc = join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
+      const result = execFileSync(process.execPath, [tsc, '--project', project], {
+        encoding: 'utf8',
+      });
+
+      expect(result).toBe('');
+    });
+
     it('exits 2 through a real process for a source with invalid MessageFormat 2', () => {
       const project = join(consumerDir, 'contract-broken');
       mkdirSync(project, { recursive: true });

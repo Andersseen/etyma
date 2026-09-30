@@ -61,10 +61,12 @@ import contract from './etyma.generated';
 export const i18n = defineI18n({ /* … */ source: en, contract });
 ```
 
-`source` stays the runtime catalog; the contract carries only its keys and each message's
-variable names, types `t()` params from them, and makes array keys exact. `defineI18n`
-throws if the contract's keys are not exactly the source's; it does not re-check variables,
-so regenerate the contract whenever the source changes. A `defineMessages()` source needs no
+`source` stays the runtime catalog; the contract carries only its keys, each message's
+variable names and the MessageFormat 2 functions their values reach, types `t()` param names
+and values from them, and makes array keys exact. `defineI18n` throws if the contract's keys
+are not exactly the source's; it does not re-check variables or functions, so regenerate the
+contract whenever the source changes, and run `etyma contract … --check` in CI to catch one
+that was not. A `defineMessages()` source needs no
 contract: its params are read from the literal text.
 
 ## Catalog grammar

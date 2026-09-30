@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -193,10 +194,200 @@ describe('runContractCommand', () => {
     expect(result.stderr).toMatch(expected);
   });
 
+  describe('--check', () => {
+    const past = new Date('2020-01-01T00:00:00Z');
+
+    /** Generates `out.ts` from `before`, backdates it, then rewrites the source as `after`. */
+    async function generated(before: unknown, after?: unknown): Promise<string> {
+      const sourcePath = source('en.json', JSON.stringify(before));
+      const output = join(dir, 'out.ts');
+
+      expect((await runContractCommand([sourcePath, '-o', output], dir)).exitCode).toBe(0);
+      utimesSync(output, past, past);
+
+      if (after !== undefined) {
+        writeFileSync(sourcePath, JSON.stringify(after));
+      }
+
+      return output;
+    }
+
+    function check(): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+      return runContractCommand(['en.json', '-o', 'out.ts', '--check'], dir);
+    }
+
+    it('exits 0 for a current contract and does not touch it', async () => {
+      const output = await generated({ total: '{$count :number}' });
+      const before = readFileSync(output, 'utf8');
+
+      expect(await check()).toEqual({
+        exitCode: 0,
+        stdout: '✓ out.ts is up to date (1 key)\n',
+        stderr: '',
+      });
+      expect(readFileSync(output, 'utf8')).toBe(before);
+      expect(statSync(output).mtime.getTime()).toBe(past.getTime());
+    });
+
+    it('exits 1 for a missing contract, creating neither it nor its directory', async () => {
+      source('en.json', '{"welcome": "Hello {$name}"}');
+
+      const result = await runContractCommand(
+        ['en.json', '--output', 'src/generated/out.ts', '--check'],
+        dir,
+      );
+
+      expect(result).toEqual({
+        exitCode: 1,
+        stdout:
+          '✗ src/generated/out.ts is missing.\n' +
+          '  Generate it with: etyma contract en.json --output src/generated/out.ts\n',
+        stderr: '',
+      });
+      expect(() => statSync(join(dir, 'src'))).toThrow();
+    });
+
+    it('exits 1 for a stale contract and leaves its content and mtime alone', async () => {
+      const output = join(dir, 'out.ts');
+      source('en.json', '{"welcome": "Hello {$name}"}');
+      writeFileSync(output, 'stale\n');
+      utimesSync(output, past, past);
+
+      expect(await check()).toEqual({
+        exitCode: 1,
+        stdout:
+          '✗ out.ts is out of date.\n' +
+          '  Regenerate it with: etyma contract en.json --output out.ts\n',
+        stderr: '',
+      });
+      expect(readFileSync(output, 'utf8')).toBe('stale\n');
+      expect(statSync(output).mtime.getTime()).toBe(past.getTime());
+    });
+
+    /**
+     * Every case keeps the same keys, so `defineI18n`'s key comparison would pass; only
+     * regenerating the contract can see the drift.
+     */
+    it.each([
+      ['a renamed variable', { welcome: 'Hello {$name}' }, { welcome: 'Hello {$user}' }],
+      ['a changed function', { total: '{$count :number}' }, { total: '{$count :datetime}' }],
+      ['an added annotation', { total: '{$count}' }, { total: '{$count :number}' }],
+      ['a removed annotation', { total: '{$count :number}' }, { total: '{$count}' }],
+      // Both are NumericMessageParam today, but the contract records the raw function name.
+      ['a function in the same category', { total: '{$n :number}' }, { total: '{$n :integer}' }],
+      ['a changed custom function', { total: '{$n :customA}' }, { total: '{$n :customB}' }],
+      ['a longer array', { steps: ['One', 'Two'] }, { steps: ['One', 'Two', 'Three'] }],
+      [
+        'a changed function in an array',
+        { steps: ['One', '{$count :number}'] },
+        { steps: ['One', '{$count :datetime}'] },
+      ],
+    ])('exits 1 for %s and writes nothing', async (_name, before, after) => {
+      const output = await generated(before, after);
+      const committed = readFileSync(output, 'utf8');
+
+      const result = await check();
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toMatch(/^✗ out\.ts is out of date\./);
+      expect(readFileSync(output, 'utf8')).toBe(committed);
+      expect(statSync(output).mtime.getTime()).toBe(past.getTime());
+
+      // Regenerating fixes it, so the check is comparing against exactly what write mode writes.
+      await runContractCommand(['en.json', '-o', 'out.ts'], dir);
+      expect((await check()).exitCode).toBe(0);
+    });
+
+    it.each([
+      ['malformed JSON', '{"nav": ', /"en\.json" is not valid JSON: /],
+      [
+        'invalid MessageFormat 2',
+        '{"welcome": "Hello, {$name"}',
+        /welcome: Invalid MessageFormat 2/,
+      ],
+      ['an array root', '["a"]', /root is an array/],
+      ['a number leaf', '{"count": 3}', /"count" is a number/],
+      ['an empty array', '{"steps": []}', /"steps" is an empty array/],
+      ['a mixed array', '{"steps": ["One", {"a": "b"}]}', /Cannot generate a contract/],
+      ['a dotted key', '{"nav.docs": "Docs"}', /contains a "\."/],
+    ])('exits 2 for %s, never comparing a partial contract', async (_name, text, expected) => {
+      const output = join(dir, 'out.ts');
+      source('en.json', text);
+      writeFileSync(output, 'previous\n');
+      utimesSync(output, past, past);
+
+      const result = await check();
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toMatch(expected);
+      expect(readFileSync(output, 'utf8')).toBe('previous\n');
+      expect(statSync(output).mtime.getTime()).toBe(past.getTime());
+    });
+
+    it('exits 2 for malformed JSON without creating the output directory', async () => {
+      source('en.json', '{"nav": ');
+
+      const result = await runContractCommand(['en.json', '-o', 'gen/out.ts', '--check'], dir);
+
+      expect(result.exitCode).toBe(2);
+      expect(() => statSync(join(dir, 'gen'))).toThrow();
+    });
+
+    it('exits 2, not 1, for an output it cannot read', async () => {
+      source('en.json', '{"welcome": "Hello {$name}"}');
+      mkdirSync(join(dir, 'out.ts'));
+
+      const result = await check();
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toMatch(/^etyma contract: Cannot read "out\.ts": EISDIR/);
+    });
+
+    it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
+      'exits 2 for an output without read permission',
+      async () => {
+        const output = await generated({ welcome: 'Hello {$name}' });
+        chmodSync(output, 0o000);
+
+        try {
+          const result = await check();
+
+          expect(result.exitCode).toBe(2);
+          expect(result.stderr).toMatch(/Cannot read "out\.ts": EACCES/);
+        } finally {
+          chmodSync(output, 0o644);
+        }
+      },
+    );
+
+    it('exits 2 when the output is the source catalog itself', async () => {
+      source('en.json', '{"a": "A"}');
+
+      const result = await runContractCommand(['en.json', '-o', 'en.json', '--check'], dir);
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stderr).toMatch(/--output must not be the source catalog itself/);
+      expect(readFileSync(join(dir, 'en.json'), 'utf8')).toBe('{"a": "A"}');
+    });
+
+    it('is a boolean flag, not one that takes a value', async () => {
+      source('en.json', '{"a": "A"}');
+
+      const result = await runContractCommand(['en.json', '-o', 'out.ts', '--check=yes'], dir);
+
+      expect(result.exitCode).toBe(2);
+      expect(() => statSync(join(dir, 'out.ts'))).toThrow();
+    });
+  });
+
   it('prints its help for --help', async () => {
     const result = await runContractCommand(['--help'], dir);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('etyma contract <source.json> --output <file>');
+    expect(result.stdout).toContain('etyma contract <source.json> --output <file> --check');
+    expect(result.stdout).toContain('MF2 functions');
   });
 });

@@ -5,11 +5,11 @@ import { parseArgs } from 'node:util';
 import { extractContractKeys, extractContractParams, renderContractModule } from '@etyma/tooling';
 
 import { CONTRACT_HELP } from '../help.js';
-import { EXIT_USAGE_ERROR, EXIT_VALID } from '../types.js';
+import { EXIT_USAGE_ERROR, EXIT_VALID, EXIT_VALIDATION_FAILED } from '../types.js';
 import type { CatalogSource, CliResult } from '../types.js';
 
 /**
- * `etyma contract <source.json> --output <file>`.
+ * `etyma contract <source.json> --output <file> [--check]`.
  *
  * Generates the `defineMessageContract` module for one local source catalog - the file
  * `defineI18n({ source, contract })` reads for typed params, and exact array keys, that a
@@ -25,8 +25,15 @@ import type { CatalogSource, CliResult } from '../types.js';
  * was asked for that message's variables and cannot know them.
  *
  * `output` is written only when its content would change, so an unchanged catalog touches no
- * file and triggers no rebuild. Every failure is exit 2: nothing here produces catalog
- * diagnostics, only a module or a reason there is none.
+ * file and triggers no rebuild. Every generation failure is exit 2: nothing here produces
+ * catalog diagnostics, only a module or a reason there is none.
+ *
+ * `--check` renders the same module and compares it byte for byte with `output`, writing
+ * nothing - not even a directory. A missing or stale output is exit 1: the check ran and found
+ * the committed contract wrong, the way `validate` finds a catalog wrong. That is what catches
+ * a same-key change `defineI18n`'s key comparison cannot see, such as `{$count :number}`
+ * becoming `{$count :datetime}`. Byte equality is enough because the rendering is
+ * deterministic; there is nothing to parse and no hash to keep.
  */
 export async function runContractCommand(argv: readonly string[], cwd: string): Promise<CliResult> {
   let parsed;
@@ -37,6 +44,7 @@ export async function runContractCommand(argv: readonly string[], cwd: string): 
       allowPositionals: true,
       options: {
         output: { type: 'string', short: 'o' },
+        check: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
       },
     });
@@ -99,6 +107,33 @@ export async function runContractCommand(argv: readonly string[], cwd: string): 
     const reason = error instanceof Error ? error.message : String(error);
 
     return failure(`Cannot generate a contract from "${shownSource}":\n${reason}`);
+  }
+
+  if (values.check) {
+    let existing: string | undefined;
+
+    try {
+      existing = await readExisting(outputPath);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+
+      return failure(`Cannot read "${shownOutput}": ${reason}`);
+    }
+
+    if (existing === rendered) {
+      return success(`✓ ${shownOutput} is up to date (${count(keyCount)})\n`);
+    }
+
+    const [state, verb] =
+      existing === undefined ? ['missing', 'Generate'] : ['out of date', 'Regenerate'];
+
+    return {
+      exitCode: EXIT_VALIDATION_FAILED,
+      stdout:
+        `✗ ${shownOutput} is ${state}.\n` +
+        `  ${verb} it with: etyma contract ${shownSource} --output ${shownOutput}\n`,
+      stderr: '',
+    };
   }
 
   try {
