@@ -37,7 +37,7 @@ catalogs, typed message keys, MessageFormat 2 formatting, locale-aware routing, 
 build-time translations, and the localized `<head>` that makes a translated page findable.
 
 > **Status: published and early.** Every package is on npm. The runtime trio (`core`,
-> `angular`, `analog`) is at `0.2.x` and is used by Volt UI; `@etyma/astro`, `@etyma/tooling`
+> `angular`, `analog`) versions together and is used by Volt UI; `@etyma/astro`, `@etyma/tooling`
 > and `@etyma/cli` are `0.x` and version independently, with `@etyma/astro` running a
 > production Astro 6 site. Etyma is still pre-1.0. The API is small on purpose and the release
 > gates exercise packed packages; read [Non-goals](#non-goals) before adopting it.

@@ -320,7 +320,7 @@ h3 {
 
 .proof-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   margin: 2rem 0 0;
 }
@@ -397,7 +397,7 @@ h3 {
 pre {
   margin: 1rem 0 0;
   padding: clamp(1rem, 2vw, 1.4rem);
-  overflow: hidden;
+  overflow-x: auto;
   color: #dcecff;
   background: rgb(2 6 12 / 84%);
   border: 1px solid rgb(255 255 255 / 9%);

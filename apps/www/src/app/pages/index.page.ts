@@ -68,6 +68,10 @@ import { injectAppI18n } from '../i18n/inject';
             <dd>{{ t('home.analog') }}</dd>
           </div>
           <div [move]="'fade-up'">
+            <dt>Astro</dt>
+            <dd>{{ t('home.astro') }}</dd>
+          </div>
+          <div [move]="'fade-up'">
             <dt>{{ t('home.localesHeading') }}</dt>
             <dd>EN / ES / UK</dd>
           </div>
@@ -162,6 +166,43 @@ import { injectAppI18n } from '../i18n/inject';
       </div>
     </section>
 
+    <section class="section split" id="tooling">
+      <div>
+        <volt-badge variant="outline" class="section-badge">{{
+          t('home.toolingEyebrow')
+        }}</volt-badge>
+        <h2>{{ t('home.toolingTitle') }}</h2>
+        <p>{{ t('home.toolingBody') }}</p>
+      </div>
+      <pre class="code-block" [moveInView]="'fade-up'"><code>{{ toolingSample }}</code></pre>
+    </section>
+
+    <section class="section">
+      <div class="feature-grid" moveStagger [moveStaggerStep]="85">
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-check-circle [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.toolingValidateTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.toolingValidateBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-code-bracket-square [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.toolingContractTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.toolingContractBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-shield-check [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.toolingCheckTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.toolingCheckBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+      </div>
+    </section>
+
     <section class="section split" id="packages">
       <div>
         <volt-badge variant="outline" class="section-badge">{{
@@ -174,6 +215,9 @@ import { injectAppI18n } from '../i18n/inject';
         <div><lmn-code-bracket-square [size]="20" /> <span>@etyma/core</span></div>
         <div><lmn-shield-check [size]="20" /> <span>@etyma/angular</span></div>
         <div><lmn-check-circle [size]="20" /> <span>@etyma/analog</span></div>
+        <div><lmn-server-stack [size]="20" /> <span>@etyma/astro</span></div>
+        <div><lmn-language [size]="20" /> <span>@etyma/tooling</span></div>
+        <div><lmn-cloud-arrow-up [size]="20" /> <span>@etyma/cli</span></div>
       </volt-card>
     </section>
   `,
@@ -190,4 +234,9 @@ export default class HomePage {
     uk: () => import('./uk.json')
   }
 });`;
+  protected readonly toolingSample = `# CI: verify, then build
+etyma contract ./src/i18n/en.json \\
+  --output ./src/i18n/etyma.generated.ts --check
+etyma validate ./src/i18n --source en
+pnpm typecheck && pnpm build`;
 }
