@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "pre-release 0.0.1"
+    "status": "0.4 · pre-1.0"
   },
   "nav": {
     "home": "Головна",
@@ -9,6 +9,7 @@
     "themes": "Analog",
     "features": "Можливості",
     "workflow": "Процес",
+    "tooling": "Інструменти",
     "packages": "Пакети",
     "language": "Мова",
     "skipToContent": "Перейти до вмісту"
@@ -16,18 +17,19 @@
   "home": {
     "eyebrow": "Офіційний сайт Etyma",
     "title": "Типізована i18n. Справжній SSR. Чисті Angular API.",
-    "lede": "Etyma дає типізовані JSON-каталоги, MessageFormat 2, локалізовані URL, перекладений SSR HTML і lazy-завантаження мов без проблем гідратації.",
+    "lede": "Etyma дає командам Angular, AnalogJS і Astro типізовані JSON-каталоги, MessageFormat 2 з типізованими параметрами, локалізовані URL, перекладений SSR HTML і lazy-завантаження мов без проблем гідратації.",
     "primaryCta": "Подивитись процес",
     "secondaryCta": "Пакети",
     "angular": "21 і 22",
     "analog": "2.6 і 2.7",
+    "astro": "6 і 7",
     "localesHeading": "Мови",
-    "codeTitle": "etyma.config.ts",
+    "codeTitle": "i18n.ts",
     "codeNote": "Локалізований HTML виходить із сервера ще до старту гідратації.",
     "whyEyebrow": "Навіщо це",
     "whyTitle": "i18n-шар, який Angular apps мали б мати за замовчуванням.",
-    "featureTypedTitle": "Типізовані ключі",
-    "featureTypedBody": "Джерельний каталог визначає контракт ключів. Помилки в назвах падають під час перевірки TypeScript, а не стають порожнім UI.",
+    "featureTypedTitle": "Типізовані ключі й параметри",
+    "featureTypedBody": "Джерельний каталог визначає контракт ключів, а змінні MessageFormat 2 кожного повідомлення стають обов’язковими параметрами: змінна :number приймає число, :datetime — дату. Помилки падають у TypeScript, а не в UI.",
     "featureSsrTitle": "SSR передусім",
     "featureSsrBody": "Локалізована URL-адреса рендерить локалізований HTML на сервері, передає каталог і гідратується без повторного завантаження мови.",
     "featureCloudTitle": "Готово для edge",
@@ -41,9 +43,18 @@
     "stepRouteBody": "Джерельна мова лишається чистою, а додаткові мови живуть під стабільними префіксами.",
     "stepHydrateTitle": "Передай активну мову",
     "stepHydrateBody": "SSR віддає каталог, який використала сторінка, тому гідратація не просить його знову й не показує англійську.",
+    "toolingEyebrow": "Інструменти",
+    "toolingTitle": "Каталоги й контракти перевіряються в CI, а не в production.",
+    "toolingBody": "@etyma/cli перевіряє кожну мову відносно джерельної й генерує типізований контракт для JSON-джерела. --check перевіряє закомічений контракт, нічого не записуючи, тож застарілий тип ніколи не потрапить у main.",
+    "toolingValidateTitle": "Перевірка каталогів",
+    "toolingValidateBody": "Відсутні й зайві ключі, некоректний MessageFormat 2 і розбіжності змінних — для локальних файлів або публічних віддалених каталогів.",
+    "toolingContractTitle": "Генерація контракту",
+    "toolingContractBody": "Точні ключі, назви змінних і функції MF2 — ніколи не текст повідомлень. Детермінований, закомічений, зрозумілий у рев’ю.",
+    "toolingCheckTitle": "Перевірка в CI",
+    "toolingCheckBody": "Код виходу 1, коли закомічений контракт відсутній або застарів, навіть якщо змінна лише змінилася з :number на :datetime.",
     "packagesEyebrow": "Пакети",
-    "packagesTitle": "Один portable core і два Angular-адаптери.",
-    "packagesBody": "@etyma/core відповідає за каталоги й MessageFormat. @etyma/angular дає signals і transfer state. @etyma/analog з'єднує маршрути, SSR і SEO."
+    "packagesTitle": "Один portable core, адаптери для трьох фреймворків і інструменти для CI.",
+    "packagesBody": "@etyma/core відповідає за каталоги, MessageFormat 2 і типи. @etyma/angular, @etyma/analog і @etyma/astro приносять їх у кожен фреймворк. @etyma/tooling і @etyma/cli тримають каталоги й контракти коректними."
   },
   "docs": {
     "eyebrow": "Перші кроки",
@@ -66,7 +77,7 @@
     "signalsTitle": "Signals, не підписки",
     "signalsBody": "locale(), direction() і ready() — це signals. Функція перекладу читає їх у Angular-шаблонах і оновлюється без припущень про Zone.js.",
     "typesTitle": "Типи з джерельного каталогу",
-    "typesBody": "Передача i18n definition в injectI18n зберігає типізовані ключі між пакетами без code generation.",
+    "typesBody": "Передача i18n definition в injectI18n зберігає типізовані ключі між пакетами без кроку генерації. Необов’язковий згенерований контракт типізує й параметри кожного повідомлення для JSON-джерела.",
     "mf2Title": "MessageFormat 2",
     "released": "Референсний build відрендерено {$on :date style=long}",
     "status": ".input {$state :string}\n.match $state\nstable {{Стабільно й задокументовано}}\nbeta   {{Бета}}\n*      {{Експериментально}}",

@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "pre-release 0.0.1"
+    "status": "0.4 · pre-1.0"
   },
   "nav": {
     "home": "Inicio",
@@ -9,6 +9,7 @@
     "themes": "Analog",
     "features": "Features",
     "workflow": "Flujo",
+    "tooling": "Tooling",
     "packages": "Paquetes",
     "language": "Idioma",
     "skipToContent": "Saltar al contenido"
@@ -16,18 +17,19 @@
   "home": {
     "eyebrow": "Web oficial de Etyma",
     "title": "i18n tipado. SSR real. APIs limpias para Angular.",
-    "lede": "Etyma ofrece catálogos JSON tipados, MessageFormat 2, URLs localizadas, HTML traducido en SSR y carga lazy de idiomas segura para hidratación.",
+    "lede": "Etyma ofrece catálogos JSON tipados, MessageFormat 2 con parámetros tipados, URLs localizadas, HTML traducido en SSR y carga lazy de idiomas segura para hidratación, para Angular, AnalogJS y Astro.",
     "primaryCta": "Explorar el flujo",
     "secondaryCta": "Ver paquetes",
     "angular": "21 y 22",
     "analog": "2.6 y 2.7",
+    "astro": "6 y 7",
     "localesHeading": "Idiomas",
-    "codeTitle": "etyma.config.ts",
+    "codeTitle": "i18n.ts",
     "codeNote": "El HTML localizado sale del servidor antes de iniciar hidratación.",
     "whyEyebrow": "Por qué existe",
     "whyTitle": "La capa i18n que una app Angular debería tener por defecto.",
-    "featureTypedTitle": "Claves tipadas",
-    "featureTypedBody": "El catálogo fuente define el contrato de claves. Los errores de escritura fallan en TypeScript en vez de convertirse en UI vacía.",
+    "featureTypedTitle": "Claves y parámetros tipados",
+    "featureTypedBody": "El catálogo fuente define el contrato de claves, y las variables MessageFormat 2 de cada mensaje se vuelven parámetros obligatorios: una variable :number recibe un número, una :datetime una fecha. Los errores fallan en TypeScript, no en la UI.",
     "featureSsrTitle": "SSR primero",
     "featureSsrBody": "Una URL localizada renderiza HTML localizado en el servidor, transfiere el catálogo e hidrata sin cargar ese idioma otra vez.",
     "featureCloudTitle": "Lista para edge",
@@ -41,9 +43,18 @@
     "stepRouteBody": "El idioma fuente queda limpio y los idiomas secundarios viven bajo prefijos estables.",
     "stepHydrateTitle": "Transfiere el idioma activo",
     "stepHydrateBody": "SSR envía el catálogo que usó la página, así la hidratación no lo vuelve a pedir ni muestra inglés.",
+    "toolingEyebrow": "Tooling",
+    "toolingTitle": "Catálogos y contratos verificados en CI, no en producción.",
+    "toolingBody": "@etyma/cli valida cada idioma contra el fuente y genera el contrato tipado para una fuente JSON. --check verifica el contrato commiteado sin escribir nada, así un tipo obsoleto nunca llega a main.",
+    "toolingValidateTitle": "Validar catálogos",
+    "toolingValidateBody": "Claves que faltan o sobran, MessageFormat 2 inválido y variables que no coinciden, en archivos locales o catálogos remotos públicos.",
+    "toolingContractTitle": "Generar el contrato",
+    "toolingContractBody": "Claves exactas, nombres de variables y funciones MF2, nunca el texto. Determinista, commiteado y legible en la revisión.",
+    "toolingCheckTitle": "Verificarlo en CI",
+    "toolingCheckBody": "Sale con 1 cuando el contrato commiteado falta o está desactualizado, aunque una variable solo haya pasado de :number a :datetime.",
     "packagesEyebrow": "Paquetes",
-    "packagesTitle": "Un core portable y dos adaptadores para Angular.",
-    "packagesBody": "@etyma/core gestiona catálogos y MessageFormat. @etyma/angular expone signals y transfer state. @etyma/analog conecta rutas, SSR y SEO."
+    "packagesTitle": "Un core portable, adaptadores para tres frameworks y tooling para CI.",
+    "packagesBody": "@etyma/core gestiona catálogos, MessageFormat 2 y tipos. @etyma/angular, @etyma/analog y @etyma/astro los llevan a cada framework. @etyma/tooling y @etyma/cli mantienen catálogos y contratos correctos."
   },
   "docs": {
     "eyebrow": "Primeros pasos",
@@ -66,7 +77,7 @@
     "signalsTitle": "Signals, no suscripciones",
     "signalsBody": "locale(), direction() y ready() son signals. La función de traducción los lee dentro de las plantillas Angular y actualiza sin asumir Zone.js.",
     "typesTitle": "Tipado por el catálogo fuente",
-    "typesBody": "Pasar la definición i18n a injectI18n mantiene claves tipadas entre paquetes sin generación de código.",
+    "typesBody": "Pasar la definición i18n a injectI18n mantiene claves tipadas entre paquetes sin paso de generación. Un contrato generado opcional tipa también los parámetros de cada mensaje para una fuente JSON.",
     "mf2Title": "MessageFormat 2",
     "released": "Build de referencia renderizado el {$on :date style=long}",
     "status": ".input {$state :string}\n.match $state\nstable {{Estable y documentado}}\nbeta   {{Beta}}\n*      {{Experimental}}",

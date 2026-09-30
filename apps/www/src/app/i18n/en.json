@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "pre-release 0.0.1"
+    "status": "0.4 · pre-1.0"
   },
   "nav": {
     "home": "Home",
@@ -9,6 +9,7 @@
     "themes": "Analog",
     "features": "Features",
     "workflow": "Workflow",
+    "tooling": "Tooling",
     "packages": "Packages",
     "language": "Language",
     "skipToContent": "Skip to content"
@@ -16,18 +17,19 @@
   "home": {
     "eyebrow": "Official Etyma site",
     "title": "Typed i18n. Real SSR. Clean Angular APIs.",
-    "lede": "Etyma gives Angular teams typed JSON catalogs, MessageFormat 2, localized URLs, translated SSR HTML and hydration-safe lazy locale loading.",
+    "lede": "Etyma gives Angular, AnalogJS and Astro teams typed JSON catalogs, MessageFormat 2 with typed params, localized URLs, translated SSR HTML and hydration-safe lazy locale loading.",
     "primaryCta": "Explore the flow",
     "secondaryCta": "View packages",
     "angular": "21 and 22",
     "analog": "2.6 and 2.7",
+    "astro": "6 and 7",
     "localesHeading": "Locales",
-    "codeTitle": "etyma.config.ts",
+    "codeTitle": "i18n.ts",
     "codeNote": "Localized HTML ships from the server before hydration starts.",
     "whyEyebrow": "Why it exists",
     "whyTitle": "The i18n layer Angular apps should have by default.",
-    "featureTypedTitle": "Typed message keys",
-    "featureTypedBody": "The source catalog defines the key contract. Misspelled translation keys fail during TypeScript checks instead of becoming silent blank UI.",
+    "featureTypedTitle": "Typed keys and params",
+    "featureTypedBody": "The source catalog defines the key contract, and each message’s MessageFormat 2 variables become required params: a :number variable takes a number, a :datetime one a date. Mistakes fail in TypeScript, not in the UI.",
     "featureSsrTitle": "SSR first",
     "featureSsrBody": "A localized URL renders localized HTML on the server, transfers the catalog, and hydrates without loading that locale again.",
     "featureCloudTitle": "Edge-ready",
@@ -41,9 +43,18 @@
     "stepRouteBody": "The source locale remains clean, while secondary locales live under stable prefixes.",
     "stepHydrateTitle": "Transfer the active locale",
     "stepHydrateBody": "SSR sends the catalog the page used, so hydration does not refetch it or flash English.",
+    "toolingEyebrow": "Tooling",
+    "toolingTitle": "Catalogs and contracts checked in CI, not in production.",
+    "toolingBody": "@etyma/cli validates every locale against the source and generates the typed contract for a JSON source. --check verifies the committed contract without writing anything, so a stale type never reaches main.",
+    "toolingValidateTitle": "Validate catalogs",
+    "toolingValidateBody": "Missing and extra keys, invalid MessageFormat 2 and variable drift, for local files or public remote catalogs.",
+    "toolingContractTitle": "Generate the contract",
+    "toolingContractBody": "Exact keys, variable names and MF2 functions — never message text. Deterministic, committed, readable in review.",
+    "toolingCheckTitle": "Verify it in CI",
+    "toolingCheckBody": "Exit 1 when the committed contract is missing or out of date — even when a variable only changed from :number to :datetime.",
     "packagesEyebrow": "Packages",
-    "packagesTitle": "One portable core, two Angular-facing adapters.",
-    "packagesBody": "@etyma/core owns catalogs and MessageFormat. @etyma/angular exposes signals and transfer state. @etyma/analog connects URL routing, SSR and SEO."
+    "packagesTitle": "One portable core, adapters for three frameworks, tooling for CI.",
+    "packagesBody": "@etyma/core owns catalogs, MessageFormat 2 and types. @etyma/angular, @etyma/analog and @etyma/astro bring them to each framework. @etyma/tooling and @etyma/cli keep catalogs and contracts honest."
   },
   "docs": {
     "eyebrow": "Getting started",
@@ -67,7 +78,7 @@
     "signalsTitle": "Signals, not subscriptions",
     "signalsBody": "locale(), direction() and ready() are signals. The translation function reads them inside Angular templates and updates without Zone.js assumptions.",
     "typesTitle": "Typed by the source catalog",
-    "typesBody": "Passing the i18n definition to injectI18n keeps keys typed across the package boundary without code generation.",
+    "typesBody": "Passing the i18n definition to injectI18n keeps keys typed across the package boundary with no generation step. An optional generated contract types each message’s params for a JSON source too.",
     "mf2Title": "MessageFormat 2",
     "released": "Reference build rendered {$on :date style=long}",
     "status": ".input {$state :string}\n.match $state\nstable {{Stable and documented}}\nbeta   {{Beta}}\n*      {{Experimental}}",
