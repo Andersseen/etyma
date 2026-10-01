@@ -15,7 +15,7 @@
     "@angular/compiler": "22.1.3",
     "@angular/core": "22.1.3",
     "@angular/platform-browser": "22.1.3",
-    "@angular/router": "22.1.3",
+    "@angular/router": "22.2.0",
     "@etyma/core": "file:../.tarballs/etyma-core.tgz",
     "@etyma/angular": "file:../.tarballs/etyma-angular.tgz",
     "@etyma/analog": "file:../.tarballs/etyma-analog.tgz",
