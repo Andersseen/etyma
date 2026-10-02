@@ -37,7 +37,7 @@ export async function discoverCatalogFiles(directory: string): Promise<Discovere
     .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
     .map(entry => ({ locale: basename(entry.name, '.json'), path: join(directory, entry.name) }));
 
-  return files.sort((a, b) => a.locale.localeCompare(b.locale));
+  return files.sort((a, b) => (a.locale < b.locale ? -1 : a.locale > b.locale ? 1 : 0));
 }
 
 /** One file's content, or the reason it could not be loaded as JSON. */

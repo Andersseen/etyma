@@ -125,7 +125,7 @@ describe('typed params through a definition', () => {
       defineRemoteI18n({
         locales: ['en'],
         sourceLocale: 'en',
-        contract: defineMessageContract(['welcome']),
+        contract: defineMessageContract({ keys: ['welcome'] }),
         loaders: { en: () => ({ welcome: 'Hello, {$name}!' }) },
       }),
     );
@@ -152,10 +152,10 @@ describe('typed params through a definition', () => {
 });
 
 describe('typed params through a remote contract', () => {
-  const contract = defineMessageContract(
-    ['footer.rights', 'nav.docs', 'steps.0', 'steps.1', 'welcome'],
-    { 'footer.rights': ['author', 'year'], 'steps.1': ['plan'], welcome: ['name'] },
-  );
+  const contract = defineMessageContract({
+    keys: ['footer.rights', 'nav.docs', 'steps.0', 'steps.1', 'welcome'],
+    variables: { 'footer.rights': ['author', 'year'], 'steps.1': ['plan'], welcome: ['name'] },
+  });
   const t = translatorFor(
     defineRemoteI18n({
       locales: ['en'],
@@ -192,11 +192,21 @@ describe('typed params through a remote contract', () => {
 
   it('only lists variables for keys the contract has', () => {
     // @ts-expect-error - `nope` is not one of the keys.
-    defineMessageContract(['welcome'], { nope: ['name'] });
+    defineMessageContract({ keys: ['welcome'], variables: { nope: ['name'] } });
+  });
+
+  it('names a field it does not know as a compile error, rather than ignoring it', () => {
+    // @ts-expect-error - `varaibles` is not a contract field.
+    defineMessageContract({ keys: ['welcome'], varaibles: { welcome: ['name'] } });
+  });
+
+  it('takes one object, not the positional form older contracts used', () => {
+    // @ts-expect-error - the keys are a field of the one argument.
+    defineMessageContract(['welcome']);
   });
 
   it('is untyped for a contract without variables, as before', () => {
-    const keysOnly = defineMessageContract(['welcome']);
+    const keysOnly = defineMessageContract({ keys: ['welcome'] });
 
     expectTypeOf(keysOnly).toEqualTypeOf<MessageContract<'welcome'>>();
   });
@@ -204,10 +214,10 @@ describe('typed params through a remote contract', () => {
 
 describe('typed params through a static contract', () => {
   // The contract `etyma contract` generates for `contract-catalog.json`.
-  const contract = defineMessageContract(
-    ['footer.rights', 'nav.docs', 'onboarding.steps.0', 'onboarding.steps.1', 'welcome'] as const,
-    { 'footer.rights': ['year'], 'onboarding.steps.1': ['plan'], welcome: ['name'] } as const,
-  );
+  const contract = defineMessageContract({
+    keys: ['footer.rights', 'nav.docs', 'onboarding.steps.0', 'onboarding.steps.1', 'welcome'],
+    variables: { 'footer.rights': ['year'], 'onboarding.steps.1': ['plan'], welcome: ['name'] },
+  });
 
   it('types a JSON source with no contract by keys only (case A)', () => {
     const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source: contractCatalog });
@@ -265,7 +275,7 @@ describe('typed params through a static contract', () => {
       sourceLocale: 'en',
       source: contractCatalog,
       // @ts-expect-error - `old.key` is not a key of the source.
-      contract: defineMessageContract(['nav.docs', 'old.key']),
+      contract: defineMessageContract({ keys: ['nav.docs', 'old.key'] }),
     });
   });
 
@@ -277,7 +287,10 @@ describe('typed params through a static contract', () => {
         locales: ['en'],
         sourceLocale: 'en',
         source,
-        contract: defineMessageContract(['nav.docs', 'welcome'], { welcome: ['name'] }),
+        contract: defineMessageContract({
+          keys: ['nav.docs', 'welcome'],
+          variables: { welcome: ['name'] },
+        }),
       }),
     );
     const keysOnly = translatorFor(
@@ -285,7 +298,7 @@ describe('typed params through a static contract', () => {
         locales: ['en'],
         sourceLocale: 'en',
         source,
-        contract: defineMessageContract(['nav.docs', 'welcome']),
+        contract: defineMessageContract({ keys: ['nav.docs', 'welcome'] }),
       }),
     );
 
@@ -303,7 +316,7 @@ describe('typed params through a static contract', () => {
         locales: ['en'],
         sourceLocale: 'en',
         source: defineMessages({ welcome: 'Hello, {$user}!' }),
-        contract: defineMessageContract(['welcome'], { welcome: ['name'] }),
+        contract: defineMessageContract({ keys: ['welcome'], variables: { welcome: ['name'] } }),
       }),
     );
 
@@ -440,29 +453,31 @@ describe('param value types from built-in function annotations', () => {
 
 describe('param value types through a contract', () => {
   it('keeps the one- and two-argument forms exactly as before', () => {
-    expectTypeOf(defineMessageContract(['welcome'])).toEqualTypeOf<MessageContract<'welcome'>>();
+    expectTypeOf(defineMessageContract({ keys: ['welcome'] })).toEqualTypeOf<
+      MessageContract<'welcome'>
+    >();
     expectTypeOf(
-      defineMessageContract(['welcome'], { welcome: ['name'] }).messageParams,
+      defineMessageContract({ keys: ['welcome'], variables: { welcome: ['name'] } }).messageParams,
     ).toEqualTypeOf<{ welcome: { readonly name: MessageParamValue } } | undefined>();
   });
 
   it('narrows the params the functions argument annotates, and only those', () => {
-    const contract = defineMessageContract(
-      ['conflict', 'custom', 'total', 'updated', 'welcome'] as const,
-      {
+    const contract = defineMessageContract({
+      keys: ['conflict', 'custom', 'total', 'updated', 'welcome'],
+      variables: {
         conflict: ['v'],
         custom: ['user'],
         total: ['count', 'label'],
         updated: ['when'],
         welcome: ['name'],
-      } as const,
-      {
+      },
+      functions: {
         conflict: { v: ['datetime', 'number'] },
         custom: { user: ['avatar'] },
         total: { count: ['number'] },
         updated: { when: ['datetime'] },
-      } as const,
-    );
+      },
+    });
 
     expectTypeOf(contract.messageParams).toEqualTypeOf<
       | {
@@ -493,8 +508,12 @@ describe('param value types through a contract', () => {
   });
 
   it('only lists functions for listed variables', () => {
-    // @ts-expect-error - `nope` is not a variable of `welcome`.
-    defineMessageContract(['welcome'], { welcome: ['name'] }, { welcome: { nope: ['number'] } });
+    defineMessageContract({
+      keys: ['welcome'],
+      variables: { welcome: ['name'] },
+      // @ts-expect-error - `nope` is not a variable of `welcome`.
+      functions: { welcome: { nope: ['number'] } },
+    });
   });
 
   it('merges a literal source and its contract: broad yields, equal agrees, a conflict is never', () => {
@@ -508,11 +527,15 @@ describe('param value types through a contract', () => {
         locales: ['en'],
         sourceLocale: 'en',
         source,
-        contract: defineMessageContract(
-          ['raw', 'total', 'when'],
-          { raw: ['value'], total: ['count'], when: ['at'] },
-          { raw: { value: ['number'] }, total: { count: ['number'] }, when: { at: ['number'] } },
-        ),
+        contract: defineMessageContract({
+          keys: ['raw', 'total', 'when'],
+          variables: { raw: ['value'], total: ['count'], when: ['at'] },
+          functions: {
+            raw: { value: ['number'] },
+            total: { count: ['number'] },
+            when: { at: ['number'] },
+          },
+        }),
       }),
     );
 

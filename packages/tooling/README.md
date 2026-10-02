@@ -111,9 +111,15 @@ interface CatalogValidationResult {
 }
 ```
 
-`diagnostics` is sorted deterministically — by `locale`, then `key`, then `code` — so the same
-catalogs always produce the same array in the same order. That matters for a CI gate, a
+`diagnostics` is sorted deterministically — by `locale`, then `key`, then `code`, comparing
+UTF-16 code units rather than collating by the host's locale — so the same catalogs always
+produce the same array in the same order, on any machine. That matters for a CI gate, a
 snapshot test, or anything that diffs two validation runs.
+
+`code` and `severity` are the machine-readable contract: a code is never renamed or removed,
+and never changes severity, within a major version. A minor version may add a code, so a
+consumer that switches on `code` should treat one it does not know by its `severity`.
+`message` is for a human and its wording may change in any release.
 
 A single run collects every problem it finds rather than stopping at the first one: a catalog
 with a missing key, an empty message and a syntax error in three different places produces
@@ -206,6 +212,10 @@ builds it with three pure functions, exported from the main entry point; `etymaR
 runs them for a remote catalog during a Vite build, and [`etyma contract`](../cli) for a local
 file from a terminal or script.
 
+These functions, like `validateCatalogs`, are a deliberate **advanced** API: what a custom
+build step, an editor extension or a CMS adapter calls to produce the same artifact the CLI
+and the Vite plugin do, without spawning either. Most applications never import them.
+
 ```ts
 import { extractContractKeys, extractContractParams, renderContractModule } from '@etyma/tooling';
 
@@ -213,7 +223,8 @@ const keys = extractContractKeys(sourceCatalog); // sorted dotted keys
 const { variables, functions } = extractContractParams(sourceCatalog);
 // variables: { total: ['count'], welcome: ['name'], … }
 // functions: { total: { count: ['number'] }, … }
-const moduleSource = renderContractModule(keys, variables, functions);
+const moduleSource = renderContractModule({ keys, variables, functions });
+// or, in one line: renderContractModule({ keys, ...extractContractParams(sourceCatalog) })
 ```
 
 `extractContractParams` parses each message once and returns both halves;
@@ -240,11 +251,11 @@ never change the contract.
 With variables, the generated module types `t()`'s params as well as its keys:
 
 ```ts
-export default defineMessageContract(
-  ['footer.rights', 'nav.docs', 'welcome'] as const,
-  { 'footer.rights': ['author', 'year'], welcome: ['name'] } as const,
-  { 'footer.rights': { year: ['number'] } } as const,
-);
+export default defineMessageContract({
+  keys: ['footer.rights', 'nav.docs', 'welcome'],
+  variables: { 'footer.rights': ['author', 'year'], welcome: ['name'] },
+  functions: { 'footer.rights': { year: ['number'] } },
+});
 ```
 
 so `t('welcome')` without `{ name }` is a compile error, and `year` takes a
@@ -252,9 +263,16 @@ so `t('welcome')` without `{ name }` is a compile error, and `year` takes a
 `author`, with no function listed, accepts any `MessageParamValue`.
 `renderContractModule` is byte-stable for a given input — no timestamp, no random id, no
 machine-specific path — so the file it produces is safe to commit and diffs only when the
-source catalog's keys, variables or annotations actually change. A catalog with no variables
-renders exactly the keys-only module earlier versions generated, and one where no variable
-reaches a function, exactly the keys-and-variables one.
+source catalog's keys, variables or annotations actually change. A field with nothing in it
+— no variables, no functions — is left out of the module, as is an empty list, which
+`defineMessageContract` would reject.
+
+**Contracts from before 0.5** passed `keys`, `variables` and `functions` as three positional
+arguments. `defineMessageContract` now takes one object with those fields, so a later kind of
+metadata is one more optional field rather than a fourth argument. Regenerate an old contract
+— `etyma contract` for a local source, the next `vite dev` or `vite build` for
+`etymaRemoteContract` — rather than editing it; `etyma contract --check` reports one that has
+not been regenerated yet.
 
 ### `@etyma/tooling/vite`
 

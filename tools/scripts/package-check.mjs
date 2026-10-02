@@ -16,6 +16,20 @@ import { contentsOf, manifestOf, packAll, readJson, repoRoot, runtimePackages } 
 
 const failures = [];
 
+/**
+ * Every package's public entry points, exactly. A new subpath - or a lost one - is a public
+ * API decision, so it has to be made here on purpose rather than arrive through a build
+ * configuration change. `@etyma/cli` is a binary only: it has no importable entry point.
+ */
+const intendedEntryPoints = {
+  '@etyma/core': ['.', './package.json'],
+  '@etyma/angular': ['.', './package.json'],
+  '@etyma/analog': ['.', './package.json'],
+  '@etyma/astro': ['.', './package.json'],
+  '@etyma/tooling': ['.', './vite', './package.json'],
+  '@etyma/cli': ['./package.json'],
+};
+
 function check(description, assertion) {
   try {
     assertion();
@@ -57,6 +71,9 @@ try {
     });
 
     check('declarations resolve for every consumer', () => {
+      // A binary-only package has no declarations for anything to resolve.
+      if (intendedEntryPoints[pkg.name]?.every(entry => entry === './package.json')) return;
+
       // `esm-only` is the correct profile: these packages ship no CommonJS, and a report
       // of "CJS cannot import this" is the intended design rather than a defect.
       run('pnpm', ['exec', 'attw', '--profile', 'esm-only', pkg.tarball], repoRoot);
@@ -70,10 +87,19 @@ try {
       );
     });
 
-    check('declares an exports map with types', () => {
-      assert(manifest.exports?.['.'] !== undefined, 'no "." entry in exports');
-      assert(manifest.exports['.'].types !== undefined, 'the "." export has no types condition');
-      assert(manifest.exports['./package.json'] !== undefined, 'package.json is not exported');
+    check('exports exactly its intended entry points, each with types', () => {
+      const expected = intendedEntryPoints[pkg.name];
+      const actual = Object.keys(manifest.exports ?? {}).sort();
+
+      assert(expected !== undefined, `no intended entry points recorded for ${pkg.name}`);
+      assert(
+        JSON.stringify(actual) === JSON.stringify([...expected].sort()),
+        `exports ${actual.join(', ') || '(nothing)'}; intended ${expected.join(', ')}`,
+      );
+
+      for (const entry of actual.filter(entry => entry !== './package.json')) {
+        assert(manifest.exports[entry].types !== undefined, `"${entry}" has no types condition`);
+      }
     });
 
     check('has no unresolved workspace specifiers', () => {

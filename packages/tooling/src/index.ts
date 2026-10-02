@@ -25,4 +25,8 @@ export type {
   ValidateCatalogOptions,
   ValidateCatalogsOptions,
 } from './types.js';
-export type { ContractParams, ExtractContractVariablesOptions } from './generate-contract.js';
+export type {
+  ContractModuleInput,
+  ContractParams,
+  ExtractContractVariablesOptions,
+} from './generate-contract.js';

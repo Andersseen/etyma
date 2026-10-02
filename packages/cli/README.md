@@ -345,17 +345,17 @@ it writes:
 
 import { defineMessageContract } from '@etyma/core';
 
-export default defineMessageContract(
-  ['footer.rights', 'nav.docs', 'onboarding.steps.0', 'onboarding.steps.1', 'welcome'] as const,
-  {
+export default defineMessageContract({
+  keys: ['footer.rights', 'nav.docs', 'onboarding.steps.0', 'onboarding.steps.1', 'welcome'],
+  variables: {
     'footer.rights': ['year'],
     'onboarding.steps.1': ['plan'],
     welcome: ['name'],
-  } as const,
-  {
+  },
+  functions: {
     'footer.rights': { year: ['number'] },
-  } as const,
-);
+  },
+});
 ```
 
 - **No message text.** `en.json` stays the runtime catalog and fallback; the module imports only
@@ -424,11 +424,28 @@ pnpm build
 | `1`       | `--check` only: the contract is missing or out of date. Nothing was written.                                                                    |
 | `2`       | Nothing written: a usage or filesystem error (including an unreadable output), malformed JSON, an invalid catalog shape, or invalid MF2 syntax. |
 
+A contract generated before 0.5 passed its keys, variables and functions as three positional
+arguments; run `etyma contract` once to regenerate it in the current one-object form.
+`--check` reports such a file as out of date.
+
 ## `etyma --version` / `etyma --help`
 
 `--version` reports `@etyma/cli`'s own installed version, read from its `package.json` at run
 time rather than hardcoded. `--help`, `etyma validate --help` and `etyma contract --help`
 print the usage summaries above.
+
+## No programmatic API
+
+`@etyma/cli` is the `etyma` binary and nothing else: it has no importable entry point, so
+`import ... from '@etyma/cli'` fails. Its stable interface is what a terminal or a CI job
+sees — the commands and options above, `--format json`, and the exit codes.
+
+Code that wants structured results calls [`@etyma/tooling`](../tooling) directly:
+`validateCatalogs()` returns the same diagnostics this CLI prints, and `extractContractKeys`,
+`extractContractParams` and `renderContractModule` produce the same contract module. Only
+reading files and fetching URLs are this package's own, and an integration already has its
+own way to do both. Versions before 0.5 exported `runCli`, `runValidateCommand` and
+`runContractCommand`; they returned the same text the binary prints, never structured data.
 
 ## Non-goals
 

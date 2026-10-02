@@ -181,7 +181,7 @@ function resolveRequest(options: EtymaRemoteValidationOptions): ResolvedRequest 
     );
   }
 
-  const sorted = [...locales].sort((a, b) => a.localeCompare(b));
+  const sorted = [...locales].sort();
 
   // Every URL is resolved and checked before the first request is sent.
   const targets = sorted.map(locale => {

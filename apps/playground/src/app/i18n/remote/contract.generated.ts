@@ -3,14 +3,14 @@
 
 import { defineMessageContract } from '@etyma/core';
 
-export default defineMessageContract(
-  [
+export default defineMessageContract({
+  keys: [
     "nav.docs",
     "remote.active",
     "remote.lede",
     "remote.title",
-  ] as const,
-  {
+  ],
+  variables: {
     "remote.active": ["locale"],
-  } as const,
-);
+  },
+});

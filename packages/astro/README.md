@@ -122,6 +122,12 @@ prerendered pages share is the loaded catalog content - see
 | `path(to, locale?)`        | `to` localized for `locale`, defaulting to the current one.                                                                              |
 | `seo()`                    | SEO metadata for the current page - see below.                                                                                           |
 
+The exported types are for typing your own code around it: `AstroI18n<TKey, TParams>` is the
+returned object (for a helper or a component prop that receives it), `AstroI18nContext` is the
+slice of Astro's request context `createAstroI18n` reads (pass `Astro`, or a middleware's
+context, wherever a helper takes one), and `AstroSeoData` / `AstroSeoAlternate` are what
+`seo()` returns.
+
 ## Localized paths
 
 ```ts

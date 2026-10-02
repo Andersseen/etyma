@@ -99,9 +99,10 @@ export async function runContractCommand(argv: readonly string[], cwd: string): 
       return failure(`"${shownSource}" has no messages; a contract needs at least one key.`);
     }
 
-    const { variables, functions } = extractContractParams(source.catalog, { strict: true });
-
-    rendered = renderContractModule(keys, variables, functions);
+    rendered = renderContractModule({
+      keys,
+      ...extractContractParams(source.catalog, { strict: true }),
+    });
     keyCount = keys.length;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

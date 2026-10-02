@@ -17,7 +17,7 @@ const catalogs: Readonly<Record<Locale, MessageSource>> = {
   uk: { home: { title: 'Головна' }, blog: { title: 'Блог' } },
 };
 
-const contract = defineMessageContract(['home.title', 'blog.title'] as const);
+const contract = defineMessageContract({ keys: ['home.title', 'blog.title'] });
 
 /** Where each locale is served, per the fake `astro:i18n` routing table (`uk` at `/ua`). */
 const routes: Readonly<Record<Locale, string>> = { es: '', en: '/en', uk: '/ua' };

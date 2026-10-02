@@ -40,12 +40,21 @@ type StaticParams<TSource, TParams> =
     ? M
     : never;
 
-type MergeParams<A, B> = {
-  [K in keyof A | keyof B]: K extends keyof A
-    ? K extends keyof B
+type MergeParams<A, B> = MergeByKeys<A, B, keyof A, keyof B>;
+
+/**
+ * The key sets arrive as type arguments, so each is resolved to a plain union once. Written
+ * as `K extends keyof A` instead, every key re-resolves `keyof` of a remapped mapped type - a
+ * contract's params, a literal's `MessageParamsOf` - which made the merge quadratic in the
+ * number of keys: an 836-key literal source with a contract hit TS2589, "excessively deep".
+ * Indexing through `KA` and `KB` keeps it linear (`tools/compat/core-large-catalog`).
+ */
+type MergeByKeys<A, B, KA extends keyof A, KB extends keyof B> = {
+  [K in KA | KB]: K extends KA
+    ? K extends KB
       ? MergeMessageParams<A[K], B[K]>
       : A[K]
-    : K extends keyof B
+    : K extends KB
       ? B[K]
       : never;
 };

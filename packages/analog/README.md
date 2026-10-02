@@ -89,7 +89,10 @@ prerendering. Pass `seo: false` to leave the head entirely alone.
 - `withLocalizedRoutes()` — a router feature for `provideFileRouter()`.
 - `provideEtymaAnalog(options?)` — request-scoped locale resolution, navigation-based locale
   switching and the localized head. `options.origin`, `options.seo`.
-- `ETYMA_LOCALE_PARAM` — the route parameter the locale prefix is captured in.
+- `ETYMA_LOCALE_PARAM` — the name of the route parameter the locale prefix is captured in
+  (`'etymaLocale'`), for code that reads route params directly — a resolver, or a route of
+  your own under the prefixed branch. To know the active locale, read `i18n.locale()`
+  instead.
 
 ## Licence
 
