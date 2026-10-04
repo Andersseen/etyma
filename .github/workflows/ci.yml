@@ -54,6 +54,11 @@ jobs:
       - name: Build the packages
         run: pnpm run build --filter='./packages/*'
 
+      # Never regenerates: a stale apps/www contract fails here, and the fix is a deliberate
+      # `pnpm --filter @etyma/www run i18n:contract`. Needs the CLI's dist from the step above.
+      - name: Website message contract is current
+        run: pnpm run i18n:contract:check
+
       - name: Lint
         run: pnpm run lint
 

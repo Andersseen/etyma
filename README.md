@@ -693,8 +693,8 @@ Not planned for `0.x`, and not partially implemented anywhere:
 ## Repository layout
 
 ```
-apps/www             The official website deployed to Cloudflare Pages
-apps/playground      A real Analog 2 application that consumes Etyma like an external app
+apps/www             The official website: a JSON source with a committed `etyma contract`
+apps/playground      A real Analog 2 consumer: JSON plus `defineMessages()`, no generation
 packages/core        @etyma/core
 packages/angular     @etyma/angular
 packages/analog      @etyma/analog
@@ -716,13 +716,14 @@ pnpm dev              # the official website, with packages built first
 pnpm dev:playground   # the dogfooding playground
 pnpm build            # every package and app
 pnpm lint             # ESLint, including the layer boundaries
-pnpm typecheck        # tsc across the workspace
+pnpm typecheck        # tsc across the workspace, plus ngc over the website's templates
 pnpm test             # Vitest unit and type tests
 pnpm e2e              # Playwright, against the Cloudflare build under Wrangler
-pnpm check            # formatting, lint, typecheck, tests and build
+pnpm check            # formatting, website contract freshness, lint, typecheck, tests and build
 pnpm package:check    # publint, are-the-types-wrong and tarball assertions
 pnpm compat:check     # builds the Angular, Analog, Astro and plain-core fixtures against packed tarballs
 pnpm changeset        # describe a change for the changelog
+pnpm --filter @etyma/www run i18n:contract  # after editing apps/www/src/app/i18n/en.json
 ```
 
 `pnpm e2e` builds the website and playground with Analog's Cloudflare Pages preset and

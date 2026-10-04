@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "0.4 · pre-1.0"
+    "status": "pre-1.0"
   },
   "nav": {
     "home": "Home",
@@ -99,5 +99,9 @@
   "footer": {
     "rights": "MIT licensed. {$year :number useGrouping=never}",
     "stack": "Built with AnalogJS, Angular, Etyma and Lumen Icons."
+  },
+  "seo": {
+    "siteName": "Etyma",
+    "tagline": "Typed internationalization for Angular and AnalogJS"
   }
 }

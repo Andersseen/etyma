@@ -2,13 +2,14 @@ import { createMessageFormatter, flattenMessages } from '@etyma/core';
 import { describe, expect, it } from 'vitest';
 
 import es from './es.json';
+import contract from './etyma.generated';
 import uk from './uk.json';
 import { i18n } from './i18n';
 
 /**
  * Keys that only the source catalog has, on purpose.
  *
- * The playground carries one so the fallback path is exercised by a real page rather than
+ * The site carries one so the fallback path is exercised by a real page rather than
  * only by a unit test. Listing it here is what keeps this suite a drift detector: any
  * *other* key going missing from a translation fails, and adding one to the list is a
  * deliberate act with a diff attached.
@@ -17,18 +18,24 @@ const SOURCE_ONLY = new Set(['docs.sourceOnly']);
 
 const catalogs = { es, uk } as const;
 
-/** `defineMessages` contributes `seo.*`, which the JSON files do not carry. */
+/** `en.json` is the whole source catalog; `defineI18n` flattens it into these keys. */
 const sourceKeys: ReadonlySet<string> = new Set<string>(i18n.keys);
 
-describe('the playground catalogs', () => {
+describe('the website catalogs', () => {
   it('agree on the locales the definition declares', () => {
     expect(i18n.locales).toEqual(['en', 'es', 'uk']);
     expect(i18n.sourceLocale).toBe('en');
   });
 
-  it('include the keys authored in TypeScript alongside the ones from JSON', () => {
+  it('take every source key from en.json, including the SEO messages', () => {
     expect(sourceKeys.has('seo.siteName')).toBe(true);
     expect(sourceKeys.has('nav.docs')).toBe(true);
+  });
+
+  it('are described exactly by the committed contract', () => {
+    // `defineI18n` already throws on a key mismatch; this names the drift in a test report
+    // instead of a module-load error. Param drift is `etyma contract --check`'s job.
+    expect([...contract.keys].sort()).toEqual([...sourceKeys].sort());
   });
 
   for (const [locale, catalog] of Object.entries(catalogs)) {
