@@ -104,7 +104,7 @@ describe('etymaRemoteContract', () => {
     }
 
     expect(readFileSync(output, 'utf8')).toContain(
-      'export default defineMessageContract([\n  "features.0",\n  "features.1",\n  "title",\n] as const);',
+      'export default defineMessageContract({\n  keys: [\n    "features.0",\n    "features.1",\n    "title",\n  ],\n});',
     );
   });
 
@@ -123,7 +123,7 @@ describe('etymaRemoteContract', () => {
     const generated = readFileSync(output, 'utf8');
 
     expect(generated).toContain(
-      '    "steps.1": ["plan"],\n    "welcome": ["name"],\n  } as const,',
+      '  variables: {\n    "steps.1": ["plan"],\n    "welcome": ["name"],\n  },',
     );
     expect(generated).not.toContain('"steps.0": [');
   });

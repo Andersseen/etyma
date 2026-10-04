@@ -1,0 +1,22 @@
+{
+  "name": "etyma-compat-core-large-catalog",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Type-checks a large generated application catalog against the packed @etyma/core: literal, JSON + contract and remote definitions. Not a workspace member: it must resolve the published package, not a symlink.",
+  "scripts": {
+    "build": "node src/generate.mjs && tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit --extendedDiagnostics"
+  },
+  "dependencies": {
+    "@etyma/core": "file:../.tarballs/etyma-core.tgz"
+  },
+  "devDependencies": {
+    "@etyma/tooling": "file:../.tarballs/etyma-tooling.tgz",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@etyma/core": "file:../.tarballs/etyma-core.tgz",
+    "@etyma/tooling": "file:../.tarballs/etyma-tooling.tgz"
+  }
+}

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { defineMessageContract } from './messages.js';
 import { defineRemoteI18n } from './remote-i18n.js';
 
-const contract = defineMessageContract(['nav.docs', 'welcome']);
+const contract = defineMessageContract({ keys: ['nav.docs', 'welcome'] });
 const loaders = {
   en: () => ({ nav: { docs: 'Docs' }, welcome: 'Hello' }),
   es: () => ({ nav: { docs: 'Documentación' }, welcome: 'Hola' }),

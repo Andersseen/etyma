@@ -61,7 +61,16 @@ with no argument works too; the keys are then plain strings.
 - `injectT(definition?)` — just the translate function.
 - `EtymaI18n` — `locale`, `direction` and `ready` signals; `t`, `parts`, `has` and `path`;
   `load`, `activate` and `setLocale`.
-- `ETYMA_DEFINITION`, `ETYMA_LOCALE_SWITCH` — the tokens an integration layer uses.
+
+**Advanced: integration tokens.** Applications do not need these; a routing integration does.
+`@etyma/analog` is built on exactly these two, and a custom router integration can be too.
+
+- `ETYMA_DEFINITION` — the `I18nDefinition` given to `provideEtyma()`. Inject it where the
+  definition is needed without creating the service, such as a route guard deciding whether a
+  URL segment is a locale.
+- `ETYMA_LOCALE_SWITCH` — a `(locale) => Promise<void>` that `setLocale()` delegates to when
+  provided. Provide one to make switching language a navigation in your own routing scheme,
+  as `provideEtymaAnalog()` does; without it, `setLocale()` is `activate()`.
 
 ## Server rendering
 

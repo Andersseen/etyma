@@ -15,6 +15,7 @@
  * - angular-22: Angular 22, Analog 2.7.x
  * - astro-6: Astro 6, `@etyma/astro` (the major its declarations are built against)
  * - astro-7: Astro 7 (Vite 8 / Rolldown), `@etyma/astro`
+ * - core-large-catalog: plain `@etyma/core`, no framework, typing a large generated catalog
  *
  * Angular 22 also requires TypeScript 6, so this is the only place the published Angular
  * declarations meet a compiler a major version newer than the one that wrote them. Astro 7
@@ -31,6 +32,7 @@ import { join } from 'node:path';
 
 import { packAll, repoRoot } from './pack.mjs';
 import { verifyAstroFixture } from './verify-astro-fixture.mjs';
+import { verifyCoreFixture } from './verify-core-fixture.mjs';
 
 const compatRoot = join(repoRoot, 'tools/compat');
 const tarballs = join(compatRoot, '.tarballs');
@@ -47,8 +49,16 @@ const families = [
     prefix: 'astro-',
     consumer: join(compatRoot, 'consumer-astro'),
     verify: cwd => verifyAstroFixture(cwd),
+    verified: 'generated HTML and catalog request counts match expectations',
     // `etymaRemoteContract` writes `contract.generated.ts` during the build, and the consumer
     // type-checks `t()` against that generated file - so `astro check` has to run after it.
+    typecheckAfterBuild: true,
+  },
+  {
+    prefix: 'core-',
+    consumer: join(compatRoot, 'consumer-core'),
+    verify: cwd => verifyCoreFixture(cwd),
+    // The build generates the catalog, the contract and the consumer before compiling them.
     typecheckAfterBuild: true,
   },
 ];
@@ -118,7 +128,7 @@ for (const { name: fixture, family } of fixtures) {
       process.exit(1);
     }
 
-    console.log(`  ok   generated HTML and catalog request counts match expectations`);
+    console.log(`  ok   ${family.verified ?? 'build output matches expectations'}`);
   }
 }
 

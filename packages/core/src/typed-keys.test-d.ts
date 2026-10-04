@@ -132,13 +132,13 @@ describe('typed message keys: arrays of messages', () => {
 
 describe('MessageContract', () => {
   it('carries the exact key union defineMessageContract was given', () => {
-    const contract = defineMessageContract(['nav.docs', 'welcome']);
+    const contract = defineMessageContract({ keys: ['nav.docs', 'welcome'] });
 
     expectTypeOf(contract.keys).toEqualTypeOf<readonly ('nav.docs' | 'welcome')[]>();
   });
 
   it('reaches defineRemoteI18n, which has no static source to read a shape from', () => {
-    const contract = defineMessageContract(['nav.docs', 'welcome']);
+    const contract = defineMessageContract({ keys: ['nav.docs', 'welcome'] });
     const definition = defineRemoteI18n({
       locales: ['en'],
       sourceLocale: 'en',
@@ -154,7 +154,7 @@ describe('MessageContract', () => {
   });
 
   it('requires a loader for every locale, including the source, unlike defineI18n', () => {
-    const contract = defineMessageContract(['nav.docs']);
+    const contract = defineMessageContract({ keys: ['nav.docs'] });
 
     defineRemoteI18n({
       locales: ['en', 'es'],

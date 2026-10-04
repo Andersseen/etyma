@@ -157,7 +157,7 @@ function remoteDefinitionWith(overrides: Partial<Record<'en' | 'es' | 'uk', Mess
   return defineRemoteI18n({
     locales: ['en', 'es', 'uk'],
     sourceLocale: 'en',
-    contract: defineMessageContract(['nav.docs']),
+    contract: defineMessageContract({ keys: ['nav.docs'] }),
     loaders: {
       en: () => english,
       es: () => spanish,
@@ -339,7 +339,7 @@ describe('createCatalogRegistry, arrays of messages', () => {
     const definition = defineRemoteI18n({
       locales: ['en'],
       sourceLocale: 'en',
-      contract: defineMessageContract(['features.0', 'features.1']),
+      contract: defineMessageContract({ keys: ['features.0', 'features.1'] }),
       loaders: { en: () => ({ features: ['A', 'B', 'C'] }) },
     });
 

@@ -52,7 +52,9 @@ function definition(loaders?: { es?: MessageLoader; uk?: MessageLoader }) {
   });
 }
 
-const remoteContract = defineMessageContract(['nav.docs', 'footer.rights', 'onlyEnglish']);
+const remoteContract = defineMessageContract({
+  keys: ['nav.docs', 'footer.rights', 'onlyEnglish'],
+});
 
 function remoteDefinition(loaders?: {
   en?: MessageLoader;
@@ -500,7 +502,7 @@ describe('EtymaI18n, remote source catalog', () => {
             defineRemoteI18n({
               locales: ['en'],
               sourceLocale: 'en',
-              contract: defineMessageContract(['nav.docs', 'nav.missing']),
+              contract: defineMessageContract({ keys: ['nav.docs', 'nav.missing'] }),
               loaders: { en: () => ({ nav: { docs: 'Docs' }, extra: 'Surprise' }) },
             }),
           ),

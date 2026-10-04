@@ -29,8 +29,8 @@ export interface ExtractContractVariablesOptions {
 }
 
 /**
- * What {@link extractContractParams} reads from a catalog: the two optional arguments
- * `renderContractModule` and `defineMessageContract` take after the keys.
+ * What {@link extractContractParams} reads from a catalog: the two optional fields of a
+ * contract after its keys, as `renderContractModule` and `defineMessageContract` take them.
  */
 export interface ContractParams {
   /** Each message's external variables, sorted - as {@link extractContractVariables}. */
@@ -127,59 +127,61 @@ const GENERATED_HEADER = [
   '// Regenerate it with `etyma contract` (local JSON) or etymaRemoteContract (remote catalog).',
 ].join('\n');
 
+/** The input of {@link renderContractModule}: a catalog's keys, and optionally its params. */
+export interface ContractModuleInput extends Partial<ContractParams> {
+  readonly keys: readonly string[];
+}
+
 /**
  * Renders a {@link https://www.npmjs.com/package/@etyma/core `defineMessageContract`} module
  * from a key list and, optionally, each message's variables and the functions those
  * variables' values reach - the one artifact both `defineI18n({ contract })` and
  * `defineRemoteI18n` read. It imports only `@etyma/core`, and holds no message text.
  *
+ * Takes the same fields `defineMessageContract` does, so the output of
+ * {@link extractContractParams} spreads straight in:
+ * `renderContractModule({ keys, ...extractContractParams(source) })`.
+ *
  * Byte-stable for a given input: no timestamp, no random id, no machine-specific path -
  * running this twice against the same catalog produces the same file, so committing the
- * output never causes churn the catalog itself did not cause. Without variables (or with
- * none to list) the module is exactly the keys-only one earlier versions generated; without
- * functions, exactly the keys-and-variables one.
+ * output never causes churn the catalog itself did not cause. An empty list - a message with
+ * no variables, a variable with no functions - is left out, as is a field with nothing left
+ * in it, because `defineMessageContract` accepts neither.
  */
-export function renderContractModule(
-  keys: readonly string[],
-  variables: Readonly<Record<string, readonly string[]>> = {},
-  functions: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {},
-): string {
-  const sortedKeys = [...keys].sort();
-  const variableKeys = Object.keys(variables).sort();
-  const functionKeys = Object.keys(functions).sort();
-  const header =
-    `${GENERATED_HEADER}\n` +
-    `\n` +
-    `import { defineMessageContract } from '@etyma/core';\n` +
-    `\n`;
-
-  if (variableKeys.length === 0 && functionKeys.length === 0) {
-    const literal = sortedKeys.map(key => `  ${JSON.stringify(key)},`).join('\n');
-
-    return `${header}export default defineMessageContract([\n${literal}\n] as const);\n`;
-  }
-
-  const keyLiteral = sortedKeys.map(key => `    ${JSON.stringify(key)},`).join('\n');
-  const variableLiteral = variableKeys
+export function renderContractModule(input: ContractModuleInput): string {
+  const { keys, variables = {}, functions = {} } = input;
+  const keyLiteral = [...keys]
+    .sort()
+    .map(key => `    ${JSON.stringify(key)},`)
+    .join('\n');
+  const variableLiteral = Object.keys(variables)
+    .filter(key => (variables[key]?.length ?? 0) > 0)
+    .sort()
     .map(key => `    ${JSON.stringify(key)}: ${nameList(variables[key])},`)
     .join('\n');
-  const functionLiteral = functionKeys
-    .map(key => {
+  const functionLiteral = Object.keys(functions)
+    .sort()
+    .flatMap(key => {
       const byVariable = functions[key] ?? {};
       const entries = Object.keys(byVariable)
+        .filter(name => (byVariable[name]?.length ?? 0) > 0)
         .sort()
         .map(name => `${JSON.stringify(name)}: ${nameList(byVariable[name])}`);
 
-      return `    ${JSON.stringify(key)}: { ${entries.join(', ')} },`;
+      return entries.length > 0 ? [`    ${JSON.stringify(key)}: { ${entries.join(', ')} },`] : [];
     })
     .join('\n');
 
   return (
-    `${header}export default defineMessageContract(\n` +
-    `  [\n${keyLiteral}\n  ] as const,\n` +
-    `  {\n${variableLiteral}\n  } as const,\n` +
-    (functionKeys.length > 0 ? `  {\n${functionLiteral}\n  } as const,\n` : '') +
-    `);\n`
+    `${GENERATED_HEADER}\n` +
+    `\n` +
+    `import { defineMessageContract } from '@etyma/core';\n` +
+    `\n` +
+    `export default defineMessageContract({\n` +
+    `  keys: [\n${keyLiteral}\n  ],\n` +
+    (variableLiteral.length > 0 ? `  variables: {\n${variableLiteral}\n  },\n` : '') +
+    (functionLiteral.length > 0 ? `  functions: {\n${functionLiteral}\n  },\n` : '') +
+    `});\n`
   );
 }
 

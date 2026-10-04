@@ -109,7 +109,10 @@ describe('defineI18n', () => {
   });
 
   describe('with a contract', () => {
-    const contract = defineMessageContract(['nav.docs', 'welcome'], { welcome: ['name'] });
+    const contract = defineMessageContract({
+      keys: ['nav.docs', 'welcome'],
+      variables: { welcome: ['name'] },
+    });
 
     it('accepts a contract whose keys match the source exactly', () => {
       const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source, contract });
@@ -145,7 +148,7 @@ describe('defineI18n', () => {
           locales: ['en'],
           sourceLocale: 'en',
           source,
-          contract: defineMessageContract(['nav.docs', 'old.key', 'welcome']) as never,
+          contract: defineMessageContract({ keys: ['nav.docs', 'old.key', 'welcome'] }) as never,
         }),
       ).toThrow(/In the contract but not the source catalog: old\.key$/);
     });
@@ -156,7 +159,7 @@ describe('defineI18n', () => {
           locales: ['en'],
           sourceLocale: 'en',
           source: { b: 'B', a: 'A', keep: 'K' },
-          contract: defineMessageContract(['z', 'keep', 'y']) as never,
+          contract: defineMessageContract({ keys: ['z', 'keep', 'y'] }) as never,
         }),
       );
 
@@ -174,7 +177,7 @@ describe('defineI18n', () => {
           locales: ['en'],
           sourceLocale: 'en',
           source: Object.fromEntries(keys.map(key => [key, key])),
-          contract: defineMessageContract(['other']),
+          contract: defineMessageContract({ keys: ['other'] }),
         }),
       );
 
@@ -189,7 +192,7 @@ describe('defineI18n', () => {
           locales: ['en'],
           sourceLocale: 'en',
           source: { steps: ['One', 'Two'] },
-          contract: defineMessageContract(['steps.0', 'steps.1']),
+          contract: defineMessageContract({ keys: ['steps.0', 'steps.1'] }),
         }),
       ).not.toThrow();
 
@@ -198,7 +201,7 @@ describe('defineI18n', () => {
           locales: ['en'],
           sourceLocale: 'en',
           source: { steps: ['One', 'Two', 'Three'] },
-          contract: defineMessageContract(['steps.0', 'steps.1']),
+          contract: defineMessageContract({ keys: ['steps.0', 'steps.1'] }),
         }),
       ).toThrow(/In the source catalog but not the contract: steps\.2$/);
     });

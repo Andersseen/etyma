@@ -58,7 +58,6 @@ export {
 export {
   createHttpMessageLoader,
   loadMessageCatalog,
-  toMessageSource,
   type HttpLoaderInit,
   type MessageLoader,
   type MessageLoaderResult,

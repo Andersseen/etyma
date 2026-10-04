@@ -69,7 +69,7 @@ export function resolveRemoteConfig(input: RemoteConfigInput): RemoteConfig {
   const timeoutMs = parseTimeout(input.timeout);
 
   const targets = [...locales]
-    .sort((a, b) => a.localeCompare(b))
+    .sort()
     .map(locale => ({ locale, url: resolveUrl(input.template, locale) }));
 
   return { template: input.template, timeoutMs, targets };

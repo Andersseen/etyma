@@ -12,8 +12,8 @@ import { createHttpMessageLoader, defineMessageContract, defineRemoteI18n } from
 // The same keys, variables and functions `etymaRemoteContract` generates into
 // `contract.generated.ts` - `generated-contract-types.ts` checks the two type identically -
 // written out so the pages do not depend on a file the build itself produces.
-const contract = defineMessageContract(
-  [
+const contract = defineMessageContract({
+  keys: [
     'nav.blog',
     'home.title',
     'home.greeting',
@@ -23,20 +23,20 @@ const contract = defineMessageContract(
     'about.body',
     'about.paragraphs.0',
     'about.paragraphs.1',
-  ] as const,
-  {
+  ],
+  variables: {
     'home.greeting': ['name'],
     'footer.rights': ['year'],
     'posts.count': ['count'],
     'about.body': ['topic'],
     'about.paragraphs.0': ['framework'],
     'about.paragraphs.1': ['author'],
-  } as const,
-  {
+  },
+  functions: {
     'footer.rights': { year: ['number'] },
     'posts.count': { count: ['number'] },
-  } as const,
-);
+  },
+});
 
 const load = createHttpMessageLoader(locale => `${__ETYMA_COMPAT_CATALOGS__}/${locale}.json`);
 

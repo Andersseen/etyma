@@ -184,7 +184,7 @@ describe('createAstroI18n', () => {
 
   describe('remote definitions', () => {
     it('works the same way as a static definition, unchanged', async () => {
-      const contract = defineMessageContract(['home.title', 'blog.title'] as const);
+      const contract = defineMessageContract({ keys: ['home.title', 'blog.title'] });
 
       const definition = defineRemoteI18n({
         locales: ['es', 'en'],

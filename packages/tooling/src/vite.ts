@@ -75,8 +75,10 @@ async function generate(options: EtymaRemoteContractOptions): Promise<void> {
 
   // Tolerant: a message that is not valid MF2 gets no variables or functions here, and
   // `etymaRemoteValidation` reports it.
-  const { variables, functions } = extractContractParams(source);
-  const rendered = renderContractModule(extractContractKeys(source), variables, functions);
+  const rendered = renderContractModule({
+    keys: extractContractKeys(source),
+    ...extractContractParams(source),
+  });
 
   if (rendered === existing) {
     return;

@@ -31,11 +31,12 @@ application would. It is a test fixture, not a showcase — keep it minimal.
 pnpm check          # the normal gates
 pnpm package:check  # publint, are-the-types-wrong, tarball assertions
 pnpm e2e            # Playwright, against the Cloudflare build under Wrangler
-pnpm compat:check   # a clean Angular 21 and 22 build against packed tarballs
+pnpm compat:check   # clean Angular, Analog, Astro and plain-core builds against packed tarballs
 ```
 
-`compat:check` runs `npm install` in two fixtures outside the workspace and takes a couple
-of minutes. CI runs all four, so it is fine to leave the slower two to CI while iterating.
+`compat:check` runs `npm install` in every fixture under `tools/compat` - outside the
+workspace - and takes a few minutes. Pass one fixture's name to build only that one, such as
+`pnpm compat:check core-large-catalog`; CI builds each fixture as its own job.
 
 Add a changeset for anything that changes a published package:
 
