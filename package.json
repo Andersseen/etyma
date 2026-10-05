@@ -2,7 +2,7 @@
   "name": "etyma-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "Etyma \u2014 an internationalization toolkit for Angular, AnalogJS and the modern web platform",
+  "description": "Etyma — an internationalization toolkit for Angular, AnalogJS and the modern web platform",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -39,13 +39,11 @@
     "clean": "turbo run clean"
   },
   "devDependencies": {
-    "@angular-eslint/eslint-plugin": "22.5.0",
-    "@angular-eslint/eslint-plugin-template": "22.5.0",
-    "@angular-eslint/template-parser": "22.5.0",
     "@arethetypeswrong/cli": "0.18.5",
     "@changesets/changelog-github": "1.0.1",
     "@changesets/cli": "3.0.3",
     "@eslint/js": "10.0.1",
+    "angular-eslint": "22.5.0",
     "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.13.0",
