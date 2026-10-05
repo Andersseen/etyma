@@ -51,7 +51,9 @@ function run(command, args, cwd) {
   try {
     execFileSync(command, args, { cwd, stdio: 'pipe', encoding: 'utf8' });
   } catch (error) {
-    throw new Error(`${command} ${args.join(' ')}\n${error.stdout ?? ''}${error.stderr ?? ''}`);
+    throw new Error(`${command} ${args.join(' ')}\n${error.stdout ?? ''}${error.stderr ?? ''}`, {
+      cause: error,
+    });
   }
 }
 

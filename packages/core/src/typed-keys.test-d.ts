@@ -117,7 +117,7 @@ describe('typed message keys: arrays of messages', () => {
     const loader: MessageLoader = () => ({ steps: ['One', 'Two'] as string[] });
 
     expectTypeOf(definition.keys).toEqualTypeOf<readonly MessageKey<typeof arrayCatalog>[]>();
-    void loader;
+    expectTypeOf(loader).toEqualTypeOf<MessageLoader>();
   });
 
   it('rejects array shapes the catalog grammar does not have', () => {

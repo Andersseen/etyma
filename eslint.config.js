@@ -1,10 +1,11 @@
 import js from '@eslint/js';
-import angular from '@angular-eslint/eslint-plugin';
-import angularTemplate from '@angular-eslint/eslint-plugin-template';
-import templateParser from '@angular-eslint/template-parser';
+import angular from 'angular-eslint';
 import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+
+/** angular-eslint ships its presets as flat-config arrays; these blocks only reuse their rules. */
+const rulesOf = configs => Object.assign({}, ...configs.map(config => config.rules));
 
 /**
  * The dependency direction, enforced rather than documented.
@@ -201,6 +202,9 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      // `Record<never, never>` is the deliberate "no params" default of the public generics
+      // (Translator, defineI18n, ...); replacing it would change the frozen 1.0 types.
+      '@typescript-eslint/no-generated-empty-object-type': 'off',
       '@typescript-eslint/restrict-template-expressions': [
         'error',
         { allowNumber: true, allowBoolean: true },
@@ -244,10 +248,10 @@ export default tseslint.config(
   {
     files: ['packages/{angular,analog}/**/*.ts', 'apps/playground/src/**/*.ts'],
     languageOptions: { globals: { ...globals.browser } },
-    plugins: { '@angular-eslint': angular },
-    processor: angularTemplate.processors['extract-inline-html'],
+    plugins: { '@angular-eslint': angular.tsPlugin },
+    processor: angular.processInlineTemplates,
     rules: {
-      ...angular.configs.recommended.rules,
+      ...rulesOf(angular.configs.tsRecommended),
       '@angular-eslint/component-class-suffix': 'off',
       '@angular-eslint/directive-selector': [
         'error',
@@ -266,12 +270,12 @@ export default tseslint.config(
     // program behind them - so the type-aware rules have to be off here or they throw.
     files: ['**/*.html'],
     ...tseslint.configs.disableTypeChecked,
-    languageOptions: { parser: templateParser },
-    plugins: { '@angular-eslint/template': angularTemplate },
+    languageOptions: { parser: angular.templateParser },
+    plugins: { '@angular-eslint/template': angular.templatePlugin },
     rules: {
       ...tseslint.configs.disableTypeChecked.rules,
-      ...angularTemplate.configs.recommended.rules,
-      ...angularTemplate.configs.accessibility.rules,
+      ...rulesOf(angular.configs.templateRecommended),
+      ...rulesOf(angular.configs.templateAccessibility),
     },
   },
 
