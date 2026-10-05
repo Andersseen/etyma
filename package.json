@@ -27,7 +27,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "e2e": "turbo run e2e",
-    "i18n:contract:check": "pnpm --filter @etyma/www run i18n:contract:check",
+    "i18n:contract:check": "pnpm install --frozen-lockfile --offline --silent && pnpm --filter @etyma/www run i18n:contract:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm run format:check && turbo run build --filter=./packages/* && pnpm run i18n:contract:check && pnpm run lint && turbo run typecheck test build",
