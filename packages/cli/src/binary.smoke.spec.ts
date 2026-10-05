@@ -44,6 +44,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../..');
 
 const SETUP_TIMEOUT = 300_000;
+/** Contract tests run real `tsc` compiles, which can exceed Vitest's 5s default on a busy runner. */
+const COMPILE_TIMEOUT = 60_000;
 
 describe('the packed etyma binary', () => {
   let consumerDir: string;
@@ -151,7 +153,7 @@ describe('the packed etyma binary', () => {
     }
   });
 
-  describe('contract', () => {
+  describe('contract', { timeout: COMPILE_TIMEOUT }, () => {
     /**
      * The whole local-JSON path, from the packed artifacts only: the packed binary generates
      * the contract from a real `en.json`, and TypeScript - resolving `@etyma/core` from the
