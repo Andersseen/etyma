@@ -1,5 +1,42 @@
 # @etyma/tooling
 
+## 0.6.0
+
+### Minor Changes
+
+- [#129](https://github.com/Andersseen/etyma/pull/129) [`4415fe5`](https://github.com/Andersseen/etyma/commit/4415fe5c3b8d1bf45cb4349aba554201d921fdee) Thanks [@Andersseen](https://github.com/Andersseen)! - Add `@etyma/tooling/source`: static analysis of how JavaScript and TypeScript source uses
+  message keys.
+  
+  ```ts
+  import { analyzeMessageUsage } from '@etyma/tooling/source';
+  
+  const { used, unreferenced, diagnostics } = analyzeMessageUsage({
+    keys: ['nav.home', 'nav.docs'],
+    files: [{ path: 'src/nav.ts', source }],
+  });
+  ```
+  
+  - Recognises `injectT()` and `injectI18n()` from `@etyma/angular`, `createAstroI18n()` from
+    `@etyma/astro` and `createTranslator()` from `@etyma/core` by following import bindings,
+    aliases included. An unrelated `t()` is never counted.
+  - `used` lists catalog keys referenced by a literal. A literal key the catalog lacks is a
+    `source.unknown-key` error; a key that is not a literal is a `source.dynamic-key` warning; a
+    syntax error is a `source.parse-error` rather than a thrown exception. Diagnostics carry
+    `path`, `line` and `column`.
+  - `unreferenced` lists keys not observed being referenced. They are candidates, not proof a key
+    is safe to delete: templates, wrappers and dataflow are not analysed in this first version.
+  - Pure and in memory, with deterministic output. It needs the TypeScript parser, so it is its
+    own subpath and `typescript` is a new dependency; the main `@etyma/tooling` entry does not
+    load it.
+  
+  JS/TS only. Angular templates, `.astro` files, wrappers and an `etyma analyze` command are not
+  included.
+
+### Patch Changes
+
+- Updated dependencies [[`c45d5c5`](https://github.com/Andersseen/etyma/commit/c45d5c5877baf88f029387611b8b1e9a35602c50)]:
+  - @etyma/core@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
