@@ -1,7 +1,7 @@
 {
   "name": "@etyma/cli",
   "version": "0.5.1",
-  "description": "Command-line tools for Etyma message catalogs. `etyma validate` runs @etyma/tooling's catalog checks against local JSON catalogs or public remote ones (fetched over HTTP, never written to disk); `etyma contract` generates a typed message contract from a local JSON source catalog.",
+  "description": "Command-line tools for Etyma catalogs: validate local or public remote catalogs, generate typed message contracts, and analyse static JS/TS message usage.",
   "keywords": [
     "i18n",
     "internationalization",

@@ -13,6 +13,7 @@ describe('runCli', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('etyma <command> --help');
     expect(result.stdout).toContain('contract    Generate');
+    expect(result.stdout).toContain('analyze     Analyze');
   });
 
   it('shows top-level help for --help and -h', async () => {
@@ -53,5 +54,12 @@ describe('runCli', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('etyma contract <source.json> --output <file>');
+  });
+
+  it('dispatches "analyze" to the analyze command', async () => {
+    const result = await runCli(['analyze', '--help'], '/');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('etyma analyze <directory> --catalog <source.json>');
   });
 });

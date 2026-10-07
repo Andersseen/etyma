@@ -690,7 +690,8 @@ Deliberately not implemented yet:
   in recognised Etyma calls; it does not read Angular or Astro templates, follow wrappers or
   dataflow, extract source messages or detect hardcoded copy. See
   [Phase 1 limits](#phase-1-limits). It reports `unreferenced` keys as candidates, not as
-  safe to delete, and `@etyma/cli` has no command for it yet.
+  safe to delete. The [`etyma analyze` CLI command](../cli#etyma-analyze) supplies local files
+  and presents this result without changing the analyzer's semantics.
 - **No full type-checking of `:function` options.** Variable function parity compares
   function _names_ directly annotating a shared variable; it does not compare option values
   (`style=long` vs. `style=short`), nor does it resolve a variable's type through an arbitrary

@@ -399,6 +399,40 @@ try {
       `"bin.etyma" points at "${binPath}", which is not in the tarball`,
     );
   });
+
+  check('@etyma/cli keeps the TypeScript parser outside every non-analyze startup graph', () => {
+    const reached = new Set();
+    const pending = ['dist/bin.js'];
+
+    for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
+      if (reached.has(file)) continue;
+      reached.add(file);
+
+      const source = readFileSync(join(cli.extracted, file), 'utf8');
+      assert(
+        !/from ['"]@etyma\/tooling\/source['"]|import\(['"]@etyma\/tooling\/source['"]\)/.test(
+          source,
+        ),
+        `${file} eagerly imports @etyma/tooling/source`,
+      );
+      assert(!/from ['"]typescript['"]/.test(source), `${file} statically imports typescript`);
+
+      for (const match of source.matchAll(/from ['"](\.\/[^'"]+)['"]/g)) {
+        const specifier = match[1];
+        assert(specifier !== undefined, `could not read static import from ${file}`);
+        if (specifier.endsWith('.js')) pending.push(join(file, '..', specifier));
+      }
+    }
+
+    assert(
+      ![...reached].some(file => file.endsWith('/commands/analyze.js')),
+      'the non-analyze startup graph reaches commands/analyze.js',
+    );
+    assert(
+      reached.has('dist/cli.js'),
+      'the packed binary startup graph does not reach the CLI dispatcher',
+    );
+  });
 } finally {
   rmSync(workspace, { recursive: true, force: true });
 }

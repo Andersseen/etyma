@@ -1,11 +1,11 @@
 # @etyma/cli
 
 The command-line entry point to [Etyma](https://github.com/Andersseen/etyma)'s catalog
-tooling: run `etyma validate` against local JSON catalogs, or against public catalogs served
-over HTTP, and `etyma contract` to generate - or, with `--check`, verify - the contract that
-types `t()` params for a local JSON source - in CI or on your own machine, without writing a script around `@etyma/tooling` yourself.
+tooling: run `etyma validate` against local or public remote JSON catalogs, `etyma contract`
+to generate or verify a typed message contract, and `etyma analyze` to inspect static JS/TS
+message-key usage - without writing a script around `@etyma/tooling` yourself.
 
-> **Pre-1.0, and deliberately narrow.** Two explicit commands, no configuration file. See
+> **Pre-1.0, and deliberately narrow.** Three explicit commands, no configuration file. See
 > [Non-goals](#non-goals) before assuming it does more.
 
 ## Why this is a separate package
@@ -30,6 +30,11 @@ parsing and presentation:
 The two inputs are the whole design. A remote run is fetch, parse, validate, discard: the same
 diagnostics, the same output, the same exit codes as a local one, and `@etyma/tooling` itself
 still never touches a filesystem or a network.
+
+`etyma analyze` is another thin adapter: it reads one local source catalog, uses
+`extractContractKeys()` for its keys, discovers JS/TS files, and calls the existing
+[`@etyma/tooling/source`](../tooling#analysing-message-usage-in-source) analyzer once. It does
+not validate MessageFormat 2 or analyse templates.
 
 `@etyma/cli` depends on `@etyma/tooling` and nothing else from Etyma - not `@etyma/core`
 directly, even though catalogs are structurally what `@etyma/core`'s `MessageSource` describes.
@@ -447,6 +452,40 @@ reading files and fetching URLs are this package's own, and an integration alrea
 own way to do both. Versions before 0.5 exported `runCli`, `runValidateCommand` and
 `runContractCommand`; they returned the same text the binary prints, never structured data.
 
+## `etyma analyze`
+
+```sh
+etyma analyze <directory> --catalog <source.json> \
+  [--exclude <glob> ...] [--format pretty|json]
+```
+
+The command recursively scans `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs` and `.cjs`
+files under the chosen directory. Declaration files (`.d.ts`, `.d.mts`, `.d.cts`), symlinks,
+Angular HTML, `.astro` files, and common generated/dependency directories (`node_modules`,
+`.git`, `.turbo`, `dist`, `build`, `coverage`, `.angular`, `.astro`) are skipped.
+
+Repeat `--exclude` to omit files by glob. Patterns match the discovered file path relative to
+the analyzed directory, with `/` separators, for example:
+
+```sh
+etyma analyze ./src --catalog ./src/i18n/en.json \
+  --exclude "**/*.spec.ts" --exclude "**/*.test.ts"
+```
+
+Paths in diagnostics are also relative to the analyzed directory. Discovery order and output
+are deterministic. `--format json` emits the analyzer's `used`, `unreferenced` and
+`diagnostics` unchanged, plus `meta` with the input paths and counts. Pretty output lists
+diagnostics and every unreferenced candidate. These candidates mean the analyzer did not
+observe a static reference; they are not proof that a key is unused or safe to delete.
+
+Exit codes: `0` means analysis completed without error diagnostics (dynamic-key warnings and
+unreferenced candidates are allowed); `1` means the analyzer found an unknown literal key or
+a source parse error; `2` means usage, catalog, directory or file I/O prevented analysis.
+The command only reads local JSON and source files. It does not check MessageFormat 2 validity,
+Angular templates, `.astro` files, wrappers or data flow. See the tooling's
+[source-analysis contract](../tooling#analysing-message-usage-in-source) for what the analyzer
+recognises and its limits.
+
 ## Non-goals
 
 Deliberately not here - all of it either belongs to a future, separate iteration or was never in
@@ -461,9 +500,9 @@ scope:
   reads public catalogs only, so it doesn't yet have to be an API for handling secrets.
 - **No pull, push or sync.** Nothing fetched is written to disk, and there is no `etyma pull`,
   `push` or `sync`, no cache and no lock file. This is validation, not synchronization.
-- **No source-code scanning.** The CLI has no command that reads application source:
-  `@etyma/tooling/source` can analyse JS/TS message usage, but nothing here feeds it files yet.
-  No hardcoded-copy detection, no reading Angular templates.
+- **No source extraction or hardcoded-copy detection.** `etyma analyze` only checks static
+  references to catalog keys. It does not read Angular templates or `.astro` files, follow
+  wrappers or data flow, or detect hardcoded copy.
 - **No translation editing or automatic translation.**
 - **No MCP server, no CMS or provider integration, no general plugin system.** Remote mode is a
   URL template, not a Glossa (or any other vendor's) adapter.
@@ -473,7 +512,7 @@ scope:
   inside a bundler, and `etyma contract` runs when you run it - from a script, not a build hook.
 - **No colour**, to keep output stable for CI logs and tests without `NO_COLOR` handling.
 
-Two commands, each doing one thing, on top of the same engine `@etyma/tooling` already ships -
+Three commands, each doing one thing, on top of the same engine `@etyma/tooling` already ships -
 not a localization platform.
 
 ## Licence

@@ -1,5 +1,3 @@
-import { runContractCommand } from './commands/contract.js';
-import { runValidateCommand } from './commands/validate.js';
 import { TOP_LEVEL_HELP } from './help.js';
 import { EXIT_USAGE_ERROR, EXIT_VALID } from './types.js';
 import type { CliResult } from './types.js';
@@ -25,11 +23,18 @@ export async function runCli(argv: readonly string[], cwd: string): Promise<CliR
   }
 
   if (command === 'validate') {
+    const { runValidateCommand } = await import('./commands/validate.js');
     return runValidateCommand(rest, cwd);
   }
 
   if (command === 'contract') {
+    const { runContractCommand } = await import('./commands/contract.js');
     return runContractCommand(rest, cwd);
+  }
+
+  if (command === 'analyze') {
+    const { runAnalyzeCommand } = await import('./commands/analyze.js');
+    return runAnalyzeCommand(rest, cwd);
   }
 
   return {
