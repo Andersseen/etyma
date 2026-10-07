@@ -83,14 +83,14 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 
 ## Packages
 
-| Package                              | What it is                                                                                                                                                                              | Depends on                      |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                                                                  | `messageformat`                 |
-| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                                                            | `@etyma/core`, Angular 21 or 22 |
-| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                                                               | `@etyma/angular`, Analog 2.x    |
-| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                                             | `@etyma/core`, Astro 6.x or 7.x |
-| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Vite plugins under `/vite`. Not a runtime dependency.             | `@etyma/core`                   |
-| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` checks local or public remote catalogs; `etyma contract` generates (or `--check`s) the typed contract for a JSON source. Not a runtime dependency. | `@etyma/tooling`                |
+| Package                              | What it is                                                                                                                                                                                                                       | Depends on                      |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| [`@etyma/core`](packages/core)       | The portable engine: catalogs, MessageFormat 2, locale routing, lazy loading. No framework, no DOM, no Node built-ins.                                                                                                           | `messageformat`                 |
+| [`@etyma/angular`](packages/angular) | Signal-native Angular bindings: `provideEtyma`, `injectI18n`, `injectT`, SSR transfer state.                                                                                                                                     | `@etyma/core`, Angular 21 or 22 |
+| [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                                                                                                        | `@etyma/angular`, Analog 2.x    |
+| [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                                                                                      | `@etyma/core`, Astro 6.x or 7.x |
+| [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Static JS/TS message-usage analysis under `/source`. Vite plugins under `/vite`. Not a runtime dependency. | `@etyma/core`                   |
+| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` checks local or public remote catalogs; `etyma contract` generates (or `--check`s) the typed contract for a JSON source. Not a runtime dependency.                                          | `@etyma/tooling`                |
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
 `core` knows nothing about Angular or Astro, `angular` knows nothing about Analog, `astro`
@@ -535,7 +535,10 @@ const result = validateCatalogs({ sourceLocale: 'en', catalogs: { en, es, uk } }
 
 It is a dev dependency, not something an application installs to run: see the
 [`@etyma/tooling` README](packages/tooling#readme) for the full diagnostic contract and what it
-deliberately does not do (no source-code scanning, no unused-key detection).
+deliberately does not do. It can also analyse static JS/TS message usage — which literal keys
+source references, which of them the catalog lacks — through `@etyma/tooling/source`; see
+[its README](packages/tooling#analysing-message-usage-in-source) for what that does and does
+not cover.
 
 From the command line, [`@etyma/cli`](packages/cli) runs the same engine without a script of
 your own — against a local directory, or against public catalogs served over HTTP:
@@ -685,9 +688,8 @@ Not planned for `0.x`, and not partially implemented anywhere:
   own public APIs; see [its README](packages/astro#readme) for why no `integrations: [...]`
   entry was added
 - A CMS integration, a translation management UI, or automatic machine translation
-- Source-message extraction, hardcoded-copy scanning or unused-key scanning
-- A general compiler or code-generation pipeline for message content, or source-code
-  scanning. The one generated artifact is a message contract — sorted keys, each message's
+- Source-message extraction or hardcoded-copy scanning
+- A general compiler or code-generation pipeline for message content. The one generated artifact is a message contract — sorted keys, each message's
   variable names and the raw MessageFormat 2 function names their values reach, never message
   text — from `etyma contract` for a JSON source or `etymaRemoteContract` for a remote one; it
   is optional for JSON sources

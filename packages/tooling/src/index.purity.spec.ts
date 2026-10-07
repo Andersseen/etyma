@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import * as main from './index.js';
+import * as source from './source.js';
 
 /**
  * `import { validateCatalogs } from '@etyma/tooling'` must never fetch, read files, touch
@@ -37,8 +38,16 @@ function importGraph(entry: string): Map<string, string> {
 describe('the main @etyma/tooling entry point', () => {
   const graph = importGraph('./index.ts');
 
-  it('never reaches the Vite adapter or remote acquisition', () => {
-    expect([...graph.keys()].sort()).not.toContainEqual(expect.stringMatching(/vite|remote/));
+  it('never reaches the Vite adapter, remote acquisition or source analysis', () => {
+    expect([...graph.keys()].sort()).not.toContainEqual(
+      expect.stringMatching(/vite|remote|source/),
+    );
+  });
+
+  it('never loads the TypeScript parser', () => {
+    const offenders = [...graph].filter(([, text]) => text.includes("from 'typescript'"));
+
+    expect(offenders).toEqual([]);
   });
 
   it.each([
@@ -55,5 +64,40 @@ describe('the main @etyma/tooling entry point', () => {
   it('does not export the Vite plugins', () => {
     expect(Object.keys(main)).not.toContain('etymaRemoteValidation');
     expect(Object.keys(main)).not.toContain('etymaRemoteContract');
+  });
+});
+
+/**
+ * `@etyma/tooling/source` needs the TypeScript parser, and that is all it may reach: it is
+ * still an in-memory engine, so a future CLI hands it files rather than it finding them.
+ */
+describe('the @etyma/tooling/source entry point', () => {
+  const graph = importGraph('./source.ts');
+
+  it('is the only entry that loads the TypeScript parser', () => {
+    const loaders = [...graph].filter(([, text]) => text.includes("from 'typescript'"));
+
+    expect(loaders.map(([file]) => file)).toEqual(['./source-scan.ts']);
+  });
+
+  it('never reaches the Vite adapter or remote acquisition', () => {
+    expect([...graph.keys()].sort()).not.toContainEqual(expect.stringMatching(/vite|remote/));
+  });
+
+  it.each([
+    ['fetch', /\bfetch\(/],
+    ['Node built-ins', /from 'node:/],
+    ['process', /\bprocess\./],
+    ['console', /\bconsole\./],
+    ['eval', /\beval\(|new Function\(/],
+    ['a TypeScript program or host', /\bcreateProgram\b|\bsys\./],
+  ])('uses no %s', (_label, pattern) => {
+    const offenders = [...graph].filter(([, text]) => pattern.test(text)).map(([f]) => f);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('exports only the analysis API', () => {
+    expect(Object.keys(source)).toEqual(['analyzeMessageUsage']);
   });
 });
