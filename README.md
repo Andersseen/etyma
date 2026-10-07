@@ -90,7 +90,7 @@ hydration fix it later. Etyma keeps those pieces in one contract:
 | [`@etyma/analog`](packages/analog)   | The AnalogJS integration: locale-prefixed routes, request-scoped SSR, localized `<head>`.                                                                                                                                        | `@etyma/angular`, Analog 2.x    |
 | [`@etyma/astro`](packages/astro)     | The Astro integration: request/render-scoped translation on top of Astro's own i18n routing. No Angular, no Analog. Versions independently.                                                                                      | `@etyma/core`, Astro 6.x or 7.x |
 | [`@etyma/tooling`](packages/tooling) | Development-time catalog validation: key parity, MessageFormat 2 syntax, external variable contracts, as diagnostics. Static JS/TS message-usage analysis under `/source`. Vite plugins under `/vite`. Not a runtime dependency. | `@etyma/core`                   |
-| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `etyma validate` checks local or public remote catalogs; `etyma contract` generates (or `--check`s) the typed contract for a JSON source. Not a runtime dependency.                                          | `@etyma/tooling`                |
+| [`@etyma/cli`](packages/cli)         | The `etyma` binary. `validate` checks catalogs, `contract` generates typed contracts, and `analyze` reports static JS/TS message usage. Not a runtime dependency.                                                                | `@etyma/tooling`                |
 
 The dependency direction is one-way and enforced by ESLint as well as by the manifests:
 `core` knows nothing about Angular or Astro, `angular` knows nothing about Analog, `astro`
@@ -552,6 +552,10 @@ etyma validate --remote "https://cdn.example.com/i18n/{locale}.json" \
 
 The same CLI's `etyma contract` generates the optional contract that types `t()` params for a
 JSON source — see [Typed params](#typed-params).
+
+`etyma analyze ./src --catalog ./src/i18n/en.json` reports statically observed message keys
+and unreferenced candidates in JS/TS source. See the [CLI README](packages/cli#etyma-analyze)
+for its discovery rules and limits.
 
 See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes. For
 remote catalogs, `etymaRemoteValidation` from `@etyma/tooling/vite` makes the same check part

@@ -6,12 +6,46 @@ Usage:
 Commands:
   validate    Validate local or remote JSON message catalogs against a source locale
   contract    Generate a typed message contract from a local source JSON catalog
+  analyze     Analyze static JS/TS message-key usage
 
 Options:
   -h, --help     Show help
   -v, --version  Show the installed @etyma/cli version
 
 Run "etyma <command> --help" for command-specific help.
+`;
+
+export const ANALYZE_HELP = `Usage:
+  etyma analyze <directory> --catalog <source.json>
+                [--exclude <glob> ...]
+                [--format pretty|json]
+
+Recursively scans JavaScript and TypeScript files for statically recognisable Etyma
+message-key usages. Reports unknown literal keys, dynamic-key warnings, and
+unreferenced candidates from one local source catalog. It does not analyse Angular
+HTML templates, .astro files, wrappers or data flow; unreferenced candidates are
+not proof that a message is unused or safe to delete.
+
+Arguments:
+  <directory>          Source directory to scan recursively
+
+Options:
+  --catalog <file>     Required local source JSON catalog
+  --exclude <glob>     Exclude a relative path; may be repeated. Paths use / separators
+  --format <format>    Output format: "pretty" (default) or "json"
+  -h, --help           Show this help
+
+Exit codes:
+  0  analysis completed with no error-severity diagnostics; warnings and
+     unreferenced candidates are allowed
+  1  analysis completed with an error-severity source diagnostic
+  2  usage, catalog, filesystem, or other operational error; analysis did not run
+
+Examples:
+  etyma analyze ./src --catalog ./src/i18n/en.json
+  etyma analyze ./src --catalog ./src/i18n/en.json \\
+    --exclude "**/*.spec.ts" --exclude "**/*.test.ts"
+  etyma analyze ./src --catalog ./src/i18n/en.json --format json
 `;
 
 export const VALIDATE_HELP = `Usage:

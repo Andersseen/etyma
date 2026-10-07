@@ -153,6 +153,91 @@ describe('the packed etyma binary', () => {
     }
   });
 
+  describe('analyze', () => {
+    const project = () => join(consumerDir, 'analyze-app');
+
+    async function runAnalyze(args: readonly string[]): Promise<{
+      readonly status: number;
+      readonly stdout: string;
+      readonly stderr: string;
+    }> {
+      try {
+        const result = await execFileAsync(binPath, [...args], {
+          cwd: project(),
+          encoding: 'utf8',
+        });
+        return { status: 0, stdout: result.stdout, stderr: result.stderr };
+      } catch (error) {
+        const failure = error as { code?: number; stdout?: string; stderr?: string };
+        return {
+          status: failure.code ?? -1,
+          stdout: failure.stdout ?? '',
+          stderr: failure.stderr ?? '',
+        };
+      }
+    }
+
+    beforeAll(() => {
+      mkdirSync(join(project(), 'src'), { recursive: true });
+      mkdirSync(join(project(), 'i18n'), { recursive: true });
+      writeFileSync(
+        join(project(), 'i18n/en.json'),
+        JSON.stringify({ nav: { home: 'Home', docs: 'Docs' } }),
+      );
+    });
+
+    it('runs the packed binary on source files and reports dynamic keys without failing', async () => {
+      writeFileSync(
+        join(project(), 'src/app.ts'),
+        `import { injectT } from '@etyma/angular';\nconst t = injectT(i18n);\nt('nav.home');\nt(key);`,
+      );
+
+      const result = await runAnalyze(['analyze', './src', '--catalog', './i18n/en.json']);
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toContain('nav.docs');
+      expect(result.stdout).toContain('Unreferenced candidates:');
+      expect(result.stdout).toContain('source.dynamic-key');
+      expect(result.stdout).toContain('○ 1 unreferenced candidate');
+    });
+
+    it('exits 1 for an unknown key and emits parseable analyzer JSON', async () => {
+      writeFileSync(
+        join(project(), 'src/app.ts'),
+        `import { injectT } from '@etyma/angular';\nconst t = injectT(i18n);\nt('nav.typo');`,
+      );
+
+      const result = await runAnalyze([
+        'analyze',
+        './src',
+        '--catalog',
+        './i18n/en.json',
+        '--format',
+        'json',
+      ]);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toBe('');
+      const output = JSON.parse(result.stdout) as {
+        used: string[];
+        unreferenced: string[];
+        diagnostics: { code: string; path: string }[];
+        meta: { command: string; fileCount: number; catalogKeyCount: number };
+      };
+      expect(output.used).toEqual([]);
+      expect(output.unreferenced).toEqual(['nav.docs', 'nav.home']);
+      expect(output.diagnostics).toMatchObject([{ code: 'source.unknown-key', path: 'app.ts' }]);
+      expect(output.meta).toMatchObject({ command: 'analyze', fileCount: 1, catalogKeyCount: 2 });
+    });
+
+    it('exits 2 for malformed catalog JSON', async () => {
+      writeFileSync(join(project(), 'i18n/bad.json'), '{');
+      const result = await runAnalyze(['analyze', './src', '--catalog', './i18n/bad.json']);
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('not valid JSON');
+    });
+  });
+
   describe('contract', { timeout: COMPILE_TIMEOUT }, () => {
     /**
      * The whole local-JSON path, from the packed artifacts only: the packed binary generates
