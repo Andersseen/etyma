@@ -14,7 +14,9 @@ import {
   type MessageContract,
   type MessageKey,
   type MessageParamValue,
+  type MessageArgs,
   type MessageParamsMap,
+  type RequiredParamKeys,
   type MessageParamsOf,
   type MessageSource,
 } from './messages.js';
@@ -201,6 +203,43 @@ export interface I18nDefinition<
    */
   readonly messageParams?: TParams;
 }
+
+/**
+ * Every message key a definition knows - `(typeof i18n.keys)[number]`, without having to
+ * know which property carries it.
+ */
+export type I18nMessageKey<TDefinition extends I18nDefinition<string, MessageParamsMap>> =
+  TDefinition['keys'][number];
+
+/**
+ * The keys the definition has an exact required-params entry for: `t(key)` needs an argument.
+ *
+ * Read from the definition's params map, never from message text. A definition with no exact
+ * per-key information, such as `I18nDefinition<string, MessageParamsMap>`, knows no key
+ * requires params, so this is `never` for it rather than `string`.
+ */
+export type I18nKeysRequiringParams<TDefinition extends I18nDefinition<string, MessageParamsMap>> =
+  TDefinition extends I18nDefinition<infer TKey, infer TParams>
+    ? RequiredParamKeys<TParams, TKey>
+    : never;
+
+/**
+ * The complement of {@link I18nKeysRequiringParams}: keys with no known required params, which
+ * `t(key)` accepts without an argument. Such a key is not forbidden params - it just is not
+ * known to need any - so this is the domain to give metadata that stores translation keys.
+ */
+export type I18nKeysWithoutRequiredParams<
+  TDefinition extends I18nDefinition<string, MessageParamsMap>,
+> = Exclude<I18nMessageKey<TDefinition>, I18nKeysRequiringParams<TDefinition>>;
+
+/**
+ * What `t()` takes after `key`, for a definition: {@link MessageArgs} without extracting the
+ * definition's params by hand.
+ */
+export type I18nMessageArgs<
+  TDefinition extends I18nDefinition<string, MessageParamsMap>,
+  TKey extends I18nMessageKey<TDefinition>,
+> = TDefinition extends I18nDefinition<string, infer TParams> ? MessageArgs<TParams, TKey> : never;
 
 /**
  * Validates an i18n configuration and freezes it into an {@link I18nDefinition}.

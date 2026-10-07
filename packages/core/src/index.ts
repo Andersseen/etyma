@@ -73,7 +73,15 @@ export {
   type TranslatorInput,
 } from './translator.js';
 
-export { defineI18n, type I18nDefinition, type I18nOptions } from './define-i18n.js';
+export {
+  defineI18n,
+  type I18nDefinition,
+  type I18nKeysRequiringParams,
+  type I18nKeysWithoutRequiredParams,
+  type I18nMessageArgs,
+  type I18nMessageKey,
+  type I18nOptions,
+} from './define-i18n.js';
 
 export { defineRemoteI18n, type RemoteI18nOptions } from './remote-i18n.js';
 

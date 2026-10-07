@@ -466,6 +466,12 @@ In short:
 
 ¹ Names always; values where a built-in function proves them — see **Param values** above.
 
+**Keys stored in metadata.** `I18nKeysWithoutRequiredParams<typeof i18n>` (and
+`I18nKeysRequiringParams`, `I18nMessageKey`, `I18nMessageArgs`) derive key sets from a definition,
+so `labelKey: I18nKeysWithoutRequiredParams<typeof i18n>` can be passed to `t()` with no cast
+while a key that needs params is rejected. See
+[Dynamic keys](packages/core/README.md#dynamic-keys).
+
 ### Arrays of messages
 
 A list of strings can be written as an array. Each element is an ordinary message, keyed by

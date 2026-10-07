@@ -14,7 +14,14 @@ import { Component, type ApplicationConfig } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideEtymaAnalog, withLocalizedRoutes } from '@etyma/analog';
 import { EtymaI18n, injectI18n, injectT, provideEtyma } from '@etyma/angular';
-import { defineI18n, defineMessages, type Locale, type MessageKey } from '@etyma/core';
+import {
+  defineI18n,
+  defineMessages,
+  type I18nKeysRequiringParams,
+  type I18nKeysWithoutRequiredParams,
+  type Locale,
+  type MessageKey,
+} from '@etyma/core';
 
 const source = defineMessages({
   nav: { docs: 'Docs' },
@@ -34,10 +41,24 @@ const i18n = defineI18n({
 type Key = MessageKey<typeof source>;
 const known: Key = 'footer.rights';
 
+/** Metadata that stores keys: only keys `t()` accepts with no argument may live here. */
+interface NavigationItem {
+  readonly labelKey: I18nKeysWithoutRequiredParams<typeof i18n>;
+}
+
+const NAVIGATION = [{ labelKey: 'nav.docs' }] as const satisfies readonly NavigationItem[];
+
+// @ts-expect-error - `footer.rights` requires `year`, so it cannot be navigation metadata.
+const notNavigation: NavigationItem = { labelKey: 'footer.rights' };
+const requiring: I18nKeysRequiringParams<typeof i18n> = 'footer.rights';
+
 @Component({
   selector: 'compat-root',
   template: `
     <p>{{ t('nav.docs') }}</p>
+    @for (item of navigation; track item.labelKey) {
+      <a>{{ t(item.labelKey) }}</a>
+    }
     <p>{{ t('footer.rights', { year: 2026 }) }}</p>
     <p>{{ t('features.0') }} / {{ t('features.1', { name: 'Ada' }) }}</p>
     <p>{{ t('updated', { when: builtAt }) }} / {{ t('footer.rights', { year: '2026' }) }}</p>
@@ -50,6 +71,7 @@ export class CompatRoot {
   protected readonly i18n: EtymaI18n<Key> = injectI18n(i18n);
   protected readonly t = injectT(i18n);
   protected readonly builtAt = new Date(0);
+  protected readonly navigation: readonly NavigationItem[] = NAVIGATION;
 
   constructor() {
     // @ts-expect-error - the source catalog has no `nav.nope`, and the published types
@@ -66,6 +88,8 @@ export class CompatRoot {
     // @ts-expect-error - `{$when :datetime}` does not take a boolean.
     this.t('updated', { when: true });
     void known;
+    void notNavigation;
+    void requiring;
   }
 
   protected switchTo(locale: Locale): void {
