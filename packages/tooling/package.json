@@ -1,7 +1,7 @@
 {
   "name": "@etyma/tooling",
   "version": "0.5.0",
-  "description": "Static validation for Etyma message catalogs: key parity, MessageFormat 2 syntax and external variable contracts, as structured diagnostics.",
+  "description": "Static validation for Etyma message catalogs (key parity, MessageFormat 2 syntax, external variable contracts) and static analysis of message usage in JS/TS source, as structured diagnostics.",
   "keywords": [
     "i18n",
     "internationalization",
@@ -35,6 +35,10 @@
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.js"
     },
+    "./source": {
+      "types": "./dist/source.d.ts",
+      "default": "./dist/source.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -52,7 +56,8 @@
   },
   "dependencies": {
     "@etyma/core": "workspace:^",
-    "messageformat": "4.0.0"
+    "messageformat": "4.0.0",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@types/node": "26.6.4",

@@ -1,3 +1,4 @@
+import { compareCodeUnits as compare } from './compare.js';
 import type { CatalogDiagnostic, CatalogValidationResult } from './types.js';
 
 /**
@@ -21,8 +22,4 @@ export function toResult(diagnostics: readonly CatalogDiagnostic[]): CatalogVali
     valid: sorted.every(diagnostic => diagnostic.severity !== 'error'),
     diagnostics: sorted,
   };
-}
-
-function compare(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }

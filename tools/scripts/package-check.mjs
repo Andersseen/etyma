@@ -26,7 +26,7 @@ const intendedEntryPoints = {
   '@etyma/angular': ['.', './package.json'],
   '@etyma/analog': ['.', './package.json'],
   '@etyma/astro': ['.', './package.json'],
-  '@etyma/tooling': ['.', './vite', './package.json'],
+  '@etyma/tooling': ['.', './vite', './source', './package.json'],
   '@etyma/cli': ['./package.json'],
 };
 
@@ -284,9 +284,75 @@ try {
       for (const [, specifier] of source.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
     }
 
-    const leaked = [...reached].filter(file => /vite|remote/.test(file));
+    const leaked = [...reached].filter(file => /vite|remote|source/.test(file));
     assert(leaked.length === 0, `the main entry reaches ${leaked.join(', ')}`);
+
+    // The TypeScript parser belongs to `./source` alone: validating a catalog must not pay to
+    // load it, so nothing the main entry reaches may import it - at runtime or in its types.
+    for (const file of reached) {
+      for (const extension of ['js', 'd.ts']) {
+        const path = join(tooling.extracted, 'dist', file.replace(/\.js$/, `.${extension}`));
+        const text = readFileSync(path, 'utf8');
+        assert(
+          !/from 'typescript'/.test(text),
+          `dist/${file.replace(/\.js$/, `.${extension}`)}, reachable from the main entry, imports typescript`,
+        );
+      }
+    }
   });
+
+  check(
+    '@etyma/tooling/source ships the analyzer, reaches the TypeScript parser, and nothing with I/O',
+    () => {
+      const manifest = manifestOf(tooling.tarball);
+      const source = manifest.exports?.['./source'];
+
+      assert(
+        source?.types === './dist/source.d.ts' && source?.default === './dist/source.js',
+        `unexpected "./source" export: ${JSON.stringify(source)}`,
+      );
+      assert(
+        typeof manifest.dependencies?.typescript === 'string',
+        'typescript must be a runtime dependency: the published ./source entry imports it',
+      );
+
+      const declarations = readFileSync(join(tooling.extracted, 'dist/source.d.ts'), 'utf8');
+      assert(declarations.includes('analyzeMessageUsage'), 'dist/source.d.ts does not declare it');
+
+      const pending = ['source.js'];
+      const reached = new Set();
+      const parserImporters = [];
+
+      for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
+        if (reached.has(file)) continue;
+        reached.add(file);
+
+        // Declarations must not leak parser types into a consumer's compilation either.
+        const base = file.replace(/\.js$/, '');
+        const declared = readFileSync(join(tooling.extracted, 'dist', `${base}.d.ts`), 'utf8');
+        assert(!/typescript/.test(declared), `dist/${base}.d.ts mentions typescript`);
+
+        const text = readFileSync(join(tooling.extracted, 'dist', file), 'utf8');
+        const code = text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+
+        assert(!/\bfetch\(/.test(code), `dist/${file}, reachable from ./source, calls fetch`);
+        assert(!/from 'node:/.test(code), `dist/${file}, reachable from ./source, imports node:`);
+        assert(!/\bprocess\./.test(code), `dist/${file}, reachable from ./source, uses process`);
+        assert(!/\bconsole\./.test(code), `dist/${file}, reachable from ./source, uses console`);
+
+        if (/from 'typescript'/.test(code)) parserImporters.push(file);
+        for (const [, specifier] of text.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
+      }
+
+      assert(
+        parserImporters.join(',') === 'source-scan.js',
+        `the parser should be imported by source-scan.js alone, not: ${parserImporters.join(', ') || '(nothing)'}`,
+      );
+
+      const leaked = [...reached].filter(file => /vite|remote/.test(file));
+      assert(leaked.length === 0, `./source reaches ${leaked.join(', ')}`);
+    },
+  );
 
   check(
     '@etyma/cli depends on nothing from a framework, and only @etyma/tooling among Etyma packages',

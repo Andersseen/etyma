@@ -461,8 +461,9 @@ scope:
   reads public catalogs only, so it doesn't yet have to be an API for handling secrets.
 - **No pull, push or sync.** Nothing fetched is written to disk, and there is no `etyma pull`,
   `push` or `sync`, no cache and no lock file. This is validation, not synchronization.
-- **No source-code scanning.** No unused-key detection, no hardcoded-copy detection, no reading
-  Angular templates or application source at all.
+- **No source-code scanning.** The CLI has no command that reads application source:
+  `@etyma/tooling/source` can analyse JS/TS message usage, but nothing here feeds it files yet.
+  No hardcoded-copy detection, no reading Angular templates.
 - **No translation editing or automatic translation.**
 - **No MCP server, no CMS or provider integration, no general plugin system.** Remote mode is a
   URL template, not a Glossa (or any other vendor's) adapter.

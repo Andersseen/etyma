@@ -27,16 +27,17 @@ and by `pnpm package:check` reading the packed tarball's own `dependencies`, not
 source tree.
 
 At its centre is a **programmatic validation engine** with no filesystem or network access of
-its own and no source-code scanning. Everything else calls that engine rather than
+its own. Everything else calls that engine rather than
 re-implementing catalog validation a second way:
 
-| API                                               | What it is                                                                                                               |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `validateCatalogs()` (main entry)                 | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                                  |
-| `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables. |
-| `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.          |
-| [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                               |
-| [`etyma contract`](../cli) (`@etyma/cli`)         | Typed contract generation for a local JSON source catalog, with the same functions `etymaRemoteContract` uses.           |
+| API                                               | What it is                                                                                                                        |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `validateCatalogs()` (main entry)                 | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                                           |
+| `analyzeMessageUsage()` (`@etyma/tooling/source`) | Static JS/TS analysis: catalog keys + source text in, used, unreferenced and unknown keys out. In memory; parses with TypeScript. |
+| `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables.          |
+| `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.                   |
+| [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                                        |
+| [`etyma contract`](../cli) (`@etyma/cli`)         | Typed contract generation for a local JSON source catalog, with the same functions `etymaRemoteContract` uses.                    |
 
 ## Install
 
@@ -318,6 +319,125 @@ broken types until someone remembers to run `vite dev` once. Since generation is
 deterministic, committing it costs nothing but a reviewable diff on the rare change, and
 buys a working editor on the first checkout.
 
+## Analysing message usage in source
+
+`@etyma/tooling/source` answers a question the catalog APIs cannot: **which messages does
+application code actually reference?** Give it the catalog's keys and JavaScript or
+TypeScript source text, and it returns plain data.
+
+```ts
+import { analyzeMessageUsage } from '@etyma/tooling/source';
+
+const result = analyzeMessageUsage({
+  keys: ['nav.home', 'nav.docs'],
+  files: [
+    {
+      path: 'src/app/nav.ts',
+      source: `
+        import { injectT } from '@etyma/angular';
+
+        const t = injectT(i18n);
+        t('nav.home');
+        t('nav.typo');
+        t(sectionKey);
+      `,
+    },
+  ],
+});
+
+result.used; // ['nav.home']
+result.unreferenced; // ['nav.docs']
+result.diagnostics;
+// [
+//   { code: 'source.unknown-key', severity: 'error', path: 'src/app/nav.ts',
+//     line: 6, column: 11, key: 'nav.typo', message: '…' },
+//   { code: 'source.dynamic-key', severity: 'warning', path: 'src/app/nav.ts',
+//     line: 7, column: 11, message: '…' },
+// ]
+```
+
+It is a separate subpath because it parses with the TypeScript compiler's parser, which
+`import { validateCatalogs } from '@etyma/tooling'` must never load — `pnpm package:check`
+proves the main entry reaches neither. `typescript` is a runtime dependency of this package
+for that reason; it is development tooling, so install size is not the concern, and nothing
+loads it until `./source` is imported. The API itself stays pure: no filesystem, glob,
+network, `process` or `console`. `path` is a label echoed on diagnostics, never opened, so a
+CLI, an editor or a CMS supplies the files and this supplies the analysis. Only syntax is
+read — no `tsconfig`, no type checker, no module resolution, and nothing is executed.
+
+### The result
+
+- **`used`** — catalog keys referenced by a string literal in a recognised Etyma call.
+  Sorted, each key once however many times it appears.
+- **`unreferenced`** — catalog keys the analysis did **not** see referenced. These are
+  _candidates_, not proof: the analysis is deliberately conservative (see below), so a key
+  used through a wrapper, a prop or a dynamic key lands here. Never delete a key on this list
+  without looking. It is never reported as an error.
+- **`diagnostics`** — sorted by path, line, column, code, key, then message. `line` and
+  `column` are 1-based (`column` in UTF-16 code units) and point at the key argument.
+
+| `code`               | `severity` | Meaning                                                                                     |
+| -------------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `source.unknown-key` | `error`    | A recognised call passes a literal key the catalog does not define. `key` holds it.         |
+| `source.dynamic-key` | `warning`  | A recognised call passes something that is not a string literal. Legal; just not checkable. |
+| `source.parse-error` | `error`    | The file has a syntax error. The file is still analysed as far as the parser recovers.      |
+
+Source diagnostics are their own type, `SourceDiagnostic`, because they locate a finding by
+`path`, `line` and `column` where a `CatalogDiagnostic` uses `locale` and `key`; they share
+`DiagnosticSeverity`. `message` is for a human and may change wording between versions —
+including a parse error's, which paraphrases the parser — so switch on `code`. Syntax errors
+never throw: one malformed file produces a finding and the other files are still analysed.
+
+The result does not depend on the order of `keys` or `files`. Duplicate keys collapse.
+
+### What is recognised
+
+A call counts only when it provably goes through an Etyma translator, found by following
+**import bindings**, not names:
+
+| Import                                | Recognised uses                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| `injectT` from `@etyma/angular`       | `const t = injectT(d); t('key')`, also as a class field: `this.t('key')` |
+| `injectI18n` from `@etyma/angular`    | `i18n.t('key')`, `i18n.parts('key')`, `injectI18n(d).t('key')`           |
+| `createAstroI18n` from `@etyma/astro` | `(await createAstroI18n(Astro, d)).t('key')`, through a variable too     |
+| `createTranslator` from `@etyma/core` | `translator.translate('key')`, `translator.translateToParts('key')`      |
+
+Aliases (`import { injectT as useT }`) and namespace imports (`import * as etyma from …`) work.
+Also followed: `const` variables, destructured members (`const { t } = i18n`), `i18n.t` taken
+as a value, instance class fields (including `#private` ones) read through `this`,
+`i18n?.t(…)` and `i18n.t?.(…)`. Local declarations shadow outer ones, so a parameter named
+`t` is not the module's `t`.
+
+A key is **static** when the argument is `'…'`, `"…"` or a template literal without
+substitutions, optionally wrapped in syntax that cannot change the value — parentheses,
+`as`, `satisfies`, `<T>` and `!`. Anything else — `t(key)`, `t(prefix + '.x')`,
+``t(`docs.${s}`)``, `t(getKey())`, even `t(KEY)` for a `const KEY = '…'` — is **dynamic** and is
+reported as such, never guessed. Only the first argument is read: whether params are right is
+the type system's job.
+
+Files are parsed by extension — `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs` —
+and anything else as TypeScript. Do not pass templates.
+
+### Phase 1 limits
+
+This is the first, deliberately narrow cut. Preferring a missed usage to a wrongly attributed
+one, it does **not** cover:
+
+- **Angular templates** (`*.html`, inline `template:` strings), **Astro files** (`*.astro`)
+  and any other template language. Only JavaScript and TypeScript are read, so a key used only
+  in a template is `unreferenced`.
+- **Wrappers and indirection.** `const tr = wrap(injectT(d))`, a project helper such as
+  `injectAppI18n()`, a translator passed as a prop or parameter (`function view({ t })`), a
+  `let` binding, constructor parameter properties, `inject(EtymaI18n)`, `require()` and
+  dynamic `import()`. There is no dataflow and no constant propagation.
+- `has()` on a translator probes a key without rendering it, so it is not counted as a use.
+- Hardcoded-copy detection, source-message extraction, route analysis and param checking are
+  not part of this analysis.
+
+Because of the first two, `unreferenced` is a to-do list for a human, not a deletion list.
+Template adapters and configurable wrapper names can feed this same result later without
+changing it.
+
 ## Validating remote catalogs during a Vite build
 
 `etymaRemoteContract` reads the source catalog's keys, variable names and the functions those variables reach, and nothing else. `etymaRemoteValidation`
@@ -555,7 +675,7 @@ module above is the recommended pattern.
 Deliberately not implemented yet:
 
 - **No filesystem or network access of its own beyond `@etyma/tooling/vite`.** The main entry
-  point operates only on catalog objects already in memory; `@etyma/tooling/vite` is the one
+  point, and `@etyma/tooling/source`, operate only on values already in memory; `@etyma/tooling/vite` is the one
   deliberate, scoped exception — `etymaRemoteContract` reads and writes exactly one file and
   fetches one catalog, `etymaRemoteValidation` fetches catalogs and writes nothing. Directory
   discovery, `*.json` reading and writing a local contract live in [`@etyma/cli`](../cli),
@@ -566,11 +686,11 @@ Deliberately not implemented yet:
   [recommended setup](#recommended-setup-for-a-remote-catalog-project) for sharing values.
 - **No remote watching.** `etymaRemoteContract` and `etymaRemoteValidation` each run once per
   dev-server start and once per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
-- **No source-message extraction, template scanning, or hardcoded-copy detection.**
-  Determining whether a key is used, or whether a template has untranslated copy, requires
-  reading application source code, which this package does not do. That is a later tooling
-  iteration.
-- **No unused-key detection**, for the same reason.
+- **Source analysis is JS/TS only, and static.** `@etyma/tooling/source` finds literal keys
+  in recognised Etyma calls; it does not read Angular or Astro templates, follow wrappers or
+  dataflow, extract source messages or detect hardcoded copy. See
+  [Phase 1 limits](#phase-1-limits). It reports `unreferenced` keys as candidates, not as
+  safe to delete, and `@etyma/cli` has no command for it yet.
 - **No full type-checking of `:function` options.** Variable function parity compares
   function _names_ directly annotating a shared variable; it does not compare option values
   (`style=long` vs. `style=short`), nor does it resolve a variable's type through an arbitrary
