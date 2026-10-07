@@ -1,5 +1,12 @@
 # @etyma/cli
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [[`4415fe5`](https://github.com/Andersseen/etyma/commit/4415fe5c3b8d1bf45cb4349aba554201d921fdee)]:
+  - @etyma/tooling@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
