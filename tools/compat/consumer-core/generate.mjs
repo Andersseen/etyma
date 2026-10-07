@@ -120,6 +120,10 @@ writeFileSync(
   defineI18n,
   defineRemoteI18n,
   type I18nDefinition,
+  type I18nKeysRequiringParams,
+  type I18nKeysWithoutRequiredParams,
+  type I18nMessageArgs,
+  type I18nMessageKey,
   type MessageKey,
   type MessageParamsMap,
   type MessageParamsOf,
@@ -190,6 +194,45 @@ export const tLiteral = translatorFor(literal);
 export const tJson = translatorFor(json);
 export const tRemote = translatorFor(remote);
 export const tBoth = translatorFor(literalWithContract);
+
+// Definition-first key vocabulary, derived from each definition at this size.
+export type LiteralKey = I18nMessageKey<typeof literal>;
+export type LiteralRequiring = I18nKeysRequiringParams<typeof literal>;
+export type LiteralWithout = I18nKeysWithoutRequiredParams<typeof literal>;
+export type JsonRequiring = I18nKeysRequiringParams<typeof json>;
+export type JsonWithout = I18nKeysWithoutRequiredParams<typeof json>;
+export type RemoteWithout = I18nKeysWithoutRequiredParams<typeof remote>;
+export type BothRequiring = I18nKeysRequiringParams<typeof literalWithContract>;
+export type NumericArgs = I18nMessageArgs<typeof literal, '${numeric[0]}'>;
+export type JsonNumericArgs = I18nMessageArgs<typeof json, '${numeric[0]}'>;
+
+export type KeySplitIsExhaustive = Assert<
+  Equal<LiteralRequiring | LiteralWithout, LiteralKey>
+>;
+export type JsonMatchesLiteral = Assert<Equal<JsonRequiring, LiteralRequiring>>;
+export type ContractAgreesBothWays = Assert<Equal<BothRequiring, LiteralRequiring>>;
+
+export const dynamicLinks: readonly { readonly key: LiteralWithout }[] = [
+  { key: '${plain[0]}' },
+];
+export const dynamicJsonLinks: readonly { readonly key: JsonWithout }[] = [{ key: '${plain[0]}' }];
+export const dynamicRemoteLinks: readonly { readonly key: RemoteWithout }[] = [
+  { key: '${plain[0]}' },
+];
+
+for (const link of dynamicLinks) tLiteral.translate(link.key);
+for (const link of dynamicJsonLinks) tJson.translate(link.key);
+for (const link of dynamicRemoteLinks) tRemote.translate(link.key);
+
+export const numericArgs: NumericArgs = [{ count: 3 }];
+export const jsonNumericArgs: JsonNumericArgs = [{ count: 3 }];
+tLiteral.translate('${numeric[0]}', ...numericArgs);
+tJson.translate('${numeric[0]}', ...jsonNumericArgs);
+
+// @ts-expect-error - \`${oneParam[0]}\` needs params, so it is not in the without-params domain.
+export const notWithout: LiteralWithout = '${oneParam[0]}';
+// @ts-expect-error - \`${plain[0]}\` is not known to need params.
+export const notRequiring: LiteralRequiring = '${plain[0]}';
 
 ${samples.flatMap(sample => ['tLiteral', 'tJson', 'tRemote', 'tBoth'].map(t => call(t, sample))).join('\n')}
 

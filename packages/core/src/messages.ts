@@ -144,11 +144,22 @@ export type MessageParamsMap = Readonly<Record<string, MessageParams>>;
  * untyped for all of them: that is what an injector hands back for `EtymaI18n` with no
  * definition to narrow it.
  */
-export type MessageArgs<TParams, TKey extends string> = string extends keyof TParams
+export type MessageArgs<TParams, TKey extends string> = [RequiredParamKeys<TParams, TKey>] extends [
+  never,
+]
   ? [params?: MessageParams]
-  : [Extract<TKey, keyof TParams>] extends [never]
-    ? [params?: MessageParams]
-    : [params: UnionToIntersection<TParams[Extract<TKey, keyof TParams>]>];
+  : [params: UnionToIntersection<TParams[RequiredParamKeys<TParams, TKey>]>];
+
+/**
+ * The members of `TKey` that `TParams` has an exact entry for - the one place "this key is
+ * known to need params" is decided, shared by {@link MessageArgs} and the definition-first key
+ * utilities. A `TParams` with an index signature knows no particular key, so none qualify.
+ *
+ * Internal: not re-exported from the package entry point.
+ */
+export type RequiredParamKeys<TParams, TKey extends string> = string extends keyof TParams
+  ? never
+  : Extract<TKey, keyof TParams>;
 
 type UnionToIntersection<U> = (U extends unknown ? (union: U) => void : never) extends (
   intersection: infer I,

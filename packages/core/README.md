@@ -126,6 +126,9 @@ framework adapter, a validator, a code generator — and most applications never
   `MessageArgs<TParams, K>` is what `t()` takes after the key. Messages typed as plain
   `string` (JSON imports) get no entry, and keep optional, untyped params unless a contract
   lists them.
+- `I18nMessageKey<D>`, `I18nKeysRequiringParams<D>`, `I18nKeysWithoutRequiredParams<D>` and
+  `I18nMessageArgs<D, K>` — key and argument vocabulary derived from a definition
+  (`typeof i18n`); see [Dynamic keys](#dynamic-keys).
 - `NumericMessageParam` (`number | bigint | string`) and `DateTimeMessageParam`
   (`Date | number | string`) — what a param annotated with a built-in numeric
   (`:number`, `:integer`, `:offset`, `:currency`, `:percent`, `:unit`) or date/time
@@ -135,6 +138,44 @@ framework adapter, a validator, a code generator — and most applications never
   `:number` as epoch milliseconds, and Etyma rejects it. Types only - a string that is not a
   number still type-checks for `:number`, and is reported through `onIssue`.
 - `EtymaError` — the one error type Etyma throws, for configuration mistakes only.
+
+### Dynamic keys
+
+`t()` stays strict: a key typed as a union needs the params of every member. When keys live in
+metadata, narrow the key _domain_ instead of loosening `t()`:
+
+```ts
+import type { I18nKeysWithoutRequiredParams } from '@etyma/core';
+
+type NavigationKey = I18nKeysWithoutRequiredParams<typeof i18n>;
+
+interface NavigationItem {
+  readonly href: string;
+  readonly labelKey: NavigationKey;
+}
+
+const NAVIGATION = [
+  { href: '/', labelKey: 'nav.home' },
+] as const satisfies readonly NavigationItem[];
+
+t(NAVIGATION[0].labelKey); // no cast
+// labelKey: 'footer.rights' // compile error: it requires params
+```
+
+- `I18nMessageKey<D>` — every known key, i.e. `(typeof i18n.keys)[number]`.
+- `I18nKeysRequiringParams<D>` — keys the definition has an exact params entry for. Read from the
+  definition's params map, never from message text.
+- `I18nKeysWithoutRequiredParams<D>` — the complement. These keys are not _forbidden_ params;
+  they are simply not known to need any, which is the domain safe to call without an argument.
+- `I18nMessageArgs<D, K>` — what `t()` takes after `K`, a definition-first `MessageArgs`. With
+  it, `function tr<K extends I18nMessageKey<typeof i18n>>(key: K, ...args: I18nMessageArgs<typeof i18n, K>)`
+  forwards to `t(key, ...args)` without an assertion.
+
+A JSON source with no contract, a keys-only contract, and any key a partial contract lists no
+variables for are all "without known required params". A broad `I18nDefinition<string,
+MessageParamsMap>` knows no key requires params, so the requiring set is `never`. They work the
+same for `defineI18n` and `defineRemoteI18n` definitions, and with Angular's `injectT` and
+Astro's `etyma.t`.
 
 ### Advanced: adapter and tooling API
 
