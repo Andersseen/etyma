@@ -1,5 +1,11 @@
 # @etyma/cli
 
+## 0.6.0
+
+### Minor Changes
+
+- [#131](https://github.com/Andersseen/etyma/pull/131) [`60da435`](https://github.com/Andersseen/etyma/commit/60da4351de530186cd8d89fc1972113e10379db7) Thanks [@Andersseen](https://github.com/Andersseen)! - Add `etyma analyze` to report static JS/TS message-key usage from a local source catalog.
+
 ## 0.5.1
 
 ### Patch Changes
