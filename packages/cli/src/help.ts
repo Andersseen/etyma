@@ -18,15 +18,16 @@ Run "etyma <command> --help" for command-specific help.
 export const ANALYZE_HELP = `Usage:
   etyma analyze <directory> --catalog <source.json>
                 [--exclude <glob> ...]
-                [--format pretty|json] [--angular]
+                [--format pretty|json] [--angular | --astro]
 
 Recursively scans JavaScript and TypeScript files for statically recognisable Etyma
 message-key usages. Reports unknown literal keys, dynamic-key warnings, and
 unreferenced candidates from one local source catalog. By default it does not analyse
 templates. With --angular it also analyses recognized Angular component templates and
-templateUrl files when the component class proves its translator binding. It does not
-analyse .astro files, wrappers, translation pipes, or arbitrary HTML; unreferenced
-candidates are not proof that a message is unused or safe to delete.
+templateUrl files when the component class proves its translator binding. With --astro it
+analyses JS/TS plus Astro frontmatter and template expressions. These options are mutually
+exclusive. Neither mode follows wrappers or general data flow; unreferenced candidates are
+not proof that a message is unused or safe to delete.
 
 Arguments:
   <directory>          Source directory to scan recursively
@@ -36,6 +37,7 @@ Options:
   --exclude <glob>     Exclude a relative path; may be repeated. Paths use / separators
   --format <format>    Output format: "pretty" (default) or "json"
   --angular            Analyze recognized Angular component templates (requires @angular/compiler ^21 or ^22)
+  --astro              Analyze Astro frontmatter and template expressions (Astro 6/7)
   -h, --help           Show this help
 
 Exit codes:
@@ -50,6 +52,7 @@ Examples:
     --exclude "**/*.spec.ts" --exclude "**/*.test.ts"
   etyma analyze ./src --catalog ./src/i18n/en.json --format json
   etyma analyze ./src --catalog ./src/i18n/en.json --angular
+  etyma analyze ./src --catalog ./src/i18n/en.json --astro
 `;
 
 export const VALIDATE_HELP = `Usage:

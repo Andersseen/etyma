@@ -6,7 +6,7 @@ export interface AnalyzeMeta {
   readonly catalog: string;
   readonly fileCount: number;
   readonly catalogKeyCount: number;
-  readonly mode?: 'angular';
+  readonly mode?: 'angular' | 'astro';
 }
 
 /** Adds CLI metadata while preserving the analyzer's result fields and diagnostic objects. */

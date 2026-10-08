@@ -172,6 +172,23 @@ for (const { name: fixture, family } of fixtures) {
     run('node', [join(repoRoot, 'tools/scripts/verify-angular-tooling-fixture.mjs')], cwd);
   }
 
+  if (fixture === 'astro-6' || fixture === 'astro-7') {
+    run(
+      'npm',
+      [
+        'install',
+        '--no-save',
+        '--no-audit',
+        '--no-fund',
+        '--loglevel',
+        'error',
+        join(tarballs, 'etyma-cli.tgz'),
+      ],
+      cwd,
+    );
+    run('node', [join(repoRoot, 'tools/scripts/verify-astro-tooling-fixture.mjs')], cwd);
+  }
+
   if (!existsSync(join(cwd, 'dist'))) {
     console.error(`${fixture} produced no build output.`);
     process.exit(1);

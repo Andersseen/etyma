@@ -151,6 +151,51 @@ describe('runAnalyzeCommand', () => {
     );
   });
 
+  it('combines TypeScript and Astro usages in one opt-in Astro result', async () => {
+    const { cwd } = await fixture();
+    await writeFile(
+      join(cwd, 'src/app.ts'),
+      `import { createAstroI18n } from '@etyma/astro';\nconst i18n = await createAstroI18n(Astro, def);\ni18n.t('nav.home');`,
+    );
+    await writeFile(
+      join(cwd, 'src/page.astro'),
+      `---\nimport { createAstroI18n } from '@etyma/astro';\nconst etyma = await createAstroI18n(Astro, def);\n---\n<h1>{etyma.t('nav.docs')}</h1>`,
+    );
+    await mkdir(join(cwd, 'src/.astro'), { recursive: true });
+    await writeFile(join(cwd, 'src/.astro/generated.astro'), `<p>ignored</p>`);
+    await writeFile(join(cwd, 'src/ignored.stories.astro'), `<p>ignored</p>`);
+
+    const result = await runAnalyzeCommand(
+      [
+        'src',
+        '--catalog',
+        'i18n/en.json',
+        '--astro',
+        '--exclude',
+        '**/*.stories.astro',
+        '--format',
+        'json',
+      ],
+      cwd,
+    );
+    const output = JSON.parse(result.stdout) as {
+      used: string[];
+      unreferenced: string[];
+      meta: { mode?: string; fileCount: number };
+    };
+
+    expect(result.exitCode).toBe(0);
+    expect(output.used).toEqual(['nav.docs', 'nav.home']);
+    expect(output.unreferenced).toEqual(['footer.rights']);
+    expect(output.meta).toMatchObject({ mode: 'astro', fileCount: 2 });
+  });
+
+  it('rejects --angular and --astro before analyzer loading', async () => {
+    const result = await runAnalyzeCommand(['--angular', '--astro'], '/');
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('mutually exclusive');
+  });
+
   it('reports operational and usage failures with exit 2', async () => {
     const { cwd } = await fixture();
     const cases: readonly (readonly string[])[] = [
