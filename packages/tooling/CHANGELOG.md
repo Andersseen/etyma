@@ -1,5 +1,11 @@
 # @etyma/tooling
 
+## 0.7.0
+
+### Minor Changes
+
+- [#133](https://github.com/Andersseen/etyma/pull/133) [`a9eb730`](https://github.com/Andersseen/etyma/commit/a9eb7301fbe1000b05ccd554d754773c3d055958) Thanks [@Andersseen](https://github.com/Andersseen)! - Add the optional `@etyma/tooling/angular` in-memory analyzer for statically provable Angular component template message usage, and add the opt-in `etyma analyze --angular` mode.
+
 ## 0.6.0
 
 ### Minor Changes
