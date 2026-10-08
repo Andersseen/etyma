@@ -32,9 +32,9 @@ diagnostics, the same output, the same exit codes as a local one, and `@etyma/to
 still never touches a filesystem or a network.
 
 `etyma analyze` is another thin adapter: it reads one local source catalog, uses
-`extractContractKeys()` for its keys, discovers JS/TS files, and calls the existing
-[`@etyma/tooling/source`](../tooling#analysing-message-usage-in-source) analyzer once. It does
-not validate MessageFormat 2 or analyse templates.
+`extractContractKeys()` for its keys, discovers source files, and calls one analyzer. The
+default mode uses [`@etyma/tooling/source`](../tooling#analysing-message-usage-in-source); the
+explicit Angular mode uses `@etyma/tooling/angular`.
 
 `@etyma/cli` depends on `@etyma/tooling` and nothing else from Etyma - not `@etyma/core`
 directly, even though catalogs are structurally what `@etyma/core`'s `MessageSource` describes.
@@ -456,13 +456,26 @@ own way to do both. Versions before 0.5 exported `runCli`, `runValidateCommand` 
 
 ```sh
 etyma analyze <directory> --catalog <source.json> \
-  [--exclude <glob> ...] [--format pretty|json]
+  [--exclude <glob> ...] [--format pretty|json] [--angular]
 ```
 
-The command recursively scans `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs` and `.cjs`
-files under the chosen directory. Declaration files (`.d.ts`, `.d.mts`, `.d.cts`), symlinks,
-Angular HTML, `.astro` files, and common generated/dependency directories (`node_modules`,
+By default the command recursively scans `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`
+and `.cjs` files under the chosen directory. Declaration files (`.d.ts`, `.d.mts`, `.d.cts`),
+symlinks, HTML, `.astro` files, and common generated/dependency directories (`node_modules`,
 `.git`, `.turbo`, `dist`, `build`, `coverage`, `.angular`, `.astro`) are skipped.
+
+Add `--angular` to load `@etyma/tooling/angular` and its optional `@angular/compiler` peer
+(`^21` or `^22`). Angular mode also discovers `.html` files, but analyzes one only when a
+recognized Angular `@Component` in the supplied source files refers to it through a static
+`templateUrl`. Inline `template` strings are analyzed too. The component class must prove the
+binding through a direct `injectT()` or `injectI18n()` field, or a simple `this.i18n.t` field
+derived from `injectI18n()`. `--exclude` applies to HTML as well as code; excluding a referenced
+template makes it unavailable and produces a missing-template diagnostic.
+
+Angular mode does not follow project wrappers or general data flow, analyze translation pipes,
+or scan arbitrary HTML. It does not execute code or load project configuration. The false-
+negative boundary is deliberate: a template call counts only when Etyma ownership is statically
+provable from the component class.
 
 Repeat `--exclude` to omit files by glob. Patterns match the discovered file path relative to
 the analyzed directory, with `/` separators, for example:
@@ -480,9 +493,10 @@ observe a static reference; they are not proof that a key is unused or safe to d
 
 Exit codes: `0` means analysis completed without error diagnostics (dynamic-key warnings and
 unreferenced candidates are allowed); `1` means the analyzer found an unknown literal key or
-a source parse error; `2` means usage, catalog, directory or file I/O prevented analysis.
-The command only reads local JSON and source files. It does not check MessageFormat 2 validity,
-Angular templates, `.astro` files, wrappers or data flow. See the tooling's
+a source/template parse error; `2` means usage, catalog, directory or file I/O prevented
+analysis. In Angular mode, a missing compatible `@angular/compiler` is an actionable exit `2`
+error. The command only reads local JSON and source files. It does not check MessageFormat 2
+validity, `.astro` files, wrappers or data flow. See the tooling's
 [source-analysis contract](../tooling#analysing-message-usage-in-source) for what the analyzer
 recognises and its limits.
 
@@ -501,8 +515,9 @@ scope:
 - **No pull, push or sync.** Nothing fetched is written to disk, and there is no `etyma pull`,
   `push` or `sync`, no cache and no lock file. This is validation, not synchronization.
 - **No source extraction or hardcoded-copy detection.** `etyma analyze` only checks static
-  references to catalog keys. It does not read Angular templates or `.astro` files, follow
-  wrappers or data flow, or detect hardcoded copy.
+  references to catalog keys. Angular templates require the explicit `--angular` mode;
+  `.astro` files, project wrappers and general data flow remain outside the analyzer, and it
+  does not detect hardcoded copy.
 - **No translation editing or automatic translation.**
 - **No MCP server, no CMS or provider integration, no general plugin system.** Remote mode is a
   URL template, not a Glossa (or any other vendor's) adapter.

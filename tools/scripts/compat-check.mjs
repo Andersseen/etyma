@@ -27,7 +27,16 @@
  * matrix proves the same API on every major rather than a different app per version.
  */
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { packAll, repoRoot } from './pack.mjs';
@@ -88,6 +97,37 @@ run('pnpm', ['run', 'build', '--filter=./packages/*'], repoRoot);
 console.log('Packing the published packages...');
 packAll(tarballs);
 
+function verifyPackedWithoutAngularCompiler() {
+  const cwd = mkdtempSync(join(tmpdir(), 'etyma-packed-no-angular-'));
+  try {
+    const toolingTarball = join(tarballs, 'etyma-tooling.tgz');
+    const cliTarball = join(tarballs, 'etyma-cli.tgz');
+    const coreTarball = join(tarballs, 'etyma-core.tgz');
+    writeFileSync(
+      join(cwd, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'etyma-packed-no-angular',
+          version: '0.0.0',
+          private: true,
+          type: 'module',
+          dependencies: {
+            '@etyma/core': `file:${coreTarball}`,
+            '@etyma/tooling': `file:${toolingTarball}`,
+            '@etyma/cli': `file:${cliTarball}`,
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    run('npm', ['install', '--no-audit', '--no-fund', '--loglevel', 'error'], cwd);
+    run('node', [join(repoRoot, 'tools/scripts/verify-no-angular-cli.mjs')], cwd);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+}
+
 for (const { name: fixture, family } of fixtures) {
   const cwd = join(compatRoot, fixture);
 
@@ -114,6 +154,24 @@ for (const { name: fixture, family } of fixtures) {
   run('npm', ['run', 'build'], cwd);
   if (family.typecheckAfterBuild) run('npm', ['run', 'typecheck'], cwd);
 
+  if (fixture === 'angular-21' || fixture === 'angular-22') {
+    run(
+      'npm',
+      [
+        'install',
+        '--no-save',
+        '--no-audit',
+        '--no-fund',
+        '--loglevel',
+        'error',
+        join(tarballs, 'etyma-tooling.tgz'),
+        join(tarballs, 'etyma-cli.tgz'),
+      ],
+      cwd,
+    );
+    run('node', [join(repoRoot, 'tools/scripts/verify-angular-tooling-fixture.mjs')], cwd);
+  }
+
   if (!existsSync(join(cwd, 'dist'))) {
     console.error(`${fixture} produced no build output.`);
     process.exit(1);
@@ -131,5 +189,7 @@ for (const { name: fixture, family } of fixtures) {
     console.log(`  ok   ${family.verified ?? 'build output matches expectations'}`);
   }
 }
+
+if (only === undefined) verifyPackedWithoutAngularCompiler();
 
 console.log('\nAll compatibility fixtures built against the packed tarballs.');

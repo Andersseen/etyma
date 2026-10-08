@@ -26,7 +26,7 @@ const intendedEntryPoints = {
   '@etyma/angular': ['.', './package.json'],
   '@etyma/analog': ['.', './package.json'],
   '@etyma/astro': ['.', './package.json'],
-  '@etyma/tooling': ['.', './vite', './source', './package.json'],
+  '@etyma/tooling': ['.', './vite', './source', './angular', './package.json'],
   '@etyma/cli': ['./package.json'],
 };
 
@@ -229,13 +229,20 @@ try {
   });
 
   check(
-    '@etyma/tooling depends on nothing from a framework, and only @etyma/core among Etyma packages',
+    '@etyma/tooling keeps Angular compiler optional and depends only on @etyma/core among Etyma packages',
     () => {
       const manifest = manifestOf(tooling.tarball);
-
       assert(
-        Object.keys(manifest.peerDependencies ?? {}).length === 0,
-        'a development tooling package should need no peers at all',
+        manifest.peerDependencies?.['@angular/compiler'] === '^21.0.0 || ^22.0.0',
+        'the Angular compiler peer range must match Angular 21 and 22',
+      );
+      assert(
+        manifest.peerDependenciesMeta?.['@angular/compiler']?.optional === true,
+        '@angular/compiler must be an optional peer dependency',
+      );
+      assert(
+        !Object.hasOwn(manifest.dependencies ?? {}, '@angular/compiler'),
+        '@angular/compiler must not be a runtime dependency',
       );
 
       const dependencies = Object.keys(manifest.dependencies ?? {});
@@ -336,6 +343,10 @@ try {
         const code = text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
 
         assert(!/\bfetch\(/.test(code), `dist/${file}, reachable from ./source, calls fetch`);
+        assert(
+          !/@angular\/compiler|analyze-angular-message-usage/.test(code),
+          `dist/${file}, reachable from ./source, reaches Angular analysis`,
+        );
         assert(!/from 'node:/.test(code), `dist/${file}, reachable from ./source, imports node:`);
         assert(!/\bprocess\./.test(code), `dist/${file}, reachable from ./source, uses process`);
         assert(!/\bconsole\./.test(code), `dist/${file}, reachable from ./source, uses console`);
@@ -353,6 +364,59 @@ try {
       assert(leaked.length === 0, `./source reaches ${leaked.join(', ')}`);
     },
   );
+
+  check('@etyma/tooling/angular alone reaches the optional Angular compiler', () => {
+    const manifest = manifestOf(tooling.tarball);
+    const angular = manifest.exports?.['./angular'];
+    assert(
+      angular?.types === './dist/angular.d.ts' && angular?.default === './dist/angular.js',
+      `unexpected "./angular" export: ${JSON.stringify(angular)}`,
+    );
+
+    const declarations = readFileSync(join(tooling.extracted, 'dist/angular.d.ts'), 'utf8');
+    const declarationCode = declarations.replace(/\/\*[\s\S]*?\*\//g, '');
+    assert(
+      declarations.includes('analyzeAngularMessageUsage'),
+      'dist/angular.d.ts does not declare the API',
+    );
+    assert(
+      !/@angular\/compiler|TmplAst|ParseSourceSpan|ParseError|\bAST\b/.test(declarationCode),
+      'the public Angular declarations leak compiler types',
+    );
+
+    const pending = ['angular.js'];
+    const reached = new Set();
+    let importsCompiler = false;
+    for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
+      if (reached.has(file)) continue;
+      reached.add(file);
+      const text = readFileSync(join(tooling.extracted, 'dist', file), 'utf8');
+      const code = text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+      assert(!/from 'node:/.test(code), `dist/${file}, reachable from ./angular, imports node:`);
+      assert(
+        !/\bprocess\.|\bconsole\.|\bfetch\(/.test(code),
+        `dist/${file}, reachable from ./angular, uses I/O`,
+      );
+      if (/from ['"]@angular\/compiler['"]/.test(code)) importsCompiler = true;
+      for (const [, specifier] of text.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
+    }
+    assert(importsCompiler, './angular does not reach @angular/compiler');
+
+    for (const entry of ['index.js', 'source.js', 'vite.js']) {
+      const pending = [entry];
+      const visited = new Set();
+      for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
+        if (visited.has(file)) continue;
+        visited.add(file);
+        const source = readFileSync(join(tooling.extracted, 'dist', file), 'utf8');
+        assert(
+          !/@angular\/compiler|analyze-angular-message-usage/.test(source),
+          `dist/${file}, reachable from ${entry}, reaches Angular analysis`,
+        );
+        for (const [, specifier] of source.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
+      }
+    }
+  });
 
   check(
     '@etyma/cli depends on nothing from a framework, and only @etyma/tooling among Etyma packages',
@@ -431,6 +495,16 @@ try {
     assert(
       reached.has('dist/cli.js'),
       'the packed binary startup graph does not reach the CLI dispatcher',
+    );
+
+    const analyzeCommand = readFileSync(join(cli.extracted, 'dist/commands/analyze.js'), 'utf8');
+    assert(
+      /import\(['"]@etyma\/tooling\/angular['"]\)/.test(analyzeCommand),
+      'analyze --angular does not dynamically import @etyma/tooling/angular',
+    );
+    assert(
+      !/from ['"]@etyma\/tooling\/angular['"]/.test(analyzeCommand),
+      'the analyze command statically imports the Angular analyzer',
     );
   });
 } finally {

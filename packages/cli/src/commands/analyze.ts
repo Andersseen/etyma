@@ -3,6 +3,10 @@ import { relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import { extractContractKeys } from '@etyma/tooling';
+import type {
+  AnalyzeAngularMessageUsageOptions,
+  MessageUsageAnalysis,
+} from '@etyma/tooling/angular';
 
 import { ANALYZE_HELP } from '../help.js';
 import { discoverSourceFiles } from '../io/source-files.js';
@@ -22,6 +26,7 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
         catalog: { type: 'string' },
         format: { type: 'string' },
         exclude: { type: 'string', multiple: true },
+        angular: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
       },
     });
@@ -79,7 +84,11 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
 
   let discovered;
   try {
-    discovered = await discoverSourceFiles(directoryPath, values.exclude ?? []);
+    discovered = await discoverSourceFiles(
+      directoryPath,
+      values.exclude ?? [],
+      values.angular === true,
+    );
   } catch (error) {
     return failure(`Cannot scan "${shownDirectory}": ${errorMessage(error)}`);
   }
@@ -93,15 +102,37 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
     }
   }
 
-  // Keep TypeScript out of help, validate, contract and version startup graphs.
-  const { analyzeMessageUsage } = await import('@etyma/tooling/source');
-  const analysis = analyzeMessageUsage({ keys, files });
+  // Keep TypeScript and Angular compiler out of the non-analyze startup graph. Angular is
+  // loaded only by the explicit opt-in, so ordinary analysis remains framework-free.
+  let analysis: MessageUsageAnalysis;
+  if (values.angular === true) {
+    let analyzer: {
+      analyzeAngularMessageUsage: (
+        options: AnalyzeAngularMessageUsageOptions,
+      ) => MessageUsageAnalysis;
+    };
+    try {
+      analyzer = await import('@etyma/tooling/angular');
+    } catch (error) {
+      if (isMissingAngularCompiler(error)) {
+        return failure(
+          'Angular analysis requires @angular/compiler ^21 || ^22. Install the version matching your Angular application.',
+        );
+      }
+      throw error;
+    }
+    analysis = analyzer.analyzeAngularMessageUsage({ keys, files });
+  } else {
+    const { analyzeMessageUsage } = await import('@etyma/tooling/source');
+    analysis = analyzeMessageUsage({ keys, files });
+  }
   const meta = {
     command: 'analyze' as const,
     directory: shownDirectory,
     catalog: shownCatalog,
     fileCount: files.length,
     catalogKeyCount: keys.length,
+    ...(values.angular === true ? { mode: 'angular' as const } : {}),
   };
   const output =
     format === 'json'
@@ -122,6 +153,14 @@ function displayPath(cwd: string, path: string): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isMissingAngularCompiler(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    (error.code === 'ERR_MODULE_NOT_FOUND' || error.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED')
+  );
 }
 
 function failure(message: string): CliResult {

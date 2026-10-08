@@ -23,6 +23,7 @@ export interface DiscoveredSourceFile {
 export async function discoverSourceFiles(
   directory: string,
   excludes: readonly string[],
+  includeHtml = false,
 ): Promise<DiscoveredSourceFile[]> {
   const root = resolve(directory);
   const found: DiscoveredSourceFile[] = [];
@@ -42,7 +43,11 @@ export async function discoverSourceFiles(
 
       const absolutePath = join(current, entry.name);
       const extension = extname(entry.name).toLowerCase();
-      if (!SOURCE_EXTENSIONS.has(extension) || isDeclarationFile(entry.name)) continue;
+      if (
+        !(SOURCE_EXTENSIONS.has(extension) || (includeHtml && extension === '.html')) ||
+        isDeclarationFile(entry.name)
+      )
+        continue;
 
       const path = toPosix(relative(root, absolutePath));
       if (excludes.some(pattern => matchesGlob(path, pattern))) continue;
