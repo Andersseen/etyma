@@ -28,6 +28,8 @@ describe('discoverSourceFiles', () => {
       'types/index.d.cts',
       'view.html',
       'page.astro',
+      'Page.stories.astro',
+      '.astro/generated.astro',
       'src/app.spec.ts',
       '__fixtures__/sample.ts',
       'node_modules/pkg/index.ts',
@@ -53,6 +55,11 @@ describe('discoverSourceFiles', () => {
       'ui/view.tsx',
       'z.ts',
     ]);
+    expect(
+      (await discoverSourceFiles(root, ['**/*.stories.astro'], false, true))
+        .map(file => file.path)
+        .filter(path => path.endsWith('.astro')),
+    ).toEqual(['page.astro']);
   });
 
   it('does not follow directory symlinks', async () => {

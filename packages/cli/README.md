@@ -34,7 +34,7 @@ still never touches a filesystem or a network.
 `etyma analyze` is another thin adapter: it reads one local source catalog, uses
 `extractContractKeys()` for its keys, discovers source files, and calls one analyzer. The
 default mode uses [`@etyma/tooling/source`](../tooling#analysing-message-usage-in-source); the
-explicit Angular mode uses `@etyma/tooling/angular`.
+explicit Angular and Astro modes use `@etyma/tooling/angular` and `@etyma/tooling/astro`.
 
 `@etyma/cli` depends on `@etyma/tooling` and nothing else from Etyma - not `@etyma/core`
 directly, even though catalogs are structurally what `@etyma/core`'s `MessageSource` describes.
@@ -456,7 +456,7 @@ own way to do both. Versions before 0.5 exported `runCli`, `runValidateCommand` 
 
 ```sh
 etyma analyze <directory> --catalog <source.json> \
-  [--exclude <glob> ...] [--format pretty|json] [--angular]
+  [--exclude <glob> ...] [--format pretty|json] [--angular | --astro]
 ```
 
 By default the command recursively scans `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`
@@ -476,6 +476,14 @@ Angular mode does not follow project wrappers or general data flow, analyze tran
 or scan arbitrary HTML. It does not execute code or load project configuration. The false-
 negative boundary is deliberate: a template call counts only when Etyma ownership is statically
 provable from the component class.
+
+Add `--astro` to analyze the same JS/TS files plus discovered `.astro` files. It recognizes
+proven `createAstroI18n()` bindings from `@etyma/astro` in frontmatter and checks calls in
+frontmatter, template expressions and expression attributes. The parser is loaded only in this
+mode; it uses Astro 6's optional `@astrojs/compiler` `^4` peer or Astro 7's optional
+`@astrojs/compiler-rs` `^0.5` peer.
+`--angular` and `--astro` are mutually exclusive. Astro analysis does not follow project
+wrappers, `Astro.props`, translator props or cross-component flow.
 
 Repeat `--exclude` to omit files by glob. Patterns match the discovered file path relative to
 the analyzed directory, with `/` separators, for example:

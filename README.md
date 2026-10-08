@@ -554,9 +554,9 @@ The same CLI's `etyma contract` generates the optional contract that types `t()`
 JSON source — see [Typed params](#typed-params).
 
 `etyma analyze ./src --catalog ./src/i18n/en.json` reports statically observed message keys
-and unreferenced candidates in JS/TS source; add `--angular` to include recognized Angular
-component templates. See the [CLI README](packages/cli#etyma-analyze) for discovery rules and
-limits.
+and unreferenced candidates in JS/TS source; add `--angular` for Angular templates or `--astro`
+for Astro frontmatter and template expressions. See the [CLI README](packages/cli#etyma-analyze)
+for discovery rules and limits.
 
 See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes. For
 remote catalogs, `etymaRemoteValidation` from `@etyma/tooling/vite` makes the same check part

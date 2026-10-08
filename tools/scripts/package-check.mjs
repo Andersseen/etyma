@@ -26,7 +26,7 @@ const intendedEntryPoints = {
   '@etyma/angular': ['.', './package.json'],
   '@etyma/analog': ['.', './package.json'],
   '@etyma/astro': ['.', './package.json'],
-  '@etyma/tooling': ['.', './vite', './source', './angular', './package.json'],
+  '@etyma/tooling': ['.', './vite', './source', './angular', './astro', './package.json'],
   '@etyma/cli': ['./package.json'],
 };
 
@@ -362,6 +362,10 @@ try {
 
       const leaked = [...reached].filter(file => /vite|remote/.test(file));
       assert(leaked.length === 0, `./source reaches ${leaked.join(', ')}`);
+      assert(
+        ![...reached].some(file => /astro|angular/.test(file)),
+        `./source reaches framework analyzers: ${[...reached].filter(file => /astro|angular/.test(file)).join(', ')}`,
+      );
     },
   );
 
@@ -401,6 +405,10 @@ try {
       for (const [, specifier] of text.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
     }
     assert(importsCompiler, './angular does not reach @angular/compiler');
+    assert(
+      ![...reached].some(file => /astro/.test(file)),
+      `./angular reaches Astro analysis: ${[...reached].filter(file => /astro/.test(file)).join(', ')}`,
+    );
 
     for (const entry of ['index.js', 'source.js', 'vite.js']) {
       const pending = [entry];
@@ -416,6 +424,63 @@ try {
         for (const [, specifier] of source.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
       }
     }
+  });
+
+  check('@etyma/tooling/astro alone reaches the public Astro parser', () => {
+    const manifest = manifestOf(tooling.tarball);
+    const astro = manifest.exports?.['./astro'];
+    assert(
+      astro?.types === './dist/astro.d.ts' && astro?.default === './dist/astro.js',
+      `unexpected "./astro" export: ${JSON.stringify(astro)}`,
+    );
+    assert(
+      manifest.peerDependencies?.['@astrojs/compiler'] === '^4.0.0' &&
+        manifest.peerDependenciesMeta?.['@astrojs/compiler']?.optional === true &&
+        manifest.peerDependencies?.['@astrojs/compiler-rs'] === '^0.5.0' &&
+        manifest.peerDependenciesMeta?.['@astrojs/compiler-rs']?.optional === true,
+      'Astro compiler APIs must be optional peers so non-Astro consumers do not install them',
+    );
+    assert(
+      !Object.hasOwn(manifest.dependencies ?? {}, '@astrojs/compiler') &&
+        !Object.hasOwn(manifest.dependencies ?? {}, '@astrojs/compiler-rs'),
+      'Astro compilers must not be dependencies of the generic @etyma/tooling package',
+    );
+
+    const declarations = readFileSync(join(tooling.extracted, 'dist/astro.d.ts'), 'utf8');
+    assert(
+      declarations.includes('analyzeAstroMessageUsage'),
+      'dist/astro.d.ts does not declare the API',
+    );
+    assert(
+      !/@astrojs\/compiler|RootNode|ExpressionNode|DiagnosticLocation/.test(declarations),
+      'the public Astro declarations leak parser types',
+    );
+
+    const pending = ['astro.js'];
+    const reached = new Set();
+    let importsParser = false;
+    for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
+      if (reached.has(file)) continue;
+      reached.add(file);
+      const text = readFileSync(join(tooling.extracted, 'dist', file), 'utf8');
+      const code = text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+      assert(!/from 'node:/.test(code), `dist/${file}, reachable from ./astro, imports node:`);
+      assert(
+        !/\bprocess\.|\bconsole\.|\bfetch\(/.test(code),
+        `dist/${file}, reachable from ./astro, uses I/O`,
+      );
+      if (/import\('@astrojs\/(?:compiler|compiler-rs)'\)/.test(code)) importsParser = true;
+      assert(
+        !/@angular\/compiler|analyze-angular-message-usage/.test(code),
+        `dist/${file}, reachable from ./astro, reaches Angular analysis`,
+      );
+      for (const [, specifier] of text.matchAll(/from '\.\/([^']+)'/g)) pending.push(specifier);
+    }
+    assert(importsParser, './astro does not reach @astrojs/compiler');
+    assert(
+      ![...reached].some(file => /angular/.test(file)),
+      `./astro reaches Angular analysis: ${[...reached].filter(file => /angular/.test(file)).join(', ')}`,
+    );
   });
 
   check(
@@ -501,6 +566,10 @@ try {
     assert(
       /import\(['"]@etyma\/tooling\/angular['"]\)/.test(analyzeCommand),
       'analyze --angular does not dynamically import @etyma/tooling/angular',
+    );
+    assert(
+      /import\(['"]@etyma\/tooling\/astro['"]\)/.test(analyzeCommand),
+      'analyze --astro does not dynamically import @etyma/tooling/astro',
     );
     assert(
       !/from ['"]@etyma\/tooling\/angular['"]/.test(analyzeCommand),

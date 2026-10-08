@@ -7,6 +7,7 @@ import type {
   AnalyzeAngularMessageUsageOptions,
   MessageUsageAnalysis,
 } from '@etyma/tooling/angular';
+import type { AnalyzeAstroMessageUsageOptions } from '@etyma/tooling/astro';
 
 import { ANALYZE_HELP } from '../help.js';
 import { discoverSourceFiles } from '../io/source-files.js';
@@ -27,6 +28,7 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
         format: { type: 'string' },
         exclude: { type: 'string', multiple: true },
         angular: { type: 'boolean' },
+        astro: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
       },
     });
@@ -36,6 +38,9 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
 
   const { values, positionals } = parsed;
   if (values.help) return { exitCode: EXIT_VALID, stdout: ANALYZE_HELP, stderr: '' };
+  if (values.angular === true && values.astro === true) {
+    return failure('Options --angular and --astro are mutually exclusive.');
+  }
 
   const [directoryArg, ...extra] = positionals;
   if (directoryArg === undefined) return failure('Missing required argument <directory>.');
@@ -88,6 +93,7 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
       directoryPath,
       values.exclude ?? [],
       values.angular === true,
+      values.astro === true,
     );
   } catch (error) {
     return failure(`Cannot scan "${shownDirectory}": ${errorMessage(error)}`);
@@ -102,8 +108,7 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
     }
   }
 
-  // Keep TypeScript and Angular compiler out of the non-analyze startup graph. Angular is
-  // loaded only by the explicit opt-in, so ordinary analysis remains framework-free.
+  // Framework parsers are loaded only by their explicit opt-in modes.
   let analysis: MessageUsageAnalysis;
   if (values.angular === true) {
     let analyzer: {
@@ -122,6 +127,23 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
       throw error;
     }
     analysis = analyzer.analyzeAngularMessageUsage({ keys, files });
+  } else if (values.astro === true) {
+    let analyzer: {
+      analyzeAstroMessageUsage: (
+        options: AnalyzeAstroMessageUsageOptions,
+      ) => Promise<MessageUsageAnalysis>;
+    };
+    try {
+      analyzer = await import('@etyma/tooling/astro');
+      analysis = await analyzer.analyzeAstroMessageUsage({ keys, files });
+    } catch (error) {
+      if (isMissingModule(error)) {
+        return failure(
+          'Astro analysis requires @astrojs/compiler ^4 (Astro 6) or @astrojs/compiler-rs ^0.5 (Astro 7). Install Astro or the matching parser.',
+        );
+      }
+      throw error;
+    }
   } else {
     const { analyzeMessageUsage } = await import('@etyma/tooling/source');
     analysis = analyzeMessageUsage({ keys, files });
@@ -133,6 +155,7 @@ export async function runAnalyzeCommand(argv: readonly string[], cwd: string): P
     fileCount: files.length,
     catalogKeyCount: keys.length,
     ...(values.angular === true ? { mode: 'angular' as const } : {}),
+    ...(values.astro === true ? { mode: 'astro' as const } : {}),
   };
   const output =
     format === 'json'
@@ -156,6 +179,14 @@ function errorMessage(error: unknown): string {
 }
 
 function isMissingAngularCompiler(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    (error.code === 'ERR_MODULE_NOT_FOUND' || error.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED')
+  );
+}
+
+function isMissingModule(error: unknown): boolean {
   return (
     error instanceof Error &&
     'code' in error &&

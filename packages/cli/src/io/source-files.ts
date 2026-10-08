@@ -24,6 +24,7 @@ export async function discoverSourceFiles(
   directory: string,
   excludes: readonly string[],
   includeHtml = false,
+  includeAstro = false,
 ): Promise<DiscoveredSourceFile[]> {
   const root = resolve(directory);
   const found: DiscoveredSourceFile[] = [];
@@ -44,7 +45,11 @@ export async function discoverSourceFiles(
       const absolutePath = join(current, entry.name);
       const extension = extname(entry.name).toLowerCase();
       if (
-        !(SOURCE_EXTENSIONS.has(extension) || (includeHtml && extension === '.html')) ||
+        !(
+          SOURCE_EXTENSIONS.has(extension) ||
+          (includeHtml && extension === '.html') ||
+          (includeAstro && extension === '.astro')
+        ) ||
         isDeclarationFile(entry.name)
       )
         continue;

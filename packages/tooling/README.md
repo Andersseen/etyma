@@ -34,6 +34,7 @@ re-implementing catalog validation a second way:
 | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `validateCatalogs()` (main entry)                         | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                                           |
 | `analyzeMessageUsage()` (`@etyma/tooling/source`)         | Static JS/TS analysis: catalog keys + source text in, used, unreferenced and unknown keys out. In memory; parses with TypeScript. |
+| `analyzeAstroMessageUsage()` (`@etyma/tooling/astro`)     | JS/TS plus Astro frontmatter and template expressions, in memory; parses `.astro` with Astro's compiler.                          |
 | `analyzeAngularMessageUsage()` (`@etyma/tooling/angular`) | Combines JS/TS analysis with provable Angular component template references; parses with the optional Angular compiler peer.      |
 | `etymaRemoteContract()` (`@etyma/tooling/vite`)           | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables.          |
 | `etymaRemoteValidation()` (`@etyma/tooling/vite`)         | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.                   |
@@ -392,6 +393,52 @@ never throw: one malformed file produces a finding and the other files are still
 
 The result does not depend on the order of `keys` or `files`. Duplicate keys collapse.
 
+### Astro source analysis
+
+`@etyma/tooling/astro` is the opt-in Astro frontend. It analyzes ordinary JS/TS files with
+the same syntax engine and `.astro` files with Astro's public compiler parser:
+
+```ts
+import { analyzeAstroMessageUsage } from '@etyma/tooling/astro';
+
+const result = await analyzeAstroMessageUsage({
+  keys: ['home.title', 'actions.save'],
+  files: [
+    {
+      path: 'src/pages/index.astro',
+      source: `---
+import { createAstroI18n } from '@etyma/astro';
+const etyma = await createAstroI18n(Astro, i18n);
+const title = etyma.t('home.title');
+---
+<h1>{etyma.t('home.title')}</h1>
+<button aria-label={etyma.parts('actions.save')} />`,
+    },
+  ],
+});
+```
+
+The API is async because the public Astro parser is async. It takes in-memory strings and
+does not read files, inspect `cwd`, load Astro configuration or start a build. Importing this
+subpath alone loads the parser; the main tooling and the `source` and `angular` subpaths stay
+independent. Astro 6 provides `@astrojs/compiler` `^4`; Astro 7 provides
+`@astrojs/compiler-rs` `^0.5`. Both are optional peers; install Astro or its matching parser
+when running this frontend.
+
+Both frontmatter and parsed template expressions, including attributes, use the ordinary
+source engine's canonical provenance rules. A call counts only when the local binding comes
+from `createAstroI18n` imported from `@etyma/astro`. Import aliases and namespace imports,
+`etyma.t()`, `etyma.parts()`, a simple `const t = etyma.t` alias, and direct destructuring of
+`t`/`parts` are recognized. Static string and no-substitution template literal keys are
+checked; other key expressions produce the same `source.dynamic-key` warning. Unknown static
+keys produce `source.unknown-key` errors.
+
+This remains conservative: wrappers, imported translator helpers, props (including
+`Astro.props`), cross-component flow and general dataflow are not followed. A local variable
+named `etyma` or `t` without proven factory provenance is ignored. Unreferenced keys combine
+JS/TS and Astro usages and remain candidates rather than deletion advice. `has()` is not
+counted because the shared engine treats it as a key probe, not a rendered message.
+
 ### Angular component templates
 
 `@etyma/tooling/angular` is a separate, pure in-memory frontend. It accepts the same `SourceFile`
@@ -733,12 +780,11 @@ Deliberately not implemented yet:
   [recommended setup](#recommended-setup-for-a-remote-catalog-project) for sharing values.
 - **No remote watching.** `etymaRemoteContract` and `etymaRemoteValidation` each run once per
   dev-server start and once per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
-- **Source analysis is JS/TS only, and static.** `@etyma/tooling/source` finds literal keys
-  in recognised Etyma calls; it does not read Angular or Astro templates, follow wrappers or
-  dataflow, extract source messages or detect hardcoded copy. See
-  [Phase 1 limits](#phase-1-limits). It reports `unreferenced` keys as candidates, not as
-  safe to delete. The [`etyma analyze` CLI command](../cli#etyma-analyze) supplies local files
-  and presents this result without changing the analyzer's semantics.
+- **Source analysis is static.** `@etyma/tooling/source`, `/angular` and `/astro` find literal
+  keys in recognised Etyma calls, but do not follow wrappers or general dataflow, extract
+  source messages or detect hardcoded copy. See [Phase 1 limits](#phase-1-limits). It reports
+  `unreferenced` keys as candidates, not as safe to delete. The [`etyma analyze` CLI command](../cli#etyma-analyze)
+  supplies local files and presents this result without changing the analyzer's semantics.
 - **No full type-checking of `:function` options.** Variable function parity compares
   function _names_ directly annotating a shared variable; it does not compare option values
   (`style=long` vs. `style=short`), nor does it resolve a variable's type through an arbitrary

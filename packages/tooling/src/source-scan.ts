@@ -25,6 +25,11 @@ export interface SourceScan {
   readonly parseProblems: readonly ParseProblem[];
 }
 
+export type SourcePositionMapper = (offset: number) => {
+  readonly line: number;
+  readonly column: number;
+};
+
 /**
  * What an expression evaluates to, as far as this scanner can prove from syntax alone.
  *
@@ -89,7 +94,12 @@ class Scope {
  * prove is deliberately narrow — see the package README for the exact patterns — and anything
  * it cannot prove is left out rather than guessed.
  */
-export function scanSource(path: string, source: string, parsedFile?: unknown): SourceScan {
+export function scanSource(
+  path: string,
+  source: string,
+  parsedFile?: unknown,
+  mapPosition?: SourcePositionMapper,
+): SourceScan {
   const file =
     (parsedFile as ts.SourceFile | undefined) ??
     ts.createSourceFile(
@@ -104,7 +114,9 @@ export function scanSource(path: string, source: string, parsedFile?: unknown): 
   const classFields = new Map<ts.Node, Map<string, Kind>>();
 
   const locate = (node: ts.Node) => {
-    const { line, character } = file.getLineAndCharacterOfPosition(node.getStart(file));
+    const offset = node.getStart(file);
+    if (mapPosition !== undefined) return mapPosition(offset);
+    const { line, character } = file.getLineAndCharacterOfPosition(offset);
     return { line: line + 1, column: character + 1 };
   };
 
@@ -377,7 +389,7 @@ export function scanSource(path: string, source: string, parsedFile?: unknown): 
     visit(child, moduleScope);
   });
 
-  return { references, parseProblems: parseProblemsOf(file) };
+  return { references, parseProblems: parseProblemsOf(file, mapPosition) };
 }
 
 /**
@@ -500,17 +512,21 @@ function scriptKindOf(path: string): ts.ScriptKind {
  * them is building a whole program, which this scanner deliberately never does. The
  * malformed-source tests fail if a TypeScript upgrade ever stops providing the field.
  */
-function parseProblemsOf(file: ts.SourceFile): readonly ParseProblem[] {
+function parseProblemsOf(
+  file: ts.SourceFile,
+  mapPosition?: SourcePositionMapper,
+): readonly ParseProblem[] {
   const { parseDiagnostics } = file as unknown as {
     readonly parseDiagnostics?: readonly ts.DiagnosticWithLocation[];
   };
 
   return (parseDiagnostics ?? []).map(diagnostic => {
+    const mapped = mapPosition?.(diagnostic.start);
     const { line, character } = file.getLineAndCharacterOfPosition(diagnostic.start);
 
     return {
-      line: line + 1,
-      column: character + 1,
+      line: mapped?.line ?? line + 1,
+      column: mapped?.column ?? character + 1,
       message: ts.flattenDiagnosticMessageText(diagnostic.messageText, ' '),
     };
   });
