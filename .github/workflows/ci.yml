@@ -151,8 +151,13 @@ jobs:
       # serves it through Wrangler, so these assertions run against production output in
       # the runtime it is deployed to - including the raw-HTTP checks that no browser
       # could stand in for.
-      - name: Run Playwright
-        run: pnpm run e2e
+      # Each suite starts its own Cloudflare Pages worker. Running them one at a time
+      # avoids competing Wrangler/Workerd processes on the small hosted runner.
+      - name: Run website Playwright
+        run: pnpm --filter @etyma/www run e2e
+
+      - name: Run playground Playwright
+        run: pnpm --filter @etyma/playground run e2e
 
       - name: Upload the report
         if: ${{ !cancelled() }}
