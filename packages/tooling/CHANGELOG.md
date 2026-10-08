@@ -1,5 +1,11 @@
 # @etyma/tooling
 
+## 0.8.0
+
+### Minor Changes
+
+- [#136](https://github.com/Andersseen/etyma/pull/136) [`49c63ea`](https://github.com/Andersseen/etyma/commit/49c63eafda326fea33983c5afeb325eb34be1846) Thanks [@Andersseen](https://github.com/Andersseen)! - Add opt-in Astro `.astro` source analysis through `@etyma/tooling/astro` and `etyma analyze --astro`.
+
 ## 0.7.0
 
 ### Minor Changes
