@@ -3,6 +3,7 @@ import { scanSource } from './source-scan.js';
 import type {
   AnalyzeMessageUsageOptions,
   MessageUsageAnalysis,
+  SourceFile,
   SourceDiagnostic,
 } from './source-types.js';
 
@@ -22,12 +23,23 @@ import type {
  * The result does not depend on the order of `keys` or `files`.
  */
 export function analyzeMessageUsage(options: AnalyzeMessageUsageOptions): MessageUsageAnalysis {
-  const catalog = new Set(options.keys);
-  const used = new Set<string>();
+  const collected = collectMessageUsage(options.files);
+  return finalizeMessageUsage(options.keys, collected.references, collected.diagnostics);
+}
+
+/** Shared source-syntax frontend for the framework-specific analyzer; not a package export. */
+export function collectMessageUsage(
+  files: readonly SourceFile[],
+  parsedFileForPath?: (path: string) => unknown,
+): {
+  readonly references: readonly MessageUsageReference[];
+  readonly diagnostics: readonly SourceDiagnostic[];
+} {
+  const references: MessageUsageReference[] = [];
   const diagnostics: SourceDiagnostic[] = [];
 
-  for (const { path, source } of options.files) {
-    const scan = scanSource(path, source);
+  for (const { path, source } of files) {
+    const scan = scanSource(path, source, parsedFileForPath?.(path));
 
     for (const problem of scan.parseProblems) {
       diagnostics.push({
@@ -40,29 +52,55 @@ export function analyzeMessageUsage(options: AnalyzeMessageUsageOptions): Messag
       });
     }
 
-    for (const { key, line, column } of scan.references) {
-      if (key === undefined) {
-        diagnostics.push({
-          code: 'source.dynamic-key',
-          severity: 'warning',
-          path,
-          line,
-          column,
-          message: 'The message key is not a string literal, so it cannot be checked statically.',
-        });
-      } else if (catalog.has(key)) {
-        used.add(key);
-      } else {
-        diagnostics.push({
-          code: 'source.unknown-key',
-          severity: 'error',
-          path,
-          line,
-          column,
-          key,
-          message: `The message key "${key}" is not defined in the catalog.`,
-        });
-      }
+    references.push(...scan.references.map(reference => ({ path, ...reference })));
+  }
+
+  return { references, diagnostics };
+}
+
+/** Plain semantic reference shared by syntax-specific analyzers. */
+export interface MessageUsageReference {
+  readonly path: string;
+  readonly key: string | undefined;
+  readonly line: number;
+  readonly column: number;
+}
+
+/**
+ * The one catalog lookup, deduplication, unreferenced and ordering path for every analyzer.
+ * Kept as a tooling internal; syntax frontends feed it plain references and diagnostics.
+ */
+export function finalizeMessageUsage(
+  keys: readonly string[],
+  references: readonly MessageUsageReference[],
+  initialDiagnostics: readonly SourceDiagnostic[] = [],
+): MessageUsageAnalysis {
+  const catalog = new Set(keys);
+  const used = new Set<string>();
+  const diagnostics = [...initialDiagnostics];
+
+  for (const { path, key, line, column } of references) {
+    if (key === undefined) {
+      diagnostics.push({
+        code: 'source.dynamic-key',
+        severity: 'warning',
+        path,
+        line,
+        column,
+        message: 'The message key is not a string literal, so it cannot be checked statically.',
+      });
+    } else if (catalog.has(key)) {
+      used.add(key);
+    } else {
+      diagnostics.push({
+        code: 'source.unknown-key',
+        severity: 'error',
+        path,
+        line,
+        column,
+        key,
+        message: `The message key "${key}" is not defined in the catalog.`,
+      });
     }
   }
 

@@ -6,6 +6,7 @@ export interface AnalyzeMeta {
   readonly catalog: string;
   readonly fileCount: number;
   readonly catalogKeyCount: number;
+  readonly mode?: 'angular';
 }
 
 /** Adds CLI metadata while preserving the analyzer's result fields and diagnostic objects. */
@@ -41,7 +42,7 @@ export function formatAnalyzePretty(
   const warnings = analysis.diagnostics.length - errors;
   lines.push(
     '',
-    `✓ ${summary.fileCount} ${plural(summary.fileCount, 'source file')} analyzed`,
+    `✓ ${summary.fileCount} ${plural(summary.fileCount, 'file')} analyzed`,
     `✓ ${analysis.used.length} ${plural(analysis.used.length, 'statically referenced key')}`,
     `○ ${analysis.unreferenced.length} ${plural(analysis.unreferenced.length, 'unreferenced candidate')}`,
     `⚠ ${warnings} ${plural(warnings, 'warning')}`,

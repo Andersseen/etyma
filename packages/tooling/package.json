@@ -39,6 +39,10 @@
       "types": "./dist/source.d.ts",
       "default": "./dist/source.js"
     },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "default": "./dist/angular.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -59,7 +63,16 @@
     "messageformat": "4.0.0",
     "typescript": "5.9.3"
   },
+  "peerDependencies": {
+    "@angular/compiler": "^21.0.0 || ^22.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular/compiler": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@angular/compiler": "21.2.25",
     "@types/node": "26.6.4",
     "vite": "8.3.2",
     "vitest": "5.0.3"

@@ -66,4 +66,19 @@ describe('discoverSourceFiles', () => {
       await rm(outside, { recursive: true, force: true });
     }
   });
+
+  it('includes HTML only when requested and applies excludes to templates', async () => {
+    root = await mkdtemp(join(tmpdir(), 'etyma-source-files-'));
+    await writeFile(join(root, 'app.ts'), '');
+    await writeFile(join(root, 'app.html'), '');
+
+    expect((await discoverSourceFiles(root, [])).map(file => file.path)).toEqual(['app.ts']);
+    expect((await discoverSourceFiles(root, [], true)).map(file => file.path)).toEqual([
+      'app.html',
+      'app.ts',
+    ]);
+    expect((await discoverSourceFiles(root, ['**/*.html'], true)).map(file => file.path)).toEqual([
+      'app.ts',
+    ]);
+  });
 });

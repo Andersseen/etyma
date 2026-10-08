@@ -1,11 +1,11 @@
 import type { DiagnosticSeverity } from './types.js';
 
 /**
- * One JavaScript or TypeScript file, already in memory.
+ * One source file, already in memory. Angular analysis also accepts HTML template files.
  *
- * `path` is a label and nothing else: it is echoed back on diagnostics exactly as supplied
- * and never opened, normalised or resolved. Its extension picks the parser mode (`.tsx`,
- * `.jsx`, ...); see {@link analyzeMessageUsage}.
+ * `path` is an in-memory label. `analyzeMessageUsage` echoes it exactly and never opens or
+ * resolves it; Angular analysis also uses it to associate a component's `templateUrl` with
+ * another supplied file. Its extension picks the source parser mode (`.tsx`, `.jsx`, ...).
  */
 export interface SourceFile {
   readonly path: string;
@@ -28,11 +28,11 @@ export interface AnalyzeMessageUsageOptions {
  * - `source.dynamic-key` — a recognised Etyma call passes a key that is not a string
  *   literal, so its value cannot be known statically. A `'warning'`: dynamic keys are
  *   legitimate, the analysis just cannot follow them.
- * - `source.parse-error` — the file has a syntax error. An `'error'`: whatever the file
- *   uses may be missing from the result.
+ * - `source.parse-error` — a source file or Angular template has a syntax error. An `'error'`:
+ *   whatever it uses may be missing from the result.
  */
 export type SourceDiagnosticCode =
-  'source.unknown-key' | 'source.dynamic-key' | 'source.parse-error';
+  'source.unknown-key' | 'source.dynamic-key' | 'source.parse-error' | 'source.template-missing';
 
 /**
  * One finding in one source file.
@@ -49,6 +49,8 @@ export interface SourceDiagnostic {
   readonly column: number;
   /** The literal key, for `source.unknown-key`. */
   readonly key?: string;
+  /** The normalized in-memory path requested by a component's `templateUrl`. */
+  readonly templatePath?: string;
   readonly message: string;
 }
 
@@ -59,7 +61,7 @@ export interface SourceDiagnostic {
  * - `unreferenced` — catalog keys that analysis did **not** observe being referenced,
  *   sorted. That is a list of candidates to look at, never proof a key is safe to delete:
  *   the analysis is deliberately conservative and misses wrappers, translators passed as
- *   props, keys built at runtime and templates.
+ *   props, keys built at runtime and Angular template bindings it cannot prove.
  * - `diagnostics` — sorted by path, line, column, code, key, then message.
  */
 export interface MessageUsageAnalysis {

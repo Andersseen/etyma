@@ -82,7 +82,73 @@ describe('runAnalyzeCommand', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('○ 3 unreferenced candidates');
-    expect(result.stdout).toContain('✓ 0 source files analyzed');
+    expect(result.stdout).toContain('✓ 0 files analyzed');
+  });
+
+  it('combines source and external-template references in opt-in Angular mode', async () => {
+    const { cwd } = await fixture();
+    await writeFile(
+      join(cwd, 'src/app.ts'),
+      `import { Component } from '@angular/core';\n` +
+        `import { injectT } from '@etyma/angular';\n` +
+        `@Component({ templateUrl: './app.html' })\n` +
+        `export class App { readonly t = injectT(definition); }\n` +
+        `const t = injectT(definition); t('nav.docs');`,
+    );
+    await writeFile(
+      join(cwd, 'src/app.html'),
+      `{{ t('nav.home') }} {{ t('nav.typo') }} {{ t(key) }}`,
+    );
+
+    const result = await runAnalyzeCommand(
+      ['src', '--catalog', 'i18n/en.json', '--angular', '--format', 'json'],
+      cwd,
+    );
+    const output = JSON.parse(result.stdout) as {
+      used: string[];
+      unreferenced: string[];
+      diagnostics: { code: string; severity: string; path: string }[];
+      meta: { mode?: string; fileCount: number };
+    };
+
+    expect(result.exitCode).toBe(1);
+    expect(output.used).toEqual(['nav.docs', 'nav.home']);
+    expect(output.unreferenced).toEqual(['footer.rights']);
+    expect(output.diagnostics).toMatchObject([
+      { code: 'source.unknown-key', severity: 'error', path: 'app.html' },
+      { code: 'source.dynamic-key', severity: 'warning', path: 'app.html' },
+    ]);
+    expect(output.meta).toMatchObject({ mode: 'angular', fileCount: 2 });
+  });
+
+  it('applies excludes to external templates in Angular mode', async () => {
+    const { cwd } = await fixture();
+    await writeFile(
+      join(cwd, 'src/app.ts'),
+      `import { Component } from '@angular/core';\n` +
+        `import { injectT } from '@etyma/angular';\n` +
+        `@Component({ templateUrl: './app.html' })\n` +
+        `export class App { readonly t = injectT(definition); }`,
+    );
+    await writeFile(join(cwd, 'src/app.html'), `{{ t('nav.home') }}`);
+
+    const result = await runAnalyzeCommand(
+      [
+        'src',
+        '--catalog',
+        'i18n/en.json',
+        '--angular',
+        '--exclude',
+        '**/*.html',
+        '--format',
+        'json',
+      ],
+      cwd,
+    );
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout).diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'source.template-missing', templatePath: 'app.html' }),
+    );
   });
 
   it('reports operational and usage failures with exit 2', async () => {

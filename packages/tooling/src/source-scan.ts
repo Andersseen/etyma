@@ -89,14 +89,16 @@ class Scope {
  * prove is deliberately narrow — see the package README for the exact patterns — and anything
  * it cannot prove is left out rather than guessed.
  */
-export function scanSource(path: string, source: string): SourceScan {
-  const file = ts.createSourceFile(
-    path,
-    source,
-    ts.ScriptTarget.Latest,
-    /* setParentNodes: needed to resolve `this` */ true,
-    scriptKindOf(path),
-  );
+export function scanSource(path: string, source: string, parsedFile?: unknown): SourceScan {
+  const file =
+    (parsedFile as ts.SourceFile | undefined) ??
+    ts.createSourceFile(
+      path,
+      source,
+      ts.ScriptTarget.Latest,
+      /* setParentNodes: needed to resolve `this` */ true,
+      scriptKindOf(path),
+    );
 
   const references: KeyReference[] = [];
   const classFields = new Map<ts.Node, Map<string, Kind>>();

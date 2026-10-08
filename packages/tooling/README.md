@@ -30,14 +30,15 @@ At its centre is a **programmatic validation engine** with no filesystem or netw
 its own. Everything else calls that engine rather than
 re-implementing catalog validation a second way:
 
-| API                                               | What it is                                                                                                                        |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `validateCatalogs()` (main entry)                 | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                                           |
-| `analyzeMessageUsage()` (`@etyma/tooling/source`) | Static JS/TS analysis: catalog keys + source text in, used, unreferenced and unknown keys out. In memory; parses with TypeScript. |
-| `etymaRemoteContract()` (`@etyma/tooling/vite`)   | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables.          |
-| `etymaRemoteValidation()` (`@etyma/tooling/vite`) | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.                   |
-| [`etyma validate`](../cli) (`@etyma/cli`)         | The same engine from a terminal or CI job, for a local directory or a remote URL template.                                        |
-| [`etyma contract`](../cli) (`@etyma/cli`)         | Typed contract generation for a local JSON source catalog, with the same functions `etymaRemoteContract` uses.                    |
+| API                                                       | What it is                                                                                                                        |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `validateCatalogs()` (main entry)                         | The pure engine: catalog objects in, diagnostics out. No I/O, no `process`, no console.                                           |
+| `analyzeMessageUsage()` (`@etyma/tooling/source`)         | Static JS/TS analysis: catalog keys + source text in, used, unreferenced and unknown keys out. In memory; parses with TypeScript. |
+| `analyzeAngularMessageUsage()` (`@etyma/tooling/angular`) | Combines JS/TS analysis with provable Angular component template references; parses with the optional Angular compiler peer.      |
+| `etymaRemoteContract()` (`@etyma/tooling/vite`)           | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables.          |
+| `etymaRemoteValidation()` (`@etyma/tooling/vite`)         | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.                   |
+| [`etyma validate`](../cli) (`@etyma/cli`)                 | The same engine from a terminal or CI job, for a local directory or a remote URL template.                                        |
+| [`etyma contract`](../cli) (`@etyma/cli`)                 | Typed contract generation for a local JSON source catalog, with the same functions `etymaRemoteContract` uses.                    |
 
 ## Install
 
@@ -376,11 +377,12 @@ read — no `tsconfig`, no type checker, no module resolution, and nothing is ex
 - **`diagnostics`** — sorted by path, line, column, code, key, then message. `line` and
   `column` are 1-based (`column` in UTF-16 code units) and point at the key argument.
 
-| `code`               | `severity` | Meaning                                                                                     |
-| -------------------- | ---------- | ------------------------------------------------------------------------------------------- |
-| `source.unknown-key` | `error`    | A recognised call passes a literal key the catalog does not define. `key` holds it.         |
-| `source.dynamic-key` | `warning`  | A recognised call passes something that is not a string literal. Legal; just not checkable. |
-| `source.parse-error` | `error`    | The file has a syntax error. The file is still analysed as far as the parser recovers.      |
+| `code`                    | `severity` | Meaning                                                                                     |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `source.unknown-key`      | `error`    | A recognised call passes a literal key the catalog does not define. `key` holds it.         |
+| `source.dynamic-key`      | `warning`  | A recognised call passes something that is not a string literal. Legal; just not checkable. |
+| `source.parse-error`      | `error`    | The file has a syntax error. The file is still analysed as far as the parser recovers.      |
+| `source.template-missing` | `error`    | A recognized Angular component references an external template not supplied in `files`.     |
 
 Source diagnostics are their own type, `SourceDiagnostic`, because they locate a finding by
 `path`, `line` and `column` where a `CatalogDiagnostic` uses `locale` and `key`; they share
@@ -389,6 +391,51 @@ including a parse error's, which paraphrases the parser — so switch on `code`.
 never throw: one malformed file produces a finding and the other files are still analysed.
 
 The result does not depend on the order of `keys` or `files`. Duplicate keys collapse.
+
+### Angular component templates
+
+`@etyma/tooling/angular` is a separate, pure in-memory frontend. It accepts the same `SourceFile`
+shape and `MessageUsageAnalysis` result as the source subpath; `.html` strings are supplied by
+the caller alongside TS/JS strings:
+
+```ts
+import { analyzeAngularMessageUsage } from '@etyma/tooling/angular';
+
+const result = analyzeAngularMessageUsage({
+  keys: ['nav.home', 'nav.docs'],
+  files: [
+    {
+      path: 'src/nav.ts',
+      source: `import { Component } from '@angular/core';
+import { injectT } from '@etyma/angular';
+@Component({ templateUrl: './nav.html' })
+export class Nav { readonly t = injectT(definition); }`,
+    },
+    { path: 'src/nav.html', source: `{{ t('nav.home') }}` },
+  ],
+});
+```
+
+It recognizes `@Component` only through an import binding from `@angular/core` (including
+aliases and namespace imports). It analyzes static inline `template` strings and in-memory
+`templateUrl` files associated with those components. A template call is attributed only when
+the component class proves the binding through a field initialized by `injectT()` or
+`injectI18n()`, including imported aliases, or a simple `readonly t = this.i18n.t` field
+derived from an `injectI18n()` field. `i18n.t()` and `i18n.parts()` are recognized.
+
+Project wrappers such as `injectAppI18n()`, arbitrary field/data flow, translation pipes and
+unowned HTML are intentionally not analyzed. Escaped inline string literals are skipped when
+source offsets cannot be mapped exactly. Dynamic keys use `source.dynamic-key`; unknown literal
+keys use `source.unknown-key`. Template syntax errors use `source.parse-error`, and an absent
+statically referenced external template uses `source.template-missing`. Locations in external
+HTML point into that file; ordinary inline template strings map back into the component `.ts`.
+The result's `used`, `unreferenced` and `diagnostics` are finalized by the same algorithm as the
+JS/TS analyzer.
+
+The subpath alone imports `@angular/compiler`. It is an optional peer dependency with range
+`^21.0.0 || ^22.0.0`; the main tooling entry and `@etyma/tooling/source` do not load it. Install
+the compiler version matching the Angular application when using this API. No filesystem,
+glob, compiler program, type checker, `tsconfig` discovery or code execution is used.
 
 ### What is recognised
 
