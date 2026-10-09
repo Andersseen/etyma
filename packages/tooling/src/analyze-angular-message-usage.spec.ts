@@ -81,6 +81,34 @@ export class Nav {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('follows a project-local Angular factory wrapper for inline and external templates', () => {
+    const result = analyze([
+      {
+        path: 'src/i18n/inject.ts',
+        source: `import { injectI18n } from '@etyma/angular';\nexport const injectAppI18n = () => injectI18n(definition);`,
+      },
+      {
+        path: 'src/nav.ts',
+        source:
+          `import { Component } from '@angular/core';\n` +
+          `import { injectAppI18n } from './i18n/inject.js';\n` +
+          `@Component({ template: "{{ i18n.t('nav.home') }}" })\n` +
+          `export class Nav { readonly i18n = injectAppI18n(); }`,
+      },
+      {
+        path: 'src/footer.ts',
+        source:
+          `import { Component } from '@angular/core';\n` +
+          `import { injectAppI18n } from './i18n/inject';\n` +
+          `@Component({ templateUrl: './footer.html' })\n` +
+          `export class Footer { readonly i18n = injectAppI18n(); }`,
+      },
+      { path: 'src/footer.html', source: `{{ i18n.parts('rich.message') }}` },
+    ]);
+    expect(result.used).toEqual(['nav.home', 'rich.message']);
+    expect(result.diagnostics).toEqual([]);
+  });
+
   it('recognizes namespace imports and aliased injectT fields by their import bindings', () => {
     const result = analyze([
       {

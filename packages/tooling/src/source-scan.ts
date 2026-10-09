@@ -1,4 +1,6 @@
 import ts from 'typescript';
+import { CANONICAL_FACTORIES } from './source-provenance.js';
+import type { ProjectProvenance, ProvenanceSummary } from './source-provenance.js';
 
 /**
  * One place a recognised Etyma call passes a message key. `key` is the literal's value, or
@@ -45,18 +47,6 @@ type Kind = 'callable' | 'i18n' | 'translator';
  * binding an import creates, never the name — `import { injectT as useT }` works, and a
  * function called `injectT` from anywhere else does not.
  */
-const FACTORIES: ReadonlyMap<string, ReadonlyMap<string, Kind>> = new Map([
-  [
-    '@etyma/angular',
-    new Map<string, Kind>([
-      ['injectT', 'callable'],
-      ['injectI18n', 'i18n'],
-    ]),
-  ],
-  ['@etyma/astro', new Map<string, Kind>([['createAstroI18n', 'i18n']])],
-  ['@etyma/core', new Map<string, Kind>([['createTranslator', 'translator']])],
-]);
-
 /** Members of each object kind that take a message key first. */
 const KEY_MEMBERS: ReadonlyMap<Kind, ReadonlySet<string>> = new Map([
   ['i18n', new Set(['t', 'parts'])],
@@ -71,6 +61,8 @@ const KEY_MEMBERS: ReadonlyMap<Kind, ReadonlySet<string>> = new Map([
 type Binding =
   | { readonly type: 'import'; readonly module: string; readonly name: string }
   | { readonly type: 'namespace'; readonly module: string }
+  | { readonly type: 'factory'; readonly kind: Kind }
+  | { readonly type: 'project-namespace'; readonly modulePath: string }
   | { readonly type: 'etyma'; readonly kind: Kind }
   | { readonly type: 'other' };
 
@@ -90,7 +82,7 @@ class Scope {
  * Finds every message key passed to a recognised Etyma translator in one JavaScript or
  * TypeScript source text.
  *
- * Syntax only: no type checker, no module resolution, nothing is executed. What it can
+ * Syntax only: no type checker or filesystem module resolution, nothing is executed. What it can
  * prove is deliberately narrow — see the package README for the exact patterns — and anything
  * it cannot prove is left out rather than guessed.
  */
@@ -99,6 +91,7 @@ export function scanSource(
   source: string,
   parsedFile?: unknown,
   mapPosition?: SourcePositionMapper,
+  project?: ProjectProvenance,
 ): SourceScan {
   const file =
     (parsedFile as ts.SourceFile | undefined) ??
@@ -137,6 +130,14 @@ export function scanSource(
     if (ts.isPropertyAccessExpression(node)) {
       const name = node.name.text;
 
+      if (ts.isIdentifier(node.expression)) {
+        const binding = scope.resolve(node.expression.text);
+        if (binding?.type === 'project-namespace') {
+          const summary = project?.modules.get(binding.modulePath)?.get(name);
+          if (summary?.role === 'value') return summary.kind;
+        }
+      }
+
       if (node.expression.kind === ts.SyntaxKind.ThisKeyword) {
         const owner = enclosingClass(node);
         return owner === undefined ? undefined : classFields.get(owner)?.get(name);
@@ -156,16 +157,21 @@ export function scanSource(
 
     if (ts.isIdentifier(callee)) {
       const binding = scope.resolve(callee.text);
-      return binding?.type === 'import'
-        ? FACTORIES.get(binding.module)?.get(binding.name)
-        : undefined;
+      if (binding?.type === 'factory') return binding.kind;
+      if (binding?.type === 'import')
+        return CANONICAL_FACTORIES.get(binding.module)?.get(binding.name);
+      return undefined;
     }
 
     if (ts.isPropertyAccessExpression(callee) && ts.isIdentifier(callee.expression)) {
       const binding = scope.resolve(callee.expression.text);
-      return binding?.type === 'namespace'
-        ? FACTORIES.get(binding.module)?.get(callee.name.text)
-        : undefined;
+      if (binding?.type === 'namespace')
+        return CANONICAL_FACTORIES.get(binding.module)?.get(callee.name.text);
+      if (binding?.type === 'project-namespace')
+        return project?.modules.get(binding.modulePath)?.get(callee.name.text)?.role === 'factory'
+          ? project.modules.get(binding.modulePath)?.get(callee.name.text)?.kind
+          : undefined;
+      return undefined;
     }
 
     return undefined;
@@ -270,10 +276,13 @@ export function scanSource(
       const module = ts.isStringLiteral(statement.moduleSpecifier)
         ? statement.moduleSpecifier.text
         : undefined;
-      const etyma = module !== undefined && FACTORIES.has(module);
+      const etyma = module !== undefined && CANONICAL_FACTORIES.has(module);
+      const localModule = module === undefined ? undefined : project?.resolve(path, module);
 
       if (importClause.name !== undefined) {
-        scope.bindings.set(importClause.name.text, OTHER);
+        const defaultSummary =
+          localModule === undefined ? undefined : project?.modules.get(localModule)?.get('default');
+        scope.bindings.set(importClause.name.text, projectBinding(defaultSummary));
       }
 
       const { namedBindings } = importClause;
@@ -282,7 +291,11 @@ export function scanSource(
       if (ts.isNamespaceImport(namedBindings)) {
         scope.bindings.set(
           namedBindings.name.text,
-          etyma && importClause.phaseModifier === undefined ? { type: 'namespace', module } : OTHER,
+          etyma && importClause.phaseModifier === undefined
+            ? { type: 'namespace', module }
+            : localModule !== undefined && importClause.phaseModifier === undefined
+              ? { type: 'project-namespace', modulePath: localModule }
+              : OTHER,
         );
         continue;
       }
@@ -292,7 +305,15 @@ export function scanSource(
           element.name.text,
           etyma && importClause.phaseModifier === undefined && !element.isTypeOnly
             ? { type: 'import', module, name: (element.propertyName ?? element.name).text }
-            : OTHER,
+            : localModule !== undefined &&
+                importClause.phaseModifier === undefined &&
+                !element.isTypeOnly
+              ? projectBinding(
+                  project?.modules
+                    .get(localModule)
+                    ?.get((element.propertyName ?? element.name).text),
+                )
+              : OTHER,
         );
       }
     }
@@ -384,12 +405,33 @@ export function scanSource(
   const moduleScope = new Scope(undefined);
   declareImports(file.statements, moduleScope);
   declare(file.statements, moduleScope);
+  for (const [name, summary] of project?.locals.get(normalizeSourcePath(path)) ?? []) {
+    if (moduleScope.bindings.get(name) === OTHER || moduleScope.bindings.get(name) === undefined)
+      moduleScope.bindings.set(name, projectBinding(summary));
+  }
   declareHoisted(file, moduleScope);
   ts.forEachChild(file, child => {
     visit(child, moduleScope);
   });
 
   return { references, parseProblems: parseProblemsOf(file, mapPosition) };
+}
+
+function projectBinding(summary: ProvenanceSummary | undefined): Binding {
+  if (!summary) return OTHER;
+  return summary.role === 'factory'
+    ? { type: 'factory', kind: summary.kind }
+    : { type: 'etyma', kind: summary.kind };
+}
+
+function normalizeSourcePath(path: string): string {
+  const parts: string[] = [];
+  for (const part of path.replace(/\\/g, '/').split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') parts.pop();
+    else parts.push(part);
+  }
+  return (path.startsWith('/') ? '/' : '') + parts.join('/');
 }
 
 /**

@@ -35,6 +35,8 @@ still never touches a filesystem or a network.
 `extractContractKeys()` for its keys, discovers source files, and calls one analyzer. The
 default mode uses [`@etyma/tooling/source`](../tooling#analysing-message-usage-in-source); the
 explicit Angular and Astro modes use `@etyma/tooling/angular` and `@etyma/tooling/astro`.
+Every mode automatically follows supported simple relative project-local wrappers in the
+supplied source set; no new option is required.
 
 `@etyma/cli` depends on `@etyma/tooling` and nothing else from Etyma - not `@etyma/core`
 directly, even though catalogs are structurally what `@etyma/core`'s `MessageSource` describes.
@@ -472,7 +474,7 @@ binding through a direct `injectT()` or `injectI18n()` field, or a simple `this.
 derived from `injectI18n()`. `--exclude` applies to HTML as well as code; excluding a referenced
 template makes it unavailable and produces a missing-template diagnostic.
 
-Angular mode does not follow project wrappers or general data flow, analyze translation pipes,
+Angular mode does not follow conditional wrappers or general data flow, analyze translation pipes,
 or scan arbitrary HTML. It does not execute code or load project configuration. The false-
 negative boundary is deliberate: a template call counts only when Etyma ownership is statically
 provable from the component class.
@@ -482,8 +484,9 @@ proven `createAstroI18n()` bindings from `@etyma/astro` in frontmatter and check
 frontmatter, template expressions and expression attributes. The parser is loaded only in this
 mode; it uses Astro 6's optional `@astrojs/compiler` `^4` peer or Astro 7's optional
 `@astrojs/compiler-rs` `^0.5` peer.
-`--angular` and `--astro` are mutually exclusive. Astro analysis does not follow project
-wrappers, `Astro.props`, translator props or cross-component flow.
+`--angular` and `--astro` are mutually exclusive. Astro analysis does not follow `Astro.props`,
+translator props or cross-component flow. All modes use only supplied files and supported
+relative imports; they do not resolve aliases configured elsewhere in a project.
 
 Repeat `--exclude` to omit files by glob. Patterns match the discovered file path relative to
 the analyzed directory, with `/` separators, for example:

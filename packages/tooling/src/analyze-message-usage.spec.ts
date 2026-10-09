@@ -124,6 +124,154 @@ describe('analyzeMessageUsage: core', () => {
   });
 });
 
+describe('analyzeMessageUsage: project-local provenance', () => {
+  const key = ['nav.home'];
+  it('follows a same-file wrapper and an exported wrapper chain through a relative import', () => {
+    const files = [
+      {
+        path: 'src/i18n/factory.ts',
+        source:
+          `import { injectI18n } from '@etyma/angular';\n` +
+          `const makeBase = () => injectI18n(def);\n` +
+          `export const makeI18n = () => makeBase();`,
+      },
+      {
+        path: 'src/page.ts',
+        source:
+          `import { makeI18n as useI18n } from './i18n/factory';\n` +
+          `const i18n = useI18n();\ni18n.t('nav.home');`,
+      },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual(key);
+  });
+
+  it('follows a project-local wrapper that uses a canonical namespace import', () => {
+    const files = [
+      {
+        path: 'src/factory.ts',
+        source:
+          `import * as angular from '@etyma/angular';\n` +
+          `export const make = () => angular.injectI18n(definition);`,
+      },
+      { path: 'src/page.ts', source: `import { make } from './factory';\nmake().t('nav.home');` },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual(key);
+  });
+
+  it('keeps unknown-key and dynamic-key diagnostics through a wrapper', () => {
+    const result = analyzeMessageUsage({
+      keys: key,
+      files: [
+        {
+          path: 'src/factory.ts',
+          source: `import { injectI18n } from '@etyma/angular';\nexport const make = () => injectI18n(def);`,
+        },
+        {
+          path: 'src/page.ts',
+          source:
+            `import { make } from './factory';\nconst i18n = make();\n` +
+            `i18n.t('missing.key');\ni18n.t(dynamicKey);`,
+        },
+      ],
+    });
+    expect(result.diagnostics.map(({ code, key }) => [code, key])).toEqual([
+      ['source.unknown-key', 'missing.key'],
+      ['source.dynamic-key', undefined],
+    ]);
+  });
+
+  it('follows direct exported values, `.js` source mapping, and relative namespace imports', () => {
+    const files = [
+      {
+        path: 'src/i18n.ts',
+        source:
+          `import { createTranslator } from '@etyma/core';\n` +
+          `export const translator = createTranslator(def);`,
+      },
+      {
+        path: 'src/page.ts',
+        source:
+          `import * as helpers from './i18n.js';\n` + `helpers.translator.translate('nav.home');`,
+      },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual(key);
+  });
+
+  it('follows a directly exported Etyma callable value', () => {
+    const files = [
+      {
+        path: 'src/i18n.ts',
+        source: `import { injectT } from '@etyma/angular';\nexport const t = injectT(definition);`,
+      },
+      { path: 'src/page.ts', source: `import { t } from './i18n';\nt('nav.home');` },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual(key);
+  });
+
+  it('resolves an index module and a three-file `.mjs` to `.mts` wrapper chain across slash styles', () => {
+    const files = [
+      {
+        path: 'lib/factory.mts',
+        source: `import { injectT } from '@etyma/angular';\nexport const make = () => injectT(def);`,
+      },
+      {
+        path: 'lib/index.mts',
+        source: `import { make } from './factory.mjs';\nexport function get() { return make(); }`,
+      },
+      { path: 'src\\page.ts', source: `import { get } from '../lib';\nget()('nav.home');` },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual(key);
+  });
+
+  it('stops safely on missing modules and cyclic wrappers', () => {
+    const files = [
+      { path: 'src/a.ts', source: `import { b } from './b';\nexport const a = () => b();` },
+      { path: 'src/b.ts', source: `import { a } from './a';\nexport const b = () => a();` },
+      {
+        path: 'src/page.ts',
+        source: `import { a } from './a';\nimport { absent } from './missing';\na().t('nav.home'); absent().t('nav.home');`,
+      },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual([]);
+  });
+
+  it('follows a default exported value through a default import', () => {
+    const files = [
+      {
+        path: 'src/i18n.ts',
+        source: `import { createTranslator } from '@etyma/core';\nexport default createTranslator(definition);`,
+      },
+      {
+        path: 'src/page.ts',
+        source: `import translator from './i18n';\ntranslator.translate('nav.home');`,
+      },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual(key);
+  });
+
+  it('does not infer through conditional wrappers, casts alone, aliases, or ambiguous paths', () => {
+    const files = [
+      {
+        path: 'src/factory.ts',
+        source: `import { injectI18n } from '@etyma/angular';\nexport const maybe = (flag: boolean) => flag ? injectI18n(def) : null;`,
+      },
+      {
+        path: 'src/factory.js',
+        source: `import { injectI18n } from '@etyma/angular';\nexport const maybe = () => injectI18n(def);`,
+      },
+      {
+        path: 'src/page.ts',
+        source: `import { maybe } from './factory';\nmaybe(true)?.t('nav.home');\nconst fake = {} as { t(key: string): string };\nfake.t('nav.home');`,
+      },
+      {
+        path: 'src/alias.ts',
+        source: `import { injectT } from '@/i18n';\nconst t = injectT();\nt('nav.home');`,
+      },
+    ];
+    expect(analyzeMessageUsage({ keys: key, files }).used).toEqual([]);
+  });
+});
+
 describe('analyzeMessageUsage: literal forms', () => {
   it.each([
     ['single quotes', `t('nav.home')`],

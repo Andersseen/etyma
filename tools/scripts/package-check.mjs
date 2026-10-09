@@ -356,8 +356,8 @@ try {
       }
 
       assert(
-        parserImporters.join(',') === 'source-scan.js',
-        `the parser should be imported by source-scan.js alone, not: ${parserImporters.join(', ') || '(nothing)'}`,
+        parserImporters.join(',') === 'source-provenance.js,source-scan.js',
+        `the parser should only be imported by source-provenance.js and source-scan.js, not: ${parserImporters.join(', ') || '(nothing)'}`,
       );
 
       const leaked = [...reached].filter(file => /vite|remote/.test(file));

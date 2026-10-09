@@ -1,5 +1,7 @@
 import { compareCodeUnits } from './compare.js';
 import { scanSource } from './source-scan.js';
+import { createProjectProvenance } from './source-provenance.js';
+import type { ProjectProvenance } from './source-provenance.js';
 import type {
   AnalyzeMessageUsageOptions,
   MessageUsageAnalysis,
@@ -11,13 +13,12 @@ import type {
  * Compares the message keys application source references with the keys a catalog defines.
  *
  * Pure and in memory: it takes keys and source text and returns plain data. It reads no file,
- * resolves no path, executes no code, and never throws for a syntax error — a file that does
+ * resolves only supplied relative paths, executes no code, and never throws for a syntax error — a file that does
  * not parse becomes a `source.parse-error` diagnostic and the other files are still analysed.
  *
- * Only calls it can prove belong to Etyma are considered: translators created by
- * `injectT()` / `injectI18n()` from `@etyma/angular`, `createAstroI18n()` from
- * `@etyma/astro` and `createTranslator()` from `@etyma/core`, followed through their import
- * bindings, aliases included. An unrelated `t()` is ignored, because a missed usage is a
+ * Only calls it can prove belong to Etyma are considered: canonical factories and trivial
+ * project-local wrappers derived from those factories, followed through unambiguous relative
+ * imports among supplied files. An unrelated `t()` is ignored, because a missed usage is a
  * limitation, while a wrongly attributed one is a lie.
  *
  * The result does not depend on the order of `keys` or `files`.
@@ -31,6 +32,7 @@ export function analyzeMessageUsage(options: AnalyzeMessageUsageOptions): Messag
 export function collectMessageUsage(
   files: readonly SourceFile[],
   parsedFileForPath?: (path: string) => unknown,
+  project: ProjectProvenance = createProjectProvenance(files),
 ): {
   readonly references: readonly MessageUsageReference[];
   readonly diagnostics: readonly SourceDiagnostic[];
@@ -39,7 +41,7 @@ export function collectMessageUsage(
   const diagnostics: SourceDiagnostic[] = [];
 
   for (const { path, source } of files) {
-    const scan = scanSource(path, source, parsedFileForPath?.(path));
+    const scan = scanSource(path, source, parsedFileForPath?.(path), undefined, project);
 
     for (const problem of scan.parseProblems) {
       diagnostics.push({

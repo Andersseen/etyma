@@ -3,9 +3,9 @@ import type { DiagnosticSeverity } from './types.js';
 /**
  * One source file, already in memory. Angular analysis also accepts HTML template files.
  *
- * `path` is an in-memory label. `analyzeMessageUsage` echoes it exactly and never opens or
- * resolves it; Angular analysis also uses it to associate a component's `templateUrl` with
- * another supplied file. Its extension picks the source parser mode (`.tsx`, `.jsx`, ...).
+ * `path` is an in-memory label. It is never opened; relative imports may be resolved against
+ * other supplied paths. Angular analysis also uses it to associate a component's `templateUrl`
+ * with another supplied file. Its extension picks the source parser mode (`.tsx`, `.jsx`, ...).
  */
 export interface SourceFile {
   readonly path: string;
@@ -60,8 +60,8 @@ export interface SourceDiagnostic {
  * - `used` — catalog keys referenced by a literal in a recognised Etyma call, sorted.
  * - `unreferenced` — catalog keys that analysis did **not** observe being referenced,
  *   sorted. That is a list of candidates to look at, never proof a key is safe to delete:
- *   the analysis is deliberately conservative and misses wrappers, translators passed as
- *   props, keys built at runtime and Angular template bindings it cannot prove.
+ *   the analysis is deliberately conservative and misses unsupported wrappers, translators
+ *   passed as props, keys built at runtime and template bindings it cannot prove.
  * - `diagnostics` — sorted by path, line, column, code, key, then message.
  */
 export interface MessageUsageAnalysis {

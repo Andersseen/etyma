@@ -28,6 +28,7 @@ import ts from 'typescript';
 
 import { collectMessageUsage, finalizeMessageUsage } from './analyze-message-usage.js';
 import type { MessageUsageReference } from './analyze-message-usage.js';
+import { createProjectProvenance, importedProvenance } from './source-provenance.js';
 import type { MessageUsageAnalysis, SourceDiagnostic, SourceFile } from './source-types.js';
 
 /** Input to {@link analyzeAngularMessageUsage}. All files are already-loaded source strings. */
@@ -48,7 +49,8 @@ type ComponentTemplate =
 
 /**
  * Analyzes ordinary JS/TS Etyma calls and statically provable Etyma calls in templates
- * associated with Angular components. It reads no files and does no module/type resolution.
+ * associated with Angular components. It reads no files and resolves only supplied relative
+ * imports in memory; it does no filesystem or type-based module resolution.
  */
 export function analyzeAngularMessageUsage(
   options: AnalyzeAngularMessageUsageOptions,
@@ -66,7 +68,8 @@ export function analyzeAngularMessageUsage(
       ),
     ]),
   );
-  const base = collectMessageUsage(jsFiles, path => sourceFiles.get(path));
+  const project = createProjectProvenance(options.files);
+  const base = collectMessageUsage(jsFiles, path => sourceFiles.get(path), project);
   const templates = new Map(options.files.map(file => [normalizePath(file.path), file]));
   const parsedTemplates = new Map<string, ReturnType<typeof parseTemplate>>();
   const references: MessageUsageReference[] = [];
@@ -129,7 +132,7 @@ export function analyzeAngularMessageUsage(
         text = external.source;
       }
 
-      const memberKinds = componentMemberKinds(statement, bindings);
+      const memberKinds = componentMemberKinds(statement, bindings, project, file.path);
       const templateCacheKey = `${templatePath}\u0000${text}`;
       let parsed = parsedTemplates.get(templateCacheKey);
       if (parsed === undefined) {
@@ -332,6 +335,8 @@ function isImplicit(expression: AST): boolean {
 function componentMemberKinds(
   declaration: ts.ClassDeclaration,
   bindings: ImportBindings,
+  project: ReturnType<typeof createProjectProvenance>,
+  path: string,
 ): ReadonlyMap<string, MemberKind> {
   const initializers = new Map<string, ts.Expression>();
   for (const member of declaration.members) {
@@ -353,7 +358,7 @@ function componentMemberKinds(
     const initializer = initializers.get(name);
     if (initializer === undefined) return undefined;
     resolving.add(name);
-    const kind = kindOfInitializer(initializer, bindings, kindOfMember);
+    const kind = kindOfInitializer(initializer, bindings, kindOfMember, project, path);
     resolving.delete(name);
     if (kind !== undefined) result.set(name, kind);
     return kind;
@@ -367,6 +372,8 @@ function kindOfInitializer(
   expression: ts.Expression,
   bindings: ImportBindings,
   kindOfMember: (name: string) => MemberKind | undefined,
+  project: ReturnType<typeof createProjectProvenance>,
+  path: string,
 ): MemberKind | undefined {
   const node = unwrap(expression);
   if (!ts.isCallExpression(node)) {
@@ -381,9 +388,11 @@ function kindOfInitializer(
     return undefined;
   }
 
-  const factory = importedFunction(node.expression, bindings);
-  if (factory === 'injectT') return 'callable';
-  if (factory === 'injectI18n') return 'i18n';
+  const symbol = importedSymbol(node.expression, bindings);
+  if (symbol) {
+    const provenance = importedProvenance(project, path, symbol.module, symbol.imported);
+    if (provenance?.role === 'factory' && provenance.kind !== 'translator') return provenance.kind;
+  }
   return undefined;
 }
 
@@ -430,11 +439,6 @@ function importedSymbol(
     return module === undefined ? undefined : { module, imported: node.name.text };
   }
   return undefined;
-}
-
-function importedFunction(expression: ts.Expression, bindings: ImportBindings): string | undefined {
-  const symbol = importedSymbol(expression, bindings);
-  return symbol?.module === '@etyma/angular' ? symbol.imported : undefined;
 }
 
 function isComponentDecorator(decorator: ts.Decorator, bindings: ImportBindings): boolean {
