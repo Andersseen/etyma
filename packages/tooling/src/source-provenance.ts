@@ -54,7 +54,10 @@ export function createProjectProvenance(files: readonly SourceFile[]): ProjectPr
     normalized.set(path, group);
   }
   const unique = new Map<string, SourceFile>();
-  for (const [path, group] of normalized) if (group.length === 1) unique.set(path, group[0]!);
+  for (const [path, group] of normalized) {
+    const [file] = group;
+    if (group.length === 1 && file) unique.set(path, file);
+  }
 
   const resolve = (from: string, specifier: string): string | undefined => {
     if (!specifier.startsWith('.')) return undefined;
@@ -168,7 +171,7 @@ function importBindings(
     if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
       continue;
     const clause = statement.importClause;
-    if (!clause || clause.isTypeOnly || clause.phaseModifier) continue;
+    if (!clause || clause.phaseModifier) continue;
     const specifier = statement.moduleSpecifier.text;
     const canonical = CANONICAL_FACTORIES.get(specifier);
     const target = resolve(path, specifier);
@@ -182,8 +185,9 @@ function importBindings(
       for (const element of bindings.elements) {
         if (!element.isTypeOnly) {
           const imported = (element.propertyName ?? element.name).text;
-          const value = canonical?.get(imported)
-            ? { kind: canonical.get(imported)!, role: 'factory' as const }
+          const canonicalKind = canonical?.get(imported);
+          const value = canonicalKind
+            ? { kind: canonicalKind, role: 'factory' as const }
             : exports?.get(imported);
           if (value) result.set(element.name.text, value);
         }
@@ -252,13 +256,15 @@ function summarizeFunction(
   resolve: ProjectProvenance['resolve'],
 ): ProvenanceSummary | undefined {
   let expression: ts.Expression | undefined;
+  const onlyStatement = node.body && ts.isBlock(node.body) ? node.body.statements[0] : undefined;
   if (
     node.body &&
     ts.isBlock(node.body) &&
     node.body.statements.length === 1 &&
-    ts.isReturnStatement(node.body.statements[0]!)
+    onlyStatement &&
+    ts.isReturnStatement(onlyStatement)
   )
-    expression = node.body.statements[0]!.expression;
+    expression = onlyStatement.expression;
   else if (node.body && !ts.isBlock(node.body)) expression = node.body;
   if (!expression) return undefined;
   const params = new Map(imports);
@@ -324,7 +330,7 @@ function namespaceImport(
       const clause = statement.importClause;
       if (
         clause &&
-        !clause.isTypeOnly &&
+        !clause.phaseModifier &&
         clause.namedBindings &&
         ts.isNamespaceImport(clause.namedBindings) &&
         clause.namedBindings.name.text === name
