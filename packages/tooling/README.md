@@ -365,7 +365,8 @@ for that reason; it is development tooling, so install size is not the concern, 
 loads it until `./source` is imported. The API itself stays pure: no filesystem, glob,
 network, `process` or `console`. `path` is a label echoed on diagnostics, never opened, so a
 CLI, an editor or a CMS supplies the files and this supplies the analysis. Only syntax is
-read — no `tsconfig`, no type checker, no module resolution, and nothing is executed.
+read — no `tsconfig`, type checker, filesystem module resolution or execution. The analyzer
+builds a small in-memory index over the supplied paths for relative imports.
 
 ### The result
 
@@ -373,7 +374,7 @@ read — no `tsconfig`, no type checker, no module resolution, and nothing is ex
   Sorted, each key once however many times it appears.
 - **`unreferenced`** — catalog keys the analysis did **not** see referenced. These are
   _candidates_, not proof: the analysis is deliberately conservative (see below), so a key
-  used through a wrapper, a prop or a dynamic key lands here. Never delete a key on this list
+  used through unsupported wrappers, props or dynamic keys lands here. Never delete a key on this list
   without looking. It is never reported as an error.
 - **`diagnostics`** — sorted by path, line, column, code, key, then message. `line` and
   `column` are 1-based (`column` in UTF-16 code units) and point at the key argument.
@@ -426,15 +427,17 @@ independent. Astro 6 provides `@astrojs/compiler` `^4`; Astro 7 provides
 when running this frontend.
 
 Both frontmatter and parsed template expressions, including attributes, use the ordinary
-source engine's canonical provenance rules. A call counts only when the local binding comes
-from `createAstroI18n` imported from `@etyma/astro`. Import aliases and namespace imports,
+source engine's provenance rules. A call counts when the binding comes from a canonical Etyma
+factory or a supported project-local wrapper whose implementation proves that provenance.
+Import aliases and namespace imports,
 `etyma.t()`, `etyma.parts()`, a simple `const t = etyma.t` alias, and direct destructuring of
 `t`/`parts` are recognized. Static string and no-substitution template literal keys are
 checked; other key expressions produce the same `source.dynamic-key` warning. Unknown static
 keys produce `source.unknown-key` errors.
 
-This remains conservative: wrappers, imported translator helpers, props (including
-`Astro.props`), cross-component flow and general dataflow are not followed. A local variable
+This remains conservative: only trivial wrappers in supplied source files and relative
+imports are followed. Props (including `Astro.props`), cross-component flow and general
+dataflow are not followed. A local variable
 named `etyma` or `t` without proven factory provenance is ignored. Unreferenced keys combine
 JS/TS and Astro usages and remain candidates rather than deletion advice. `has()` is not
 counted because the shared engine treats it as a key probe, not a rendered message.
@@ -470,8 +473,9 @@ the component class proves the binding through a field initialized by `injectT()
 `injectI18n()`, including imported aliases, or a simple `readonly t = this.i18n.t` field
 derived from an `injectI18n()` field. `i18n.t()` and `i18n.parts()` are recognized.
 
-Project wrappers such as `injectAppI18n()`, arbitrary field/data flow, translation pipes and
-unowned HTML are intentionally not analyzed. Escaped inline string literals are skipped when
+Simple project-local wrappers such as `injectAppI18n()` are followed when their implementation
+proves the canonical factory call. Arbitrary field/data flow, translation pipes and unowned
+HTML are intentionally not analyzed. Escaped inline string literals are skipped when
 source offsets cannot be mapped exactly. Dynamic keys use `source.dynamic-key`; unknown literal
 keys use `source.unknown-key`. Template syntax errors use `source.parse-error`, and an absent
 statically referenced external template uses `source.template-missing`. Locations in external
@@ -512,25 +516,30 @@ the type system's job.
 Files are parsed by extension — `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs` —
 and anything else as TypeScript. Do not pass templates.
 
-### Phase 1 limits
+### Conservative provenance limits
 
-This is the first, deliberately narrow cut. Preferring a missed usage to a wrongly attributed
-one, it does **not** cover:
+Preferring a missed usage to a wrongly attributed one, it does **not** cover:
 
 - **Angular templates** (`*.html`, inline `template:` strings), **Astro files** (`*.astro`)
   and any other template language. Only JavaScript and TypeScript are read, so a key used only
   in a template is `unreferenced`.
-- **Wrappers and indirection.** `const tr = wrap(injectT(d))`, a project helper such as
-  `injectAppI18n()`, a translator passed as a prop or parameter (`function view({ t })`), a
-  `let` binding, constructor parameter properties, `inject(EtymaI18n)`, `require()` and
-  dynamic `import()`. There is no dataflow and no constant propagation.
+- **General data flow.** Conditional or mutable wrappers, a translator passed as a prop or
+  parameter (`function view({ t })`), constructor parameter properties, `inject(EtymaI18n)`,
+  `require()` and dynamic `import()` are not followed.
 - `has()` on a translator probes a key without rendering it, so it is not counted as a use.
 - Hardcoded-copy detection, source-message extraction, route analysis and param checking are
   not part of this analysis.
 
-Because of the first two, `unreferenced` is a to-do list for a human, not a deletion list.
-Template adapters and configurable wrapper names can feed this same result later without
-changing it.
+Project-local provenance follows only trivial wrappers that directly return a proven Etyma
+factory result, direct exported values, and named imports through supplied relative modules.
+It supports extensionless and explicit extensions, index files, and `.js` to `.ts` (also
+`.mjs` to `.mts`, `.cjs` to `.cts`) source mappings when resolution is unambiguous. It does
+not follow `tsconfig`/Vite aliases, npm or workspace aliases, or general re-export barrels.
+Arrow and function wrappers can be synchronous or async, including a single returned
+expression/statement. Named import aliases, namespace imports and default imports from a
+supported default export are followed. An excluded or missing file is unavailable, and when
+multiple supplied paths match a request the import remains unresolved. In all cases
+`unreferenced` remains a review list, never deletion advice.
 
 ## Validating remote catalogs during a Vite build
 

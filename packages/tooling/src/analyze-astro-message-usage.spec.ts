@@ -200,6 +200,29 @@ const etyma = await createAstroI18n(Astro, definition);
     expect(first.used).toEqual(['nav.home', 'page.title']);
   });
 
+  it('follows an async project-local Astro wrapper into frontmatter and parts()', async () => {
+    const result = await analyzeAstroMessageUsage({
+      keys: KEYS,
+      files: [
+        {
+          path: 'src/i18n/page.ts',
+          source:
+            `import { createAstroI18n } from '@etyma/astro';\n` +
+            `export async function getPageI18n(astro: unknown) { return await createAstroI18n(astro, definition); }`,
+        },
+        {
+          path: 'src/pages/index.astro',
+          source:
+            `---\nimport { getPageI18n } from '../i18n/page.js';\n` +
+            `const etyma = await getPageI18n(Astro);\n---\n` +
+            `<h1>{etyma.t('page.title')}</h1><div>{etyma.parts('rich.message')}</div>`,
+        },
+      ],
+    });
+    expect(result.used).toEqual(['page.title', 'rich.message']);
+    expect(result.diagnostics).toEqual([]);
+  });
+
   it('scales across hundreds of Astro files with many references', async () => {
     const keys = Array.from({ length: 400 }, (_, index) => `key${index}`);
     const files = Array.from({ length: 240 }, (_, fileIndex) => ({

@@ -555,8 +555,9 @@ JSON source — see [Typed params](#typed-params).
 
 `etyma analyze ./src --catalog ./src/i18n/en.json` reports statically observed message keys
 and unreferenced candidates in JS/TS source; add `--angular` for Angular templates or `--astro`
-for Astro frontmatter and template expressions. See the [CLI README](packages/cli#etyma-analyze)
-for discovery rules and limits.
+for Astro frontmatter and template expressions. Each mode follows supported simple relative
+project-local wrappers automatically, using only files in the analyzed set. See the
+[CLI README](packages/cli#etyma-analyze) for discovery rules and limits.
 
 See the [`@etyma/cli` README](packages/cli#readme) for output formats and exit codes. For
 remote catalogs, `etymaRemoteValidation` from `@etyma/tooling/vite` makes the same check part

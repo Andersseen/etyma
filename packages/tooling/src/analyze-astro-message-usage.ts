@@ -3,6 +3,7 @@ import ts from 'typescript';
 import { collectMessageUsage, finalizeMessageUsage } from './analyze-message-usage.js';
 import type { MessageUsageReference } from './analyze-message-usage.js';
 import { scanSource } from './source-scan.js';
+import { createProjectProvenance } from './source-provenance.js';
 import type { SourcePositionMapper } from './source-scan.js';
 import type {
   AnalyzeMessageUsageOptions,
@@ -66,13 +67,14 @@ export async function analyzeAstroMessageUsage(
   options: AnalyzeAstroMessageUsageOptions,
 ): Promise<MessageUsageAnalysis> {
   const ordinaryFiles = options.files.filter(file => !file.path.toLowerCase().endsWith('.astro'));
-  const base = collectMessageUsage(ordinaryFiles);
+  const project = createProjectProvenance(options.files);
+  const base = collectMessageUsage(ordinaryFiles, undefined, project);
   const references: MessageUsageReference[] = [...base.references];
   const diagnostics: SourceDiagnostic[] = [...base.diagnostics];
 
   for (const file of options.files) {
     if (!file.path.toLowerCase().endsWith('.astro')) continue;
-    await analyzeAstroFile(file, references, diagnostics);
+    await analyzeAstroFile(file, references, diagnostics, project);
   }
 
   return finalizeMessageUsage(options.keys, references, diagnostics);
@@ -82,6 +84,7 @@ async function analyzeAstroFile(
   file: SourceFile,
   references: MessageUsageReference[],
   diagnostics: SourceDiagnostic[],
+  project: ReturnType<typeof createProjectProvenance>,
 ): Promise<void> {
   let parsed: {
     readonly snippets: readonly ExpressionSource[];
@@ -139,7 +142,7 @@ async function analyzeAstroFile(
     return { line: line + 1, column: character + 1 };
   };
 
-  const scan = scanSource(file.path, combined.source, parsedScript, mapPosition);
+  const scan = scanSource(file.path, combined.source, parsedScript, mapPosition, project);
   references.push(...scan.references.map(reference => ({ path: file.path, ...reference })));
   for (const problem of scan.parseProblems) {
     diagnostics.push({

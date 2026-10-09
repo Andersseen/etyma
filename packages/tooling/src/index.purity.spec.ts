@@ -77,7 +77,10 @@ describe('the @etyma/tooling/source entry point', () => {
   it('is the only entry that loads the TypeScript parser', () => {
     const loaders = [...graph].filter(([, text]) => text.includes("from 'typescript'"));
 
-    expect(loaders.map(([file]) => file)).toEqual(['./source-scan.ts']);
+    expect(loaders.map(([file]) => file).sort()).toEqual([
+      './source-provenance.ts',
+      './source-scan.ts',
+    ]);
   });
 
   it('never reaches the Vite adapter or remote acquisition', () => {
