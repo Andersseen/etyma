@@ -1,5 +1,11 @@
 # @etyma/tooling
 
+## 0.9.0
+
+### Minor Changes
+
+- [#138](https://github.com/Andersseen/etyma/pull/138) [`9ce2868`](https://github.com/Andersseen/etyma/commit/9ce28680a419c5ced5349cf52e0447846e186dd1) Thanks [@Andersseen](https://github.com/Andersseen)! - Follow conservative project-local relative wrappers in source, Angular, Astro, and CLI message-usage analysis.
+
 ## 0.8.0
 
 ### Minor Changes
