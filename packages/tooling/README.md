@@ -394,6 +394,25 @@ never throw: one malformed file produces a finding and the other files are still
 
 The result does not depend on the order of `keys` or `files`. Duplicate keys collapse.
 
+### Suggestions for unknown keys
+
+When a `source.unknown-key` finding is close to a catalog key, the diagnostic also carries
+`suggestions`, up to three catalog keys, best first:
+
+```ts
+// catalog: nav.home, nav.docs — source: t('nav.docz')
+{ code: 'source.unknown-key', severity: 'error', key: 'nav.docz',
+  suggestions: ['nav.docs'], message: '…' }
+```
+
+Suggestions are optional, best-effort and conservative. They are deterministic (independent
+of `keys` order, host locale and platform) and rank by edit distance with adjacent
+transpositions, a shared namespace and case-only differences counting in a key's favour; short
+keys (five characters or fewer) only match case-insensitively. A missing `suggestions` field
+means "no confident guess", not a weaker finding: the key is still unknown, the severity is
+still `error`, and the CLI still exits `1`. A suggested key is advice only. It is never counted
+as `used`, and the source is never rewritten. Only `source.unknown-key` carries suggestions.
+
 ### Astro source analysis
 
 `@etyma/tooling/astro` is the opt-in Astro frontend. It analyzes ordinary JS/TS files with

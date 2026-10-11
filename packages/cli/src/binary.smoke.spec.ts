@@ -229,6 +229,42 @@ describe('the packed etyma binary', () => {
       expect(output.meta).toMatchObject({ command: 'analyze', fileCount: 1, catalogKeyCount: 2 });
     });
 
+    it('prints and serializes a "did you mean" suggestion through a project-local wrapper', async () => {
+      writeFileSync(
+        join(project(), 'src/i18n.ts'),
+        `import { injectT } from '@etyma/angular';\nexport const injectAppT = () => injectT(i18n);`,
+      );
+      writeFileSync(
+        join(project(), 'src/app.ts'),
+        `import { injectAppT } from './i18n';\ninjectAppT()('nav.docz');`,
+      );
+
+      const pretty = await runAnalyze(['analyze', './src', '--catalog', './i18n/en.json']);
+      expect(pretty.status).toBe(1);
+      expect(pretty.stdout).toContain('Did you mean "nav.docs"?');
+
+      const json = await runAnalyze([
+        'analyze',
+        './src',
+        '--catalog',
+        './i18n/en.json',
+        '--format',
+        'json',
+      ]);
+      expect(json.status).toBe(1);
+      const output = JSON.parse(json.stdout) as {
+        used: string[];
+        unreferenced: string[];
+        diagnostics: { code: string; suggestions?: string[] }[];
+      };
+      expect(output.diagnostics).toMatchObject([
+        { code: 'source.unknown-key', suggestions: ['nav.docs'] },
+      ]);
+      expect(output.used).toEqual([]);
+      expect(output.unreferenced).toEqual(['nav.docs', 'nav.home']);
+      rmSync(join(project(), 'src/i18n.ts'));
+    });
+
     it('exits 2 for malformed catalog JSON', async () => {
       writeFileSync(join(project(), 'i18n/bad.json'), '{');
       const result = await runAnalyze(['analyze', './src', '--catalog', './i18n/bad.json']);

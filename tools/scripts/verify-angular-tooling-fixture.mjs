@@ -27,12 +27,36 @@ const direct = tooling.analyzeAngularMessageUsage({
         `@Component({ templateUrl: './app.html' })\n` +
         `export class App { readonly t = injectT(definition); }`,
     },
-    { path: 'src/app.html', source: `{{ t('nav.home') }} {{ t('nav.typo') }}` },
+    { path: 'src/app.html', source: `{{ t('nav.home') }} {{ t('nav.docz') }}` },
   ],
 });
 assert.deepEqual(direct.used, ['nav.home']);
 assert.equal(direct.diagnostics[0]?.code, 'source.unknown-key');
 assert.equal(direct.diagnostics[0]?.path, 'src/app.html');
+assert.deepEqual(direct.diagnostics[0]?.suggestions, ['nav.docs']);
+
+// The packed `./source` entry: suggestions survive packaging, also through a project-local wrapper.
+const { analyzeMessageUsage } = await import(
+  pathToFileURL(requireFromFixture.resolve('@etyma/tooling/source'))
+);
+const packedSource = analyzeMessageUsage({
+  keys: ['nav.home', 'nav.docs'],
+  files: [
+    {
+      path: 'src/i18n.ts',
+      source:
+        `import { injectT } from '@etyma/angular';\n` +
+        `export const injectAppT = () => injectT(def);`,
+    },
+    {
+      path: 'src/page.ts',
+      source: `import { injectAppT } from './i18n';\ninjectAppT()('nav.docz');`,
+    },
+  ],
+});
+assert.equal(packedSource.diagnostics[0]?.code, 'source.unknown-key');
+assert.deepEqual(packedSource.diagnostics[0]?.suggestions, ['nav.docs']);
+assert.deepEqual(packedSource.used, []);
 
 const project = join(cwd, '.etyma-angular-tooling-smoke');
 rmSync(project, { recursive: true, force: true });
@@ -52,7 +76,7 @@ writeFileSync(
 );
 writeFileSync(
   join(project, 'src/app.html'),
-  `{{ t('nav.home') }} {{ t('nav.typo') }} {{ t(key) }}`,
+  `{{ t('nav.home') }} {{ t('nav.docz') }} {{ t(key) }}`,
 );
 const binary = join(cwd, 'node_modules/.bin/etyma');
 const cli = spawnSync(
@@ -74,7 +98,12 @@ assert(
   ),
 );
 assert(
-  output.diagnostics.some(item => item.code === 'source.unknown-key' && item.severity === 'error'),
+  output.diagnostics.some(
+    item =>
+      item.code === 'source.unknown-key' &&
+      item.severity === 'error' &&
+      item.suggestions?.[0] === 'nav.docs',
+  ),
 );
 rmSync(project, { recursive: true, force: true });
 console.log(`  ok   packed Angular ${compilerMajor} tooling API and CLI --angular smoke`);

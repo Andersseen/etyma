@@ -1,4 +1,5 @@
 import { compareCodeUnits } from './compare.js';
+import { createKeySuggester } from './suggest-keys.js';
 import { scanSource } from './source-scan.js';
 import { createProjectProvenance } from './source-provenance.js';
 import type { ProjectProvenance } from './source-provenance.js';
@@ -80,6 +81,7 @@ export function finalizeMessageUsage(
   const catalog = new Set(keys);
   const used = new Set<string>();
   const diagnostics = [...initialDiagnostics];
+  const suggest = createKeySuggester(catalog);
 
   for (const { path, key, line, column } of references) {
     if (key === undefined) {
@@ -94,6 +96,7 @@ export function finalizeMessageUsage(
     } else if (catalog.has(key)) {
       used.add(key);
     } else {
+      const suggestions = suggest(key);
       diagnostics.push({
         code: 'source.unknown-key',
         severity: 'error',
@@ -101,6 +104,7 @@ export function finalizeMessageUsage(
         line,
         column,
         key,
+        ...(suggestions.length > 0 && { suggestions: [...suggestions] }),
         message: `The message key "${key}" is not defined in the catalog.`,
       });
     }
