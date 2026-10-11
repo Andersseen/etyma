@@ -123,10 +123,18 @@ function countSegments(key: string): number {
   return count;
 }
 
+const INFINITE = 1 << 20;
+let rowBuffers: [Int32Array, Int32Array, Int32Array] = [
+  new Int32Array(0),
+  new Int32Array(0),
+  new Int32Array(0),
+];
+
 /**
  * Optimal-string-alignment distance over UTF-16 code units (insert, delete, substitute and
  * swap two adjacent units, each one edit). Returns `limit + 1` as soon as the distance is
- * known to exceed `limit`. Keeps three rows, so memory is linear in the key length.
+ * known to exceed `limit`. Only the diagonal band `|i - j| <= limit` can hold a distance
+ * within the limit, so only that band is computed, in three reused rows.
  */
 function boundedEditDistance(a: string, b: string, limit: number): number {
   if (a === b) return 0;
@@ -135,19 +143,24 @@ function boundedEditDistance(a: string, b: string, limit: number): number {
   if (Math.abs(n - m) > limit) return limit + 1;
   if (n === 0 || m === 0) return Math.max(n, m);
 
-  let twoBack = new Array<number>(m + 1).fill(0);
-  let previous = Array.from({ length: m + 1 }, (_, j) => j);
-  let current = new Array<number>(m + 1).fill(0);
+  if (rowBuffers[0].length < m + 2) {
+    rowBuffers = [new Int32Array(m + 2), new Int32Array(m + 2), new Int32Array(m + 2)];
+  }
+  let [twoBack, previous, current] = rowBuffers;
+  for (let j = 0; j <= m; j++) previous[j] = j;
 
   for (let i = 1; i <= n; i++) {
-    current[0] = i;
-    let rowMin = i;
-    for (let j = 1; j <= m; j++) {
+    const from = Math.max(1, i - limit);
+    const to = Math.min(m, i + limit);
+    current[from - 1] = from === 1 ? i : INFINITE;
+    if (to < m) current[to + 1] = INFINITE;
+    let rowMin = from === 1 ? i : INFINITE;
+    for (let j = from; j <= to; j++) {
       const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
       let value = Math.min(
-        (previous[j] ?? 0) + 1,
-        (current[j - 1] ?? 0) + 1,
-        (previous[j - 1] ?? 0) + cost,
+        (previous[j] ?? INFINITE) + 1,
+        (current[j - 1] ?? INFINITE) + 1,
+        (previous[j - 1] ?? INFINITE) + cost,
       );
       if (
         i > 1 &&
@@ -155,7 +168,7 @@ function boundedEditDistance(a: string, b: string, limit: number): number {
         a.charCodeAt(i - 1) === b.charCodeAt(j - 2) &&
         a.charCodeAt(i - 2) === b.charCodeAt(j - 1)
       ) {
-        value = Math.min(value, (twoBack[j - 2] ?? 0) + 1);
+        value = Math.min(value, (twoBack[j - 2] ?? INFINITE) + 1);
       }
       current[j] = value;
       if (value < rowMin) rowMin = value;
