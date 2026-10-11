@@ -56,3 +56,27 @@ describe('analyzeMessageUsage: performance at scale', () => {
     expect(result.diagnostics).toEqual([]);
   });
 });
+
+describe('analyzeMessageUsage: unknown-key suggestions at scale', () => {
+  it('ranks many typos, with repeats, against a thousand-key catalog', () => {
+    const keys = Array.from({ length: 1000 }, (_, i) => `section${i % 50}.message${i}`);
+    const calls = Array.from({ length: 2000 }, (_, i) => {
+      // A third are valid, a third repeat a handful of typos, a third are unrelated.
+      const key = keys[i % keys.length] ?? '';
+      if (i % 3 === 0) return `t('${key}');`;
+      if (i % 3 === 1) return `t('${keys[i % 7]}x');`;
+      return `t('unrelated.thing${i}');`;
+    });
+    const source = `import { injectT } from '@etyma/angular';\nconst t = injectT();\n${calls.join('\n')}`;
+
+    const result = analyzeMessageUsage({ keys, files: [{ path: 'big.ts', source }] });
+    const unknown = result.diagnostics.filter(d => d.code === 'source.unknown-key');
+
+    expect(unknown).toHaveLength(calls.length - Math.ceil(calls.length / 3));
+    const typos = unknown.filter(d => d.key?.endsWith('x'));
+    expect(typos.length).toBeGreaterThan(600);
+    for (const d of typos) {
+      expect(d.suggestions?.[0]).toBe(d.key?.slice(0, -1));
+    }
+  });
+});

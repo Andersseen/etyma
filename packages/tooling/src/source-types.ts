@@ -49,6 +49,13 @@ export interface SourceDiagnostic {
   readonly column: number;
   /** The literal key, for `source.unknown-key`. */
   readonly key?: string;
+  /**
+   * Up to three catalog keys the author probably meant, best first, for `source.unknown-key`.
+   * Optional and best-effort: present only for a high-confidence match, so a missing value
+   * means "no confident guess", never "no error". Advice only: a suggested key is not
+   * counted as used, and the finding keeps its `'error'` severity.
+   */
+  readonly suggestions?: readonly string[];
   /** The normalized in-memory path requested by a component's `templateUrl`. */
   readonly templatePath?: string;
   readonly message: string;

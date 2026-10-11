@@ -499,7 +499,19 @@ etyma analyze ./src --catalog ./src/i18n/en.json \
 Paths in diagnostics are also relative to the analyzed directory. Discovery order and output
 are deterministic. `--format json` emits the analyzer's `used`, `unreferenced` and
 `diagnostics` unchanged, plus `meta` with the input paths and counts. Pretty output lists
-diagnostics and every unreferenced candidate. These candidates mean the analyzer did not
+diagnostics and every unreferenced candidate. When an unknown key closely matches a catalog
+key, the diagnostic also carries `suggestions` (in JSON) and pretty output adds a line:
+
+```text
+src/nav.ts:12:5
+  ERROR source.unknown-key
+  nav.docz
+  The message key "nav.docz" is not defined in the catalog.
+  Did you mean "nav.docs"?
+```
+
+Suggestions are conservative advice. They never change the error, the exit code or the
+unreferenced candidates, and many typos will have none. These candidates mean the analyzer did not
 observe a static reference; they are not proof that a key is unused or safe to delete.
 
 Exit codes: `0` means analysis completed without error diagnostics (dynamic-key warnings and

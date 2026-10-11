@@ -76,6 +76,20 @@ describe('runAnalyzeCommand', () => {
     expect(result.stdout).toContain('Unreferenced candidates:');
   });
 
+  it('prints a single suggestion, several suggestions, and nothing when there is none', async () => {
+    const { cwd } = await fixture();
+    await writeFile(
+      join(cwd, 'src/app.ts'),
+      `import { injectT } from '@etyma/angular';\nconst t = injectT(i18n);\nt('nav.homx');\nt('unrelated.thing');`,
+    );
+
+    const result = await runAnalyzeCommand(['src', '--catalog', 'i18n/en.json'], cwd);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain('Did you mean "nav.home"?');
+    expect(result.stdout.match(/Did you mean/g)).toHaveLength(1);
+  });
+
   it('runs successfully with no discovered files and lists all keys as candidates', async () => {
     const { cwd } = await fixture();
     const result = await runAnalyzeCommand(['src', '--catalog', 'i18n/en.json'], cwd);

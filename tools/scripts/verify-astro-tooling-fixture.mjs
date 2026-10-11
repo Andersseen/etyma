@@ -65,7 +65,7 @@ writeFileSync(
   `---\nimport { createAstroI18n } from '@etyma/astro';\n` +
     `const etyma = await createAstroI18n(Astro, definition);\n---\n` +
     `<h1>{etyma.t('home.title')}</h1>\n` +
-    `{etyma.t('nav.typo')} {etyma.t(key)}`,
+    `{etyma.t('nav.docz')} {etyma.t(key)}`,
 );
 writeFileSync(join(project, 'src/.astro/generated.astro'), `<p>generated</p>`);
 
@@ -82,7 +82,12 @@ assert.deepEqual(output.unreferenced, ['nav.unused']);
 assert.equal(output.meta.mode, 'astro');
 assert.equal(output.meta.fileCount, 2);
 assert(
-  output.diagnostics.some(item => item.code === 'source.unknown-key' && item.key === 'nav.typo'),
+  output.diagnostics.some(
+    item =>
+      item.code === 'source.unknown-key' &&
+      item.key === 'nav.docz' &&
+      item.suggestions?.[0] === 'nav.docs',
+  ),
 );
 assert(
   output.diagnostics.some(

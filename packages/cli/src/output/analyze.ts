@@ -31,7 +31,13 @@ export function formatAnalyzePretty(
       `  ${diagnostic.severity.toUpperCase()} ${diagnostic.code}`,
     );
     if (diagnostic.key !== undefined) lines.push(`  ${diagnostic.key}`);
-    lines.push(`  ${diagnostic.message}`, '');
+    lines.push(`  ${diagnostic.message}`);
+    const [first, ...rest] = diagnostic.suggestions ?? [];
+    if (first !== undefined && rest.length === 0) lines.push(`  Did you mean "${first}"?`);
+    else if (first !== undefined) {
+      lines.push('  Did you mean one of:', ...[first, ...rest].map(key => `    ${key}`));
+    }
+    lines.push('');
   }
 
   lines.push('Unreferenced candidates:');
