@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { analyzeAstroMessageUsage } from './astro.js';
 
+/**
+ * Scale tests run in parallel with builds and typechecks on CI runners, where Vitest's 5s default
+ * is too tight even though the work takes well under a second. This bound still catches
+ * quadratic regressions, which run for minutes at these sizes.
+ */
+const SCALE_TIMEOUT_MS = 30_000;
+
 const KEYS = [
   'front.title',
   'page.title',
@@ -223,22 +230,26 @@ const etyma = await createAstroI18n(Astro, definition);
     expect(result.diagnostics).toEqual([]);
   });
 
-  it('scales across hundreds of Astro files with many references', async () => {
-    const keys = Array.from({ length: 400 }, (_, index) => `key${index}`);
-    const files = Array.from({ length: 240 }, (_, fileIndex) => ({
-      path: `src/Page${fileIndex}.astro`,
-      source:
-        `---\nimport { createAstroI18n } from '@etyma/astro';\n` +
-        `const etyma = await createAstroI18n(Astro, def);\n---\n` +
-        Array.from(
-          { length: 12 },
-          (_, callIndex) => `{etyma.t('key${(fileIndex * 12 + callIndex) % keys.length}')}`,
-        ).join('\n'),
-    }));
+  it(
+    'scales across hundreds of Astro files with many references',
+    async () => {
+      const keys = Array.from({ length: 400 }, (_, index) => `key${index}`);
+      const files = Array.from({ length: 240 }, (_, fileIndex) => ({
+        path: `src/Page${fileIndex}.astro`,
+        source:
+          `---\nimport { createAstroI18n } from '@etyma/astro';\n` +
+          `const etyma = await createAstroI18n(Astro, def);\n---\n` +
+          Array.from(
+            { length: 12 },
+            (_, callIndex) => `{etyma.t('key${(fileIndex * 12 + callIndex) % keys.length}')}`,
+          ).join('\n'),
+      }));
 
-    const result = await analyzeAstroMessageUsage({ keys, files });
-    expect(result.used).toHaveLength(keys.length);
-    expect(result.diagnostics).toEqual([]);
-    expect(result.unreferenced).toEqual([]);
-  });
+      const result = await analyzeAstroMessageUsage({ keys, files });
+      expect(result.used).toHaveLength(keys.length);
+      expect(result.diagnostics).toEqual([]);
+      expect(result.unreferenced).toEqual([]);
+    },
+    SCALE_TIMEOUT_MS,
+  );
 });
