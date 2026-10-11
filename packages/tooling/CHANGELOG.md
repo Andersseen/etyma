@@ -1,5 +1,11 @@
 # @etyma/tooling
 
+## 0.10.0
+
+### Minor Changes
+
+- [#140](https://github.com/Andersseen/etyma/pull/140) [`76b7784`](https://github.com/Andersseen/etyma/commit/76b7784fe7843f9bce0104a6b49971c1df7e724e) Thanks [@Andersseen](https://github.com/Andersseen)! - Add conservative, deterministic `suggestions` to `source.unknown-key` diagnostics, and print `Did you mean ...?` in `etyma analyze`.
+
 ## 0.9.0
 
 ### Minor Changes
