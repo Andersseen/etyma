@@ -708,7 +708,7 @@ Not part of the stable API, and not partially implemented anywhere:
 ## Repository layout
 
 ```
-apps/www             The official website: a JSON source with a committed `etyma contract`
+apps/www             The official website: Glossa remote catalogs with a generated contract
 apps/playground      A real Analog 2 consumer: JSON plus `defineMessages()`, no generation
 packages/core        @etyma/core
 packages/angular     @etyma/angular
@@ -734,17 +734,20 @@ pnpm lint             # ESLint, including the layer boundaries
 pnpm typecheck        # tsc across the workspace, plus ngc over the website's templates
 pnpm test             # Vitest unit and type tests
 pnpm e2e              # Playwright, against the Cloudflare build under Wrangler
-pnpm check            # formatting, website contract freshness, lint, typecheck, tests and build
+pnpm check            # formatting, lint, typecheck, tests and build
 pnpm package:check    # publint, are-the-types-wrong and tarball assertions
 pnpm compat:check     # builds the Angular, Analog, Astro and plain-core fixtures against packed tarballs
 pnpm changeset        # describe a change for the changelog
-pnpm --filter @etyma/www run i18n:contract  # after editing apps/www/src/app/i18n/en.json
 ```
 
 `pnpm e2e` builds the website and playground with Analog's Cloudflare Pages preset and
 serves each through Wrangler, so the end-to-end suite runs against production output in the
 runtime it deploys to. The suite includes raw HTTP assertions, because a browser cannot
 tell you whether the _response_ was translated or only the page.
+
+The website's catalogs come from the Glossa `etyma-www` project. For local MCP clients, copy
+`.env.example` to `.env.local` and put the project token in `GLOSSA_ETYMA_TOKEN`; the committed
+`.mcp.json` reads that variable without exposing the token or configuring it globally.
 
 ## CI, releases and deployments
 

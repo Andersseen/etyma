@@ -297,13 +297,14 @@ import { injectAppI18n } from '../i18n/inject';
 export default class HomePage {
   protected readonly i18n = injectAppI18n();
   protected readonly t = this.i18n.t;
-  protected readonly codeSample = `const i18n = defineI18n({
+  protected readonly codeSample = `const i18n = defineRemoteI18n({
   locales: ['en', 'es', 'uk'],
   sourceLocale: 'en',
-  source: en,
+  contract,
   loaders: {
-    es: () => import('./es.json'),
-    uk: () => import('./uk.json')
+    en: createHttpMessageLoader(localeUrl),
+    es: createHttpMessageLoader(localeUrl),
+    uk: createHttpMessageLoader(localeUrl)
   }
 });`;
   protected readonly typesSample = `const { t } = injectI18n(i18n);
@@ -313,9 +314,8 @@ t('home.titel');                  // unknown key
 t('footer.rights');               // year required
 t('footer.rights', { year: 'x' }); // not a number
 t('footer.rights', { year: 2026 });`;
-  protected readonly toolingSample = `# CI: verify, then build
-etyma contract ./src/i18n/en.json \\
-  --output ./src/i18n/etyma.generated.ts --check
-etyma validate ./src/i18n --source en
+  protected readonly toolingSample = `# CI: validate Glossa, then build
+etyma validate --remote "https://glossa.andersseen.dev/i18n/etyma-www/{locale}.json" \\
+  --locales en,es,uk --source en
 pnpm typecheck && pnpm build`;
 }

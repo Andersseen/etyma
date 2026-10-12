@@ -132,6 +132,16 @@ describe('etymaRemoteValidation', () => {
       expect(log.warn[0]).toContain('message.variable-function-mismatch  footer.rights');
     });
 
+    it('allows explicitly declared source-only keys to fall back', async () => {
+      const { origin } = await serve(
+        catalogs({ en: { ...en, docs: { sourceOnly: 'Source only' } } }),
+      );
+
+      await expect(
+        plugin(origin, { allowedMissingKeys: ['docs.sourceOnly'] }).buildStart(),
+      ).resolves.toBeUndefined();
+    });
+
     it('validates once per plugin instance, however many builds call buildStart', async () => {
       const { origin, requests } = await serve(catalogs());
       const target = plugin(origin);
