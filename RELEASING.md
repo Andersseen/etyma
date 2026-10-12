@@ -24,6 +24,17 @@ did (below): npm Trusted Publishing cannot be configured for a package that does
 yet. `@etyma/tooling` and `@etyma/cli` have both been through it and are published, so their
 releases now go through the normal flow below.
 
+## The first stable release (1.0.0)
+
+The first stable milestone is one coordinated release of all six public packages -
+`@etyma/core`, `@etyma/angular`, `@etyma/analog`, `@etyma/astro`, `@etyma/tooling` and
+`@etyma/cli` - each moving from `0.x` to `1.0.0` through a single `major` changeset. That is a
+one-time milestone, not a change of grouping: afterwards the fixed runtime trio versions
+together and the other three version independently, exactly as above. [V1.md](V1.md) is the
+readiness record and defines what the stability promise covers. It is released like any other
+version: merge the changeset's PR, then review and merge the generated **release: version
+packages** PR.
+
 The process is deliberately in three separable steps, even though only the first two need a
 human:
 

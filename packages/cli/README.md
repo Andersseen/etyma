@@ -2,11 +2,12 @@
 
 The command-line entry point to [Etyma](https://github.com/Andersseen/etyma)'s catalog
 tooling: run `etyma validate` against local or public remote JSON catalogs, `etyma contract`
-to generate or verify a typed message contract, and `etyma analyze` to inspect static JS/TS
-message-key usage - without writing a script around `@etyma/tooling` yourself.
+to generate or verify a typed message contract, and `etyma analyze` to inspect static
+message-key usage in JS/TS, Angular templates and Astro files - without writing a script around `@etyma/tooling` yourself.
 
-> **Pre-1.0, and deliberately narrow.** Three explicit commands, no configuration file. See
-> [Non-goals](#non-goals) before assuming it does more.
+> **Deliberately narrow.** Three explicit commands, no configuration file. The commands, options,
+> output and exit codes follow semantic versioning. See [Non-goals](#non-goals) before assuming it
+> does more.
 
 ## Why this is a separate package
 
@@ -519,7 +520,7 @@ unreferenced candidates are allowed); `1` means the analyzer found an unknown li
 a source/template parse error; `2` means usage, catalog, directory or file I/O prevented
 analysis. In Angular mode, a missing compatible `@angular/compiler` is an actionable exit `2`
 error. The command only reads local JSON and source files. It does not check MessageFormat 2
-validity, `.astro` files, wrappers or data flow. See the tooling's
+validity or general data flow. See the tooling's
 [source-analysis contract](../tooling#analysing-message-usage-in-source) for what the analyzer
 recognises and its limits.
 
@@ -538,9 +539,8 @@ scope:
 - **No pull, push or sync.** Nothing fetched is written to disk, and there is no `etyma pull`,
   `push` or `sync`, no cache and no lock file. This is validation, not synchronization.
 - **No source extraction or hardcoded-copy detection.** `etyma analyze` only checks static
-  references to catalog keys. Angular templates require the explicit `--angular` mode;
-  `.astro` files, project wrappers and general data flow remain outside the analyzer, and it
-  does not detect hardcoded copy.
+  references to catalog keys. Angular templates require `--angular` and `.astro` files `--astro`;
+  general data flow remains outside the analyzer, and it does not detect hardcoded copy.
 - **No translation editing or automatic translation.**
 - **No MCP server, no CMS or provider integration, no general plugin system.** Remote mode is a
   URL template, not a Glossa (or any other vendor's) adapter.
