@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "i18n tipado"
+    "status": "v1"
   },
   "nav": {
     "home": "Inicio",
@@ -15,7 +15,7 @@
     "skipToContent": "Saltar al contenido"
   },
   "home": {
-    "eyebrow": "Web oficial de Etyma",
+    "eyebrow": "Etyma 1.0 ya es estable",
     "title": "i18n tipado. SSR real. APIs limpias para Angular.",
     "lede": "Etyma ofrece catálogos JSON tipados, MessageFormat 2 con parámetros tipados, URLs localizadas, HTML traducido en SSR y carga lazy de idiomas segura para hidratación, para Angular, AnalogJS y Astro.",
     "primaryCta": "Explorar el flujo",
@@ -45,7 +45,7 @@
     "stepHydrateBody": "SSR envía el catálogo que usó la página, así la hidratación no lo vuelve a pedir ni muestra inglés.",
     "toolingEyebrow": "Tooling",
     "toolingTitle": "Catálogos y contratos verificados en CI, no en producción.",
-    "toolingBody": "@etyma/cli valida cada idioma contra el fuente y genera el contrato tipado para una fuente JSON. --check verifica el contrato commiteado sin escribir nada, así un tipo obsoleto nunca llega a main.",
+    "toolingBody": "@etyma/cli valida cada idioma contra el fuente y genera el contrato tipado para una fuente JSON. --check verifica el contrato commiteado sin escribir nada, así un tipo obsoleto nunca llega a main. etyma analyze encuentra claves desconocidas en JS/TS, plantillas Angular y archivos Astro.",
     "toolingValidateTitle": "Validar catálogos",
     "toolingValidateBody": "Claves que faltan o sobran, MessageFormat 2 inválido y variables que no coinciden, en archivos locales o catálogos remotos públicos.",
     "toolingContractTitle": "Generar el contrato",
