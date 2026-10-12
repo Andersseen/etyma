@@ -22,6 +22,8 @@ export interface EtymaRemoteValidationOptions {
   readonly locales: readonly string[];
   /** The locale whose catalog is the contract every other locale is measured against. */
   readonly sourceLocale: string;
+  /** Source keys that are intentionally allowed to fall back in other locales. */
+  readonly allowedMissingKeys?: readonly string[];
   /** Per-request timeout in milliseconds, covering a stalled body too. Defaults to 10 000. */
   readonly timeout?: number;
 }
@@ -117,6 +119,7 @@ interface ResolvedRequest {
   readonly locales: readonly string[];
   readonly targets: readonly RemoteTarget[];
   readonly timeoutMs: number;
+  readonly allowedMissingKeys: ReadonlySet<string>;
 }
 
 /** A failed run's full report, or a passing run's warnings, if it had any. */
@@ -126,7 +129,13 @@ interface Outcome {
 }
 
 function resolveRequest(options: EtymaRemoteValidationOptions): ResolvedRequest {
-  const { remote, locales, sourceLocale, timeout = DEFAULT_TIMEOUT_MS } = options;
+  const {
+    remote,
+    locales,
+    sourceLocale,
+    allowedMissingKeys = [],
+    timeout = DEFAULT_TIMEOUT_MS,
+  } = options;
 
   if (typeof remote !== 'string' || !remote.includes(LOCALE_PLACEHOLDER)) {
     throw configError(
@@ -194,7 +203,13 @@ function resolveRequest(options: EtymaRemoteValidationOptions): ResolvedRequest 
     return { locale, url: resolved.url };
   });
 
-  return { sourceLocale, locales: sorted, targets, timeoutMs: timeout };
+  return {
+    sourceLocale,
+    locales: sorted,
+    targets,
+    timeoutMs: timeout,
+    allowedMissingKeys: new Set(allowedMissingKeys),
+  };
 }
 
 function configError(message: string): EtymaError {
@@ -217,16 +232,32 @@ async function acquireAndValidate(request: ResolvedRequest): Promise<Outcome> {
     fetched.map(catalog => [catalog.locale, catalog.data as MessageSource]),
   );
   const result = validateCatalogs({ sourceLocale: request.sourceLocale, catalogs });
+  const diagnostics = result.diagnostics.filter(
+    diagnostic =>
+      !(
+        diagnostic.code === 'catalog.missing-key' &&
+        diagnostic.key !== undefined &&
+        request.allowedMissingKeys.has(diagnostic.key)
+      ),
+  );
+  const filteredResult: CatalogValidationResult = {
+    valid: diagnostics.every(diagnostic => diagnostic.severity !== 'error'),
+    diagnostics,
+  };
 
-  if (!result.valid) {
+  if (!filteredResult.valid) {
     return {
-      failure: formatDiagnostics('[etyma] remote catalog validation failed', result, request),
+      failure: formatDiagnostics(
+        '[etyma] remote catalog validation failed',
+        filteredResult,
+        request,
+      ),
     };
   }
 
-  if (result.diagnostics.length > 0) {
+  if (filteredResult.diagnostics.length > 0) {
     return {
-      warnings: formatDiagnostics('[etyma] remote catalogs are valid', result, request),
+      warnings: formatDiagnostics('[etyma] remote catalogs are valid', filteredResult, request),
     };
   }
 

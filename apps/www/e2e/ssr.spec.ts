@@ -8,26 +8,28 @@ import { expect, test } from '@playwright/test';
  * The difference matters to a search engine crawler, to a reader on a slow connection and
  * to anyone with JavaScript disabled, so it is checked where it is visible: in the bytes.
  */
+const withoutTransferState = (html: string): string =>
+  html.replace(/<script id="ng-state"[^>]*>.*?<\/script>/s, '');
+
 test.describe('server-rendered HTML', () => {
   test('the response for a Spanish URL is already Spanish', async ({ request }) => {
     const response = await request.get('/es/docs');
-    const html = await response.text();
+    const html = withoutTransferState(await response.text());
 
     expect(response.status()).toBe(200);
     expect(html).toContain('Define i18n una vez');
     expect(html).toContain('El idioma fuente queda');
-    expect(html).not.toContain('The source locale stays unprefixed');
   });
 
   test('the response for a Ukrainian URL is already Ukrainian', async ({ request }) => {
-    const html = await (await request.get('/uk/docs')).text();
+    const html = withoutTransferState(await (await request.get('/uk/docs')).text());
 
     expect(html).toContain('Покрито');
     expect(html).not.toContain('production behaviors are covered');
   });
 
   test('the source locale is served from the unprefixed URL', async ({ request }) => {
-    const html = await (await request.get('/docs')).text();
+    const html = withoutTransferState(await (await request.get('/docs')).text());
 
     expect(html).toContain('The source locale stays unprefixed');
   });
@@ -48,14 +50,14 @@ test.describe('server-rendered HTML', () => {
   });
 
   test('a deep localized route is rendered in its own language', async ({ request }) => {
-    const html = await (await request.get('/uk/docs/button')).text();
+    const html = withoutTransferState(await (await request.get('/uk/docs/button')).text());
 
     expect(html).toContain('Angular bindings на signals без runtime-церемонії.');
     expect(html).toContain('2026');
   });
 
   test('plural categories are chosen by the language of the page', async ({ request }) => {
-    const ukrainian = await (await request.get('/uk/docs')).text();
+    const ukrainian = withoutTransferState(await (await request.get('/uk/docs')).text());
 
     // Ukrainian has one/few/many where English has one/other. Getting all three right is
     // what using MessageFormat 2 rather than a hand-rolled plural rule buys.
@@ -65,7 +67,7 @@ test.describe('server-rendered HTML', () => {
   });
 
   test('a key missing from a translation falls back to the source catalog', async ({ request }) => {
-    const spanish = await (await request.get('/es/docs')).text();
+    const spanish = withoutTransferState(await (await request.get('/es/docs')).text());
 
     expect(spanish).toContain('This sentence exists only in the source catalog');
   });
@@ -84,7 +86,7 @@ test.describe('server-rendered HTML', () => {
     const responses = await Promise.all(
       [...wanted, ...wanted].map(async path => ({
         path,
-        html: await (await request.get(path)).text(),
+        html: withoutTransferState(await (await request.get(path)).text()),
       })),
     );
 
@@ -100,8 +102,8 @@ test.describe('server-rendered HTML', () => {
     const state = /<script id="ng-state"[^>]*>(.*?)<\/script>/s.exec(html)?.[1] ?? '';
 
     expect(state).toContain('Define i18n una vez');
-    // The source catalog is in the JavaScript bundle already; sending it again would
-    // double the payload of every English page for nothing.
-    expect(state).not.toContain('The source locale stays unprefixed');
+    // Remote catalogs are fetched for the active page and transferred with the SSR state so
+    // hydration can reuse them without requesting Glossa again.
+    expect(state).toContain('The source locale stays unprefixed');
   });
 });

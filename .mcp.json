@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "glossa": {
+      "url": "https://glossa.andersseen.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer ${GLOSSA_ETYMA_TOKEN}"
+      }
+    }
+  }
+}
