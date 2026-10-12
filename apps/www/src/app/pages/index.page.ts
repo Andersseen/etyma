@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   VoltBadge,
   VoltButton,
@@ -21,6 +22,7 @@ import { injectAppI18n } from '../i18n/inject';
 @Component({
   selector: 'app-home-page',
   imports: [
+    RouterLink,
     VoltBadge,
     VoltButton,
     VoltCard,
@@ -56,6 +58,11 @@ import { injectAppI18n } from '../i18n/inject';
           <a href="#packages">
             <volt-button variant="outline" size="lg">{{ t('home.secondaryCta') }}</volt-button>
           </a>
+        </div>
+
+        <div class="install-pill" data-testid="install">
+          <span aria-hidden="true">$</span>
+          <code>pnpm add @etyma/core</code>
         </div>
 
         <dl class="proof-grid" moveStagger [moveStaggerStep]="70">
@@ -136,6 +143,58 @@ import { injectAppI18n } from '../i18n/inject';
           </volt-card-header>
         </volt-card>
       </div>
+    </section>
+
+    <section class="section" id="stability">
+      <div class="section-heading">
+        <volt-badge variant="outline" class="section-badge">{{
+          t('home.stabilityEyebrow')
+        }}</volt-badge>
+        <h2>{{ t('home.stabilityTitle') }}</h2>
+        <p>{{ t('home.stabilityBody') }}</p>
+      </div>
+
+      <div class="stability-grid" moveStagger [moveStaggerStep]="80">
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-check-circle [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.stabilityApiTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.stabilityApiBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-code-bracket-square [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.stabilityContractTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.stabilityContractBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-shield-check [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.stabilityDiagnosticsTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.stabilityDiagnosticsBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card class="feature-card" [move]="'fade-up'">
+          <lmn-server-stack [size]="24" />
+          <volt-card-header>
+            <volt-card-title>{{ t('home.stabilityCliTitle') }}</volt-card-title>
+            <volt-card-description>{{ t('home.stabilityCliBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+      </div>
+    </section>
+
+    <section class="section split" id="types">
+      <div>
+        <volt-badge variant="outline" class="section-badge">{{
+          t('home.typesEyebrow')
+        }}</volt-badge>
+        <h2>{{ t('home.typesTitle') }}</h2>
+        <p>{{ t('home.typesBody') }}</p>
+      </div>
+      <pre class="code-block" [moveInView]="'fade-up'"><code>{{ typesSample }}</code></pre>
     </section>
 
     <section class="section workflow" id="workflow">
@@ -220,10 +279,23 @@ import { injectAppI18n } from '../i18n/inject';
         <div><lmn-cloud-arrow-up [size]="20" /> <span>@etyma/cli</span></div>
       </volt-card>
     </section>
+
+    <section class="section cta">
+      <h2>{{ t('home.ctaTitle') }}</h2>
+      <p>{{ t('home.ctaBody') }}</p>
+      <div class="hero-actions">
+        <a [routerLink]="i18n.path('/docs')" data-testid="cta-docs">
+          <volt-button class="primary-cta" size="lg">{{ t('home.ctaPrimary') }}</volt-button>
+        </a>
+        <a href="https://github.com/Andersseen/etyma" rel="noopener">
+          <volt-button variant="outline" size="lg">{{ t('home.ctaSecondary') }}</volt-button>
+        </a>
+      </div>
+    </section>
   `,
 })
 export default class HomePage {
-  private readonly i18n = injectAppI18n();
+  protected readonly i18n = injectAppI18n();
   protected readonly t = this.i18n.t;
   protected readonly codeSample = `const i18n = defineI18n({
   locales: ['en', 'es', 'uk'],
@@ -234,6 +306,13 @@ export default class HomePage {
     uk: () => import('./uk.json')
   }
 });`;
+  protected readonly typesSample = `const { t } = injectI18n(i18n);
+
+t('home.title');                  // ok
+t('home.titel');                  // unknown key
+t('footer.rights');               // year required
+t('footer.rights', { year: 'x' }); // not a number
+t('footer.rights', { year: 2026 });`;
   protected readonly toolingSample = `# CI: verify, then build
 etyma contract ./src/i18n/en.json \\
   --output ./src/i18n/etyma.generated.ts --check
