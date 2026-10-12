@@ -8,8 +8,8 @@ page files serves every language, the catalog is loaded during navigation so the
 HTML is already translated, and the `<head>` describes whichever page the URL currently
 names.
 
-> **Alpha.** See the [repository README](https://github.com/Andersseen/etyma#readme) for
-> what that means.
+> **Semver-stable public API.** The documented exports, generated formats, diagnostic codes and
+> CLI exit semantics follow semantic versioning; see [what the stability promise covers](https://github.com/Andersseen/etyma/blob/main/V1.md).
 
 ## Install
 

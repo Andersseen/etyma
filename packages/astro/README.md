@@ -7,10 +7,10 @@ package does not implement a second locale router. It reads the locale Astro alr
 resolved for the current request and builds a translator from it, and it localizes paths
 through `astro:i18n`'s own URL helpers - never a routing table of its own.
 
-> **Alpha, and independent of the runtime trio.** See the
-> [repository README](https://github.com/Andersseen/etyma#readme) for what "alpha" means
-> here. `@etyma/astro` versions on its own schedule, separate from `@etyma/core`,
-> `@etyma/angular` and `@etyma/analog`.
+> **Semver-stable public API, independent of the runtime trio.** The documented exports follow
+> semantic versioning; see [what the stability promise covers](https://github.com/Andersseen/etyma/blob/main/V1.md).
+> `@etyma/astro` versions on its own schedule, separate from `@etyma/core`, `@etyma/angular`
+> and `@etyma/analog`.
 
 ## Install
 

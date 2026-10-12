@@ -1,7 +1,7 @@
 {
   "name": "@etyma/cli",
   "version": "0.10.0",
-  "description": "Command-line tools for Etyma catalogs: validate local or public remote catalogs, generate typed message contracts, and analyse static JS/TS message usage.",
+  "description": "Command-line tools for Etyma catalogs: validate local or public remote catalogs, generate typed message contracts, and analyse static message usage in JS/TS, Angular templates and Astro files.",
   "keywords": [
     "i18n",
     "internationalization",

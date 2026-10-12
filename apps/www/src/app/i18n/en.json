@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "pre-1.0"
+    "status": "v1"
   },
   "nav": {
     "home": "Home",
@@ -15,7 +15,7 @@
     "skipToContent": "Skip to content"
   },
   "home": {
-    "eyebrow": "Official Etyma site",
+    "eyebrow": "Etyma 1.0 is stable",
     "title": "Typed i18n. Real SSR. Clean Angular APIs.",
     "lede": "Etyma gives Angular, AnalogJS and Astro teams typed JSON catalogs, MessageFormat 2 with typed params, localized URLs, translated SSR HTML and hydration-safe lazy locale loading.",
     "primaryCta": "Explore the flow",
@@ -45,7 +45,7 @@
     "stepHydrateBody": "SSR sends the catalog the page used, so hydration does not refetch it or flash English.",
     "toolingEyebrow": "Tooling",
     "toolingTitle": "Catalogs and contracts checked in CI, not in production.",
-    "toolingBody": "@etyma/cli validates every locale against the source and generates the typed contract for a JSON source. --check verifies the committed contract without writing anything, so a stale type never reaches main.",
+    "toolingBody": "@etyma/cli validates every locale against the source and generates the typed contract for a JSON source. --check verifies the committed contract without writing anything, so a stale type never reaches main. etyma analyze finds unknown keys in JS/TS, Angular templates and Astro files.",
     "toolingValidateTitle": "Validate catalogs",
     "toolingValidateBody": "Missing and extra keys, invalid MessageFormat 2 and variable drift, for local files or public remote catalogs.",
     "toolingContractTitle": "Generate the contract",
@@ -54,7 +54,25 @@
     "toolingCheckBody": "Exit 1 when the committed contract is missing or out of date — even when a variable only changed from :number to :datetime.",
     "packagesEyebrow": "Packages",
     "packagesTitle": "One portable core, adapters for three frameworks, tooling for CI.",
-    "packagesBody": "@etyma/core owns catalogs, MessageFormat 2 and types. @etyma/angular, @etyma/analog and @etyma/astro bring them to each framework. @etyma/tooling and @etyma/cli keep catalogs and contracts honest."
+    "packagesBody": "@etyma/core owns catalogs, MessageFormat 2 and types. @etyma/angular, @etyma/analog and @etyma/astro bring them to each framework. @etyma/tooling and @etyma/cli keep catalogs and contracts honest.",
+    "stabilityEyebrow": "Stable since 1.0",
+    "stabilityTitle": "A promise you can build a product on.",
+    "stabilityBody": "Every documented export, generated format, diagnostic code and CLI exit code keeps its meaning for every 1.x release. New capabilities arrive as minors, never as surprises.",
+    "stabilityApiTitle": "Stable API",
+    "stabilityApiBody": "Runtime exports and public types follow semver across all six packages.",
+    "stabilityContractTitle": "Stable contract",
+    "stabilityContractBody": "One generated shape. New metadata is a new optional field, never a new format.",
+    "stabilityDiagnosticsTitle": "Stable diagnostics",
+    "stabilityDiagnosticsBody": "Codes are namespaced and never renamed, removed or re-graded within a major.",
+    "stabilityCliTitle": "Stable CLI",
+    "stabilityCliBody": "Exit 0 on success, 1 on a validation or stale-contract failure, 2 on usage or I/O errors.",
+    "typesEyebrow": "Caught in the editor",
+    "typesTitle": "Mistakes fail in TypeScript, not in production.",
+    "typesBody": "Keys, parameter names and parameter types come from your catalog. A typo, a missing variable or a string where a number belongs is a compile error — in code and in Angular templates.",
+    "ctaTitle": "Ship typed, translated, server-rendered.",
+    "ctaBody": "Start with the docs, or read the source. Etyma is MIT licensed and developed in the open.",
+    "ctaPrimary": "Read the docs",
+    "ctaSecondary": "Star on GitHub"
   },
   "docs": {
     "eyebrow": "Getting started",

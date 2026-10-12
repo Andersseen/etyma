@@ -4,9 +4,10 @@ Static validation for [Etyma](https://github.com/Andersseen/etyma) message catal
 parity, MessageFormat 2 syntax, and the external variable contract between a source catalog
 and its translations — as structured, machine-readable diagnostics.
 
-> **Alpha.** See the [repository README](https://github.com/Andersseen/etyma#readme) for
-> what that means. `@etyma/tooling` is newer than the runtime packages and versions
-> independently of them — see [Versioning](#versioning) below.
+> **Semver-stable public API.** The documented exports, diagnostic codes and generated contract
+> format follow semantic versioning; see [what the stability promise covers](https://github.com/Andersseen/etyma/blob/main/V1.md).
+> `@etyma/tooling` versions independently of the runtime packages — see
+> [Versioning](#versioning) below.
 
 ## Why this is a separate package
 
@@ -539,9 +540,10 @@ and anything else as TypeScript. Do not pass templates.
 
 Preferring a missed usage to a wrongly attributed one, it does **not** cover:
 
-- **Angular templates** (`*.html`, inline `template:` strings), **Astro files** (`*.astro`)
-  and any other template language. Only JavaScript and TypeScript are read, so a key used only
-  in a template is `unreferenced`.
+- **Templates, in this subpath.** `@etyma/tooling/source` reads only JavaScript and TypeScript,
+  so through it alone a key used only in an Angular template or an Astro file is `unreferenced`.
+  Those are covered by the separate [`/angular`](#angular-component-templates) and
+  [`/astro`](#astro-source-analysis) frontends; any other template language is not.
 - **General data flow.** Conditional or mutable wrappers, a translator passed as a prop or
   parameter (`function view({ t })`), constructor parameter properties, `inject(EtymaI18n)`,
   `require()` and dynamic `import()` are not followed.
@@ -809,8 +811,9 @@ Deliberately not implemented yet:
 - **No remote watching.** `etymaRemoteContract` and `etymaRemoteValidation` each run once per
   dev-server start and once per build. No polling, webhooks, SSE or sync: a remote change is seen on the next start.
 - **Source analysis is static.** `@etyma/tooling/source`, `/angular` and `/astro` find literal
-  keys in recognised Etyma calls, but do not follow wrappers or general dataflow, extract
-  source messages or detect hardcoded copy. See [Phase 1 limits](#phase-1-limits). It reports
+  keys in recognised Etyma calls and follow only trivial project-local wrappers; they do not
+  follow general dataflow or arbitrary module resolution, extract source messages or detect
+  hardcoded copy. See [Conservative provenance limits](#conservative-provenance-limits). It reports
   `unreferenced` keys as candidates, not as safe to delete. The [`etyma analyze` CLI command](../cli#etyma-analyze)
   supplies local files and presents this result without changing the analyzer's semantics.
 - **No full type-checking of `:function` options.** Variable function parity compares

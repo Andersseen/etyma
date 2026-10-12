@@ -10,8 +10,8 @@ implementation. That constraint is enforced by lint rules and checked against th
 tarball on every CI run, because it is what lets the same catalog logic run in a browser, in
 a Node server, in a Cloudflare Worker and in whatever adapter comes next.
 
-> **Alpha.** See the [repository README](https://github.com/Andersseen/etyma#readme) for
-> what that means.
+> **Semver-stable public API.** The documented exports, generated formats, diagnostic codes and
+> CLI exit semantics follow semantic versioning; see [what the stability promise covers](https://github.com/Andersseen/etyma/blob/main/V1.md).
 
 ## Install
 

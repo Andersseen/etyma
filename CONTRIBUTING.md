@@ -1,8 +1,9 @@
 # Contributing to Etyma
 
-Etyma is alpha software with a deliberately small API. The most valuable contribution right
-now is being told that something is wrong — a bug, a confusing name, an API that does not
-survive contact with a real application — while it is still cheap to change.
+Etyma has a deliberately small API. The most valuable contribution right now is being told
+that something is wrong — a bug, a confusing name, an API that does not survive contact with a
+real application. Public API changes follow semantic versioning, so a fix to a stable API
+means a deprecation or a major release; the sooner it is reported, the cheaper it is.
 
 By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 

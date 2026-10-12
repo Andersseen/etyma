@@ -2,12 +2,12 @@
 
 ## Supported versions
 
-Etyma is pre-1.0. Only the latest published version receives fixes.
+Only the latest published version of each package receives security fixes.
 
-| Version        | Supported |
-| -------------- | --------- |
-| 0.0.x (latest) | Yes       |
-| Anything older | No        |
+| Version                        | Supported |
+| ------------------------------ | --------- |
+| Latest release of each package | Yes       |
+| Anything older                 | No        |
 
 ## Reporting a vulnerability
 

@@ -1,6 +1,6 @@
 {
   "layout": {
-    "status": "pre-1.0"
+    "status": "v1"
   },
   "nav": {
     "home": "Inicio",
@@ -15,7 +15,7 @@
     "skipToContent": "Saltar al contenido"
   },
   "home": {
-    "eyebrow": "Web oficial de Etyma",
+    "eyebrow": "Etyma 1.0 ya es estable",
     "title": "i18n tipado. SSR real. APIs limpias para Angular.",
     "lede": "Etyma ofrece catálogos JSON tipados, MessageFormat 2 con parámetros tipados, URLs localizadas, HTML traducido en SSR y carga lazy de idiomas segura para hidratación, para Angular, AnalogJS y Astro.",
     "primaryCta": "Explorar el flujo",
@@ -45,7 +45,7 @@
     "stepHydrateBody": "SSR envía el catálogo que usó la página, así la hidratación no lo vuelve a pedir ni muestra inglés.",
     "toolingEyebrow": "Tooling",
     "toolingTitle": "Catálogos y contratos verificados en CI, no en producción.",
-    "toolingBody": "@etyma/cli valida cada idioma contra el fuente y genera el contrato tipado para una fuente JSON. --check verifica el contrato commiteado sin escribir nada, así un tipo obsoleto nunca llega a main.",
+    "toolingBody": "@etyma/cli valida cada idioma contra el fuente y genera el contrato tipado para una fuente JSON. --check verifica el contrato commiteado sin escribir nada, así un tipo obsoleto nunca llega a main. etyma analyze encuentra claves desconocidas en JS/TS, plantillas Angular y archivos Astro.",
     "toolingValidateTitle": "Validar catálogos",
     "toolingValidateBody": "Claves que faltan o sobran, MessageFormat 2 inválido y variables que no coinciden, en archivos locales o catálogos remotos públicos.",
     "toolingContractTitle": "Generar el contrato",
@@ -54,7 +54,25 @@
     "toolingCheckBody": "Sale con 1 cuando el contrato commiteado falta o está desactualizado, aunque una variable solo haya pasado de :number a :datetime.",
     "packagesEyebrow": "Paquetes",
     "packagesTitle": "Un core portable, adaptadores para tres frameworks y tooling para CI.",
-    "packagesBody": "@etyma/core gestiona catálogos, MessageFormat 2 y tipos. @etyma/angular, @etyma/analog y @etyma/astro los llevan a cada framework. @etyma/tooling y @etyma/cli mantienen catálogos y contratos correctos."
+    "packagesBody": "@etyma/core gestiona catálogos, MessageFormat 2 y tipos. @etyma/angular, @etyma/analog y @etyma/astro los llevan a cada framework. @etyma/tooling y @etyma/cli mantienen catálogos y contratos correctos.",
+    "stabilityEyebrow": "Estable desde 1.0",
+    "stabilityTitle": "Una promesa sobre la que construir un producto.",
+    "stabilityBody": "Cada export documentado, formato generado, código de diagnóstico y código de salida del CLI mantiene su significado en todas las versiones 1.x. Las novedades llegan como minors, nunca como sorpresas.",
+    "stabilityApiTitle": "API estable",
+    "stabilityApiBody": "Los exports de runtime y los tipos públicos siguen semver en los seis paquetes.",
+    "stabilityContractTitle": "Contrato estable",
+    "stabilityContractBody": "Una sola forma generada. Los metadatos nuevos son un campo opcional, nunca un formato nuevo.",
+    "stabilityDiagnosticsTitle": "Diagnósticos estables",
+    "stabilityDiagnosticsBody": "Los códigos tienen espacio de nombres y no se renombran, eliminan ni cambian de gravedad dentro de una major.",
+    "stabilityCliTitle": "CLI estable",
+    "stabilityCliBody": "Salida 0 si todo va bien, 1 si falla la validación o el contrato está obsoleto, 2 por errores de uso o de E/S.",
+    "typesEyebrow": "Detectado en el editor",
+    "typesTitle": "Los errores fallan en TypeScript, no en producción.",
+    "typesBody": "Las claves, los nombres de parámetros y sus tipos salen de tu catálogo. Un typo, una variable que falta o un texto donde va un número es un error de compilación, en código y en plantillas de Angular.",
+    "ctaTitle": "Publica con tipos, traducido y renderizado en servidor.",
+    "ctaBody": "Empieza por la documentación o lee el código. Etyma tiene licencia MIT y se desarrolla en abierto.",
+    "ctaPrimary": "Leer la documentación",
+    "ctaSecondary": "Estrella en GitHub"
   },
   "docs": {
     "eyebrow": "Primeros pasos",

@@ -36,11 +36,12 @@ Etyma is a small toolkit for translating Angular, AnalogJS and Astro application
 catalogs, typed message keys, MessageFormat 2 formatting, locale-aware routing, server- and
 build-time translations, and the localized `<head>` that makes a translated page findable.
 
-> **Status: published and early.** Every package is on npm. The runtime trio (`core`,
-> `angular`, `analog`) versions together and is used by Volt UI; `@etyma/astro`, `@etyma/tooling`
-> and `@etyma/cli` are `0.x` and version independently, with `@etyma/astro` running a
-> production Astro 6 site. Etyma is still pre-1.0. The API is small on purpose and the release
-> gates exercise packed packages; read [Non-goals](#non-goals) before adopting it.
+> **Status: published, with a semver-stable public API.** Every package is on npm. The runtime
+> trio (`core`, `angular`, `analog`) versions together and is used by Volt UI; `@etyma/astro`,
+> `@etyma/tooling` and `@etyma/cli` version independently, with `@etyma/astro` running a
+> production Astro 6 site. The API is small on purpose and the release gates exercise packed
+> packages. What the stability promise covers is in [V1.md](V1.md); read
+> [Non-goals](#non-goals) before adopting it.
 
 ## Why Etyma exists
 
@@ -686,7 +687,7 @@ is also development tooling, not a runtime dependency — no other Etyma package
 
 ## Non-goals
 
-Not planned for `0.x`, and not partially implemented anywhere:
+Not part of the stable API, and not partially implemented anywhere:
 
 - Adapters for React, Vue or Svelte
 - A client-side locale store, `localStorage` or cookie-based locale persistence, or an
@@ -770,12 +771,12 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Release Status
 
-Every package is published to npm and is still pre-1.0. `@etyma/core`, `@etyma/angular` and
-`@etyma/analog` share one version and are released together; `@etyma/astro`, `@etyma/tooling`
-and `@etyma/cli` version independently. Current versions are on npm and in each package's
+Every package is published to npm under semantic versioning. `@etyma/core`, `@etyma/angular`
+and `@etyma/analog` share one version and are released together; `@etyma/astro`,
+`@etyma/tooling` and `@etyma/cli` version independently. Current versions are on npm and in each package's
 `CHANGELOG.md`, and every release goes through [RELEASING.md](RELEASING.md) — see it for why the
 Astro adapter and the development tooling are not in the runtime trio's fixed version group.
-What 1.0 requires, and what it deliberately does not, is in [V1.md](V1.md).
+What the 1.0 stability promise covers, and what it deliberately does not, is in [V1.md](V1.md).
 
 ## Licence
 
