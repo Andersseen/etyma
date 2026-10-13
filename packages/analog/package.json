@@ -49,7 +49,7 @@
     "@analogjs/content": "2.8.0",
     "@analogjs/router": "2.8.0",
     "@analogjs/vite-plugin-angular": "2.8.0",
-    "@angular/build": "21.2.24",
+    "@angular/build": "21.2.26",
     "@angular/common": "21.2.25",
     "@angular/compiler": "21.2.25",
     "@angular/compiler-cli": "21.2.25",
