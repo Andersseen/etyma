@@ -42,7 +42,7 @@
     "@changesets/changelog-github": "1.0.1",
     "@changesets/cli": "3.0.3",
     "@eslint/js": "10.0.1",
-    "angular-eslint": "22.5.0",
+    "angular-eslint": "22.6.0",
     "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.13.0",
