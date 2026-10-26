@@ -33,7 +33,7 @@
     "@etyma/angular": "workspace:^",
     "@etyma/core": "workspace:^",
     "@tailwindcss/vite": "4.3.3",
-    "@voltui/components": "1.1.0",
+    "@voltui/components": "1.3.3",
     "angular-movement": "1.2.0",
     "front-matter": "4.0.2",
     "lumen-icons": "0.2.0",
