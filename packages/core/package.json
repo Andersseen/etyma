@@ -46,7 +46,7 @@
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
-    "messageformat": "4.0.0"
+    "messageformat": "4.1.0"
   },
   "devDependencies": {
     "vitest": "5.0.5"

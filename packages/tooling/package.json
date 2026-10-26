@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "@etyma/core": "workspace:^",
-    "messageformat": "4.0.0",
+    "messageformat": "4.1.0",
     "typescript": "5.9.3"
   },
   "peerDependencies": {
