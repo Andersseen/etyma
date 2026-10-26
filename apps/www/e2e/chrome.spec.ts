@@ -25,7 +25,6 @@ test.describe('site chrome', () => {
     await page.goto('/');
 
     const colors = await page.getByTestId('hero-primary').evaluate(anchor => {
-      const button = anchor.querySelector('button');
       const root = document.documentElement;
       const probe = document.createElement('span');
 
@@ -34,7 +33,7 @@ test.describe('site chrome', () => {
 
       const result = {
         accent: getComputedStyle(probe).color,
-        background: button === null ? '' : getComputedStyle(button).backgroundImage,
+        background: getComputedStyle(anchor).backgroundColor,
       };
 
       probe.remove();

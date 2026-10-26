@@ -17,7 +17,7 @@ import {
   VoltTabsList,
   VoltTabsTrigger,
 } from '@voltui/components';
-import { MoveAnimateDirective } from 'angular-movement';
+import { MoveAnimateDirective, MoveLoopDirective } from 'angular-movement';
 import { LmnLockClosedIcon } from 'lumen-icons/lock-closed';
 
 import { siteCopy } from '../content/site-copy';
@@ -98,6 +98,7 @@ interface SourceLine {
     VoltTabsList,
     VoltTabsTrigger,
     MoveAnimateDirective,
+    MoveLoopDirective,
     LmnLockClosedIcon,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -121,7 +122,10 @@ interface SourceLine {
               </volt-tabs-trigger>
             }
           </volt-tabs-list>
-          <span class="demo-live"><i aria-hidden="true"></i>{{ copy().demoLabel }}</span>
+          <span class="demo-live"
+            ><i aria-hidden="true" moveLoop="pulse" moveDuration="1800"></i
+            >{{ copy().demoLabel }}</span
+          >
         </div>
 
         @for (locale of locales; track locale) {

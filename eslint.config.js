@@ -164,6 +164,8 @@ export default tseslint.config(
       '**/coverage/**',
       '**/playwright-report/**',
       '**/test-results/**',
+      // Vendored, minified build of Vertex's read-only editor.
+      'apps/www/public/web-editor-lite.min.js',
       // Compatibility fixtures are not workspace source: their `src` is copied in at run
       // time and their dependencies are packed tarballs, so there is no project for the
       // type-aware rules to read. Each fixture runs its own `tsc` against a real Angular.
