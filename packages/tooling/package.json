@@ -88,8 +88,8 @@
     "@astrojs/compiler-rs": "0.5.1",
     "@angular/compiler": "21.2.25",
     "@types/node": "26.6.4",
-    "vite": "8.3.2",
-    "vitest": "5.0.3"
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
   },
   "publishConfig": {
     "access": "public",
