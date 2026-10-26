@@ -186,11 +186,10 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
               (click)="toggleTheme()"
             >
               @if (theme() === 'dark') {
-                <lmn-moon slot="leading" [size]="16" />
+                <lmn-moon [size]="18" />
               } @else {
-                <lmn-sun slot="leading" [size]="16" />
+                <lmn-sun [size]="18" />
               }
-              <span class="hidden sm:inline">{{ themeLabel() }}</span>
             </volt-button>
             <volt-button
               variant="outline"
@@ -314,7 +313,6 @@ export class App {
   protected readonly i18n = injectAppI18n();
   protected readonly repoUrl = 'https://github.com/Andersseen/etyma';
   protected readonly theme = signal<'dark' | 'light'>('dark');
-  protected readonly themeLabel = computed(() => (this.theme() === 'dark' ? 'Dark' : 'Light'));
   protected readonly themeAriaLabel = computed(() => `Switch to ${this.oppositeTheme()} theme`);
   protected readonly showBackToTop = signal(false);
   protected readonly copy = computed(() => siteCopy(this.i18n.locale()));
