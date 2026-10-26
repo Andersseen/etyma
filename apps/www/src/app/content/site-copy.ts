@@ -175,7 +175,7 @@ const en: SiteCopy = {
       {
         question: 'Is MessageFormat 2 ready for production?',
         answer:
-          'Etyma builds on the Unicode MessageFormat 2 reference implementation. The stable functions are always available; draft ones such as :date and :currency are on by default and can be turned off.',
+          'Etyma builds on the Unicode MessageFormat 2 reference implementation. The stable functions are always available; draft ones such as :date and :unit are on by default and can be turned off.',
       },
       {
         question: 'Is it open source?',
@@ -298,7 +298,7 @@ const es: SiteCopy = {
       {
         question: '¿MessageFormat 2 está listo para producción?',
         answer:
-          'Etyma usa la implementación de referencia de Unicode MessageFormat 2. Las funciones estables siempre están disponibles; las draft, como :date y :currency, están activadas por defecto y se pueden desactivar.',
+          'Etyma usa la implementación de referencia de Unicode MessageFormat 2. Las funciones estables siempre están disponibles; las draft, como :date y :unit, están activadas por defecto y se pueden desactivar.',
       },
       {
         question: '¿Es open source?',
@@ -420,7 +420,7 @@ const uk: SiteCopy = {
       {
         question: 'Чи готовий MessageFormat 2 до продакшену?',
         answer:
-          'Etyma використовує еталонну реалізацію Unicode MessageFormat 2. Стабільні функції доступні завжди; чернеткові, як-от :date і :currency, увімкнені за замовчуванням і їх можна вимкнути.',
+          'Etyma використовує еталонну реалізацію Unicode MessageFormat 2. Стабільні функції доступні завжди; чернеткові, як-от :date і :unit, увімкнені за замовчуванням і їх можна вимкнути.',
       },
       {
         question: 'Це open source?',
