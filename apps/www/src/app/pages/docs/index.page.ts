@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import {
+  VoltCard,
+  VoltCardContent,
+  VoltCardDescription,
+  VoltCardHeader,
+  VoltCardTitle,
+} from '@voltui/components';
 import { LmnArrowRightIcon } from 'lumen-icons/arrow-right';
 import { LmnCheckCircleIcon } from 'lumen-icons/check-circle';
 
@@ -8,7 +15,16 @@ import { injectPageSeo } from '../../seo/page-seo';
 
 @Component({
   selector: 'app-docs-page',
-  imports: [RouterLink, LmnArrowRightIcon, LmnCheckCircleIcon],
+  imports: [
+    RouterLink,
+    VoltCard,
+    VoltCardContent,
+    VoltCardDescription,
+    VoltCardHeader,
+    VoltCardTitle,
+    LmnArrowRightIcon,
+    LmnCheckCircleIcon,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page-hero compact" data-motion="rise">
@@ -27,23 +43,39 @@ import { injectPageSeo } from '../../seo/page-seo';
 
     <section class="section">
       <div class="feature-grid dense">
-        <article class="feature-card">
-          <lmn-check-circle [size]="20" />
-          <h3>{{ t('docs.routingTitle') }}</h3>
-          <p>{{ t('docs.routingBody') }}</p>
-        </article>
-        <article class="feature-card">
-          <lmn-check-circle [size]="20" />
-          <h3>{{ t('docs.fallbackTitle') }}</h3>
-          <p data-testid="fallback">{{ t('docs.sourceOnly') }}</p>
-        </article>
-        <article class="feature-card">
-          <lmn-check-circle [size]="20" />
-          <h3>{{ t('docs.messageTitle') }}</h3>
-          <p data-testid="plural-one">{{ t('docs.componentCount', { count: 1 }) }}</p>
-          <p data-testid="plural-few">{{ t('docs.componentCount', { count: 3 }) }}</p>
-          <p data-testid="plural-many">{{ t('docs.componentCount', { count: 12 }) }}</p>
-        </article>
+        <volt-card>
+          <volt-card-header>
+            <lmn-check-circle [size]="20" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('docs.routingTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('docs.routingBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card>
+          <volt-card-header>
+            <lmn-check-circle [size]="20" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('docs.fallbackTitle')
+            }}</volt-card-title>
+          </volt-card-header>
+          <volt-card-content class="grid gap-2 text-sm text-muted-foreground">
+            <p data-testid="fallback">{{ t('docs.sourceOnly') }}</p>
+          </volt-card-content>
+        </volt-card>
+        <volt-card>
+          <volt-card-header>
+            <lmn-check-circle [size]="20" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('docs.messageTitle')
+            }}</volt-card-title>
+          </volt-card-header>
+          <volt-card-content class="grid gap-2 text-sm text-muted-foreground">
+            <p data-testid="plural-one">{{ t('docs.componentCount', { count: 1 }) }}</p>
+            <p data-testid="plural-few">{{ t('docs.componentCount', { count: 3 }) }}</p>
+            <p data-testid="plural-many">{{ t('docs.componentCount', { count: 12 }) }}</p>
+          </volt-card-content>
+        </volt-card>
       </div>
     </section>
 

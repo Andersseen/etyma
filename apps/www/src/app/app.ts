@@ -22,6 +22,7 @@ import {
   VoltNavigationMenuItem,
   VoltNavigationMenuLink,
   VoltNavigationMenuList,
+  VoltNativeButton,
 } from '@voltui/components';
 import { MOVEMENT_DIRECTIVES } from 'angular-movement';
 import { LmnArrowSmallUpIcon } from 'lumen-icons/arrow-small-up';
@@ -58,6 +59,7 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
     VoltNavigationMenuItem,
     VoltNavigationMenuLink,
     VoltNavigationMenuList,
+    VoltNativeButton,
     ...MOVEMENT_DIRECTIVES,
     LmnArrowSmallUpIcon,
     LmnBars3Icon,
@@ -241,8 +243,10 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
 
       <ng-container *movePresence="showBackToTop()">
         <button
+          voltButton
+          size="icon"
           type="button"
-          class="back-to-top"
+          class="back-to-top rounded-full shadow-lg"
           data-testid="back-to-top"
           aria-label="Back to top"
           [moveInitial]="{ opacity: 0, y: 18, scale: 0.92 }"

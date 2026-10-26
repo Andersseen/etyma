@@ -6,6 +6,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { VoltNativeButton } from '@voltui/components';
 import { MoveTapDirective } from 'angular-movement';
 import { LmnCheckIcon } from 'lumen-icons/check';
 import { LmnClipboardDocumentIcon } from 'lumen-icons/clipboard-document';
@@ -13,15 +14,16 @@ import { LmnClipboardDocumentIcon } from 'lumen-icons/clipboard-document';
 /** Copies `text` and says so for a moment. The label comes from the page's language. */
 @Component({
   selector: 'app-copy-button',
-  imports: [MoveTapDirective, LmnCheckIcon, LmnClipboardDocumentIcon],
+  imports: [VoltNativeButton, MoveTapDirective, LmnCheckIcon, LmnClipboardDocumentIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
+      voltButton
+      variant="ghost"
+      size="icon"
       type="button"
-      class="copy-button"
       moveWhileTap="press"
       [attr.aria-label]="copied() ? copiedLabel() : label()"
-      [attr.data-copied]="copied() ? '' : null"
       (click)="copy()"
     >
       @if (copied()) {

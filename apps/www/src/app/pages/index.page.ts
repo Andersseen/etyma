@@ -6,7 +6,12 @@ import {
   VoltAccordionItem,
   VoltAccordionTrigger,
   VoltBadge,
-  VoltButton,
+  VoltCard,
+  VoltCardContent,
+  VoltCardDescription,
+  VoltCardHeader,
+  VoltCardTitle,
+  VoltNativeButton,
   VoltTabs,
   VoltTabsContent,
   VoltTabsList,
@@ -125,7 +130,12 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
     VoltAccordionItem,
     VoltAccordionTrigger,
     VoltBadge,
-    VoltButton,
+    VoltCard,
+    VoltCardContent,
+    VoltCardDescription,
+    VoltCardHeader,
+    VoltCardTitle,
+    VoltNativeButton,
     VoltTabs,
     VoltTabsContent,
     VoltTabsList,
@@ -189,14 +199,26 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
         <p class="hero-lede" data-testid="lede">{{ t('home.lede') }}</p>
 
         <div class="hero-actions">
-          <a href="#start" data-testid="hero-primary" moveWhileHover="lift" moveWhileTap="press">
-            <volt-button class="primary-cta" size="lg">
-              {{ copy().hero.getStarted }}
-              <lmn-arrow-right slot="trailing" [size]="20" />
-            </volt-button>
+          <a
+            voltButton
+            size="lg"
+            href="#start"
+            data-testid="hero-primary"
+            moveWhileHover="lift"
+            moveWhileTap="press"
+          >
+            {{ copy().hero.getStarted }}
+            <lmn-arrow-right [size]="20" />
           </a>
-          <a href="#packages" moveWhileHover="lift" moveWhileTap="press">
-            <volt-button variant="outline" size="lg">{{ t('home.secondaryCta') }}</volt-button>
+          <a
+            voltButton
+            variant="outline"
+            size="lg"
+            href="#packages"
+            moveWhileHover="lift"
+            moveWhileTap="press"
+          >
+            {{ t('home.secondaryCta') }}
           </a>
         </div>
 
@@ -287,49 +309,81 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
       </div>
 
       <div class="bento" moveStagger moveStaggerStep="60ms">
-        <article class="bento-card bento-typed" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-language [size]="24" class="bento-icon" />
-          <h3>{{ t('home.featureTypedTitle') }}</h3>
-          <p>{{ t('home.featureTypedBody') }}</p>
-          <pre
-            class="bento-code"
-            aria-hidden="true"
-          ><code><span class="tok-fn">t</span>(<span class="tok-str">'checkout.total'</span>, {{ '{' }} <span class="tok-key">amount</span>: <span class="squiggle">'12'</span> {{ '}' }});
+        <volt-card class="bento-typed" moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-language [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('home.featureTypedTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('home.featureTypedBody') }}</volt-card-description>
+          </volt-card-header>
+          <volt-card-content>
+            <pre
+              class="bento-code"
+              aria-hidden="true"
+            ><code><span class="tok-fn">t</span>(<span class="tok-str">'checkout.total'</span>, {{ '{' }} <span class="tok-key">amount</span>: <span class="squiggle">'12'</span> {{ '}' }});
 <span class="tok-err">✕ Type 'string' is not assignable to type 'number'.</span></code></pre>
-        </article>
-        <article class="bento-card bento-ssr" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-server-stack [size]="24" class="bento-icon" />
-          <h3>{{ t('home.featureSsrTitle') }}</h3>
-          <p>{{ t('home.featureSsrBody') }}</p>
-          <div class="ssr-flow" aria-hidden="true">
-            <span>SSR</span><i></i><span>HTML · es</span><i></i><span>hydrate ✓</span>
-          </div>
-        </article>
-        <article class="bento-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-globe-alt [size]="24" class="bento-icon" />
-          <h3>{{ copy().features.routesTitle }}</h3>
-          <p>{{ copy().features.routesBody }}</p>
-        </article>
-        <article class="bento-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-code-bracket-square [size]="24" class="bento-icon" />
-          <h3>{{ copy().features.mf2Title }}</h3>
-          <p>{{ copy().features.mf2Body }}</p>
-        </article>
-        <article class="bento-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-cloud-arrow-up [size]="24" class="bento-icon" />
-          <h3>{{ t('home.featureCloudTitle') }}</h3>
-          <p>{{ t('home.featureCloudBody') }}</p>
-        </article>
-        <article class="bento-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-puzzle-piece [size]="24" class="bento-icon" />
-          <h3>{{ copy().features.remoteTitle }}</h3>
-          <p>{{ copy().features.remoteBody }}</p>
-        </article>
-        <article class="bento-card bento-wide" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-signal [size]="24" class="bento-icon" />
-          <h3>{{ copy().features.signalsTitle }}</h3>
-          <p>{{ copy().features.signalsBody }}</p>
-        </article>
+          </volt-card-content>
+        </volt-card>
+        <volt-card class="bento-ssr" moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-server-stack [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('home.featureSsrTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('home.featureSsrBody') }}</volt-card-description>
+          </volt-card-header>
+          <volt-card-content>
+            <div class="ssr-flow" aria-hidden="true">
+              <span>SSR</span><i></i><span>HTML · es</span><i></i><span>hydrate ✓</span>
+            </div>
+          </volt-card-content>
+        </volt-card>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-globe-alt [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              copy().features.routesTitle
+            }}</volt-card-title>
+            <volt-card-description>{{ copy().features.routesBody }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-code-bracket-square [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              copy().features.mf2Title
+            }}</volt-card-title>
+            <volt-card-description>{{ copy().features.mf2Body }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-cloud-arrow-up [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('home.featureCloudTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('home.featureCloudBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-puzzle-piece [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              copy().features.remoteTitle
+            }}</volt-card-title>
+            <volt-card-description>{{ copy().features.remoteBody }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card class="bento-wide" moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-signal [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              copy().features.signalsTitle
+            }}</volt-card-title>
+            <volt-card-description>{{ copy().features.signalsBody }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
       </div>
     </section>
 
@@ -476,21 +530,33 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
 
     <section class="section tool-cards" aria-label="Tooling">
       <div class="feature-grid" moveStagger moveStaggerStep="80ms">
-        <article class="feature-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-check-circle [size]="24" />
-          <h3>{{ t('home.toolingValidateTitle') }}</h3>
-          <p>{{ t('home.toolingValidateBody') }}</p>
-        </article>
-        <article class="feature-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-code-bracket-square [size]="24" />
-          <h3>{{ t('home.toolingContractTitle') }}</h3>
-          <p>{{ t('home.toolingContractBody') }}</p>
-        </article>
-        <article class="feature-card" moveInView="fade-up" moveWhileHover="lift">
-          <lmn-shield-check [size]="24" />
-          <h3>{{ t('home.toolingCheckTitle') }}</h3>
-          <p>{{ t('home.toolingCheckBody') }}</p>
-        </article>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-check-circle [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('home.toolingValidateTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('home.toolingValidateBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-code-bracket-square [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('home.toolingContractTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('home.toolingContractBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
+        <volt-card moveInView="fade-up" moveWhileHover="lift">
+          <volt-card-header>
+            <lmn-shield-check [size]="24" class="self-start text-primary" />
+            <volt-card-title role="heading" aria-level="3">{{
+              t('home.toolingCheckTitle')
+            }}</volt-card-title>
+            <volt-card-description>{{ t('home.toolingCheckBody') }}</volt-card-description>
+          </volt-card-header>
+        </volt-card>
       </div>
     </section>
 
@@ -536,26 +602,44 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
           <p>{{ t('home.stabilityBody') }}</p>
         </div>
         <div class="stability-grid" moveStagger moveStaggerStep="70ms">
-          <article class="feature-card" moveInView="fade-up">
-            <lmn-check-circle [size]="24" />
-            <h3>{{ t('home.stabilityApiTitle') }}</h3>
-            <p>{{ t('home.stabilityApiBody') }}</p>
-          </article>
-          <article class="feature-card" moveInView="fade-up">
-            <lmn-code-bracket-square [size]="24" />
-            <h3>{{ t('home.stabilityContractTitle') }}</h3>
-            <p>{{ t('home.stabilityContractBody') }}</p>
-          </article>
-          <article class="feature-card" moveInView="fade-up">
-            <lmn-shield-check [size]="24" />
-            <h3>{{ t('home.stabilityDiagnosticsTitle') }}</h3>
-            <p>{{ t('home.stabilityDiagnosticsBody') }}</p>
-          </article>
-          <article class="feature-card" moveInView="fade-up">
-            <lmn-bolt [size]="24" />
-            <h3>{{ t('home.stabilityCliTitle') }}</h3>
-            <p>{{ t('home.stabilityCliBody') }}</p>
-          </article>
+          <volt-card moveInView="fade-up">
+            <volt-card-header>
+              <lmn-check-circle [size]="24" class="self-start text-primary" />
+              <volt-card-title role="heading" aria-level="3">{{
+                t('home.stabilityApiTitle')
+              }}</volt-card-title>
+              <volt-card-description>{{ t('home.stabilityApiBody') }}</volt-card-description>
+            </volt-card-header>
+          </volt-card>
+          <volt-card moveInView="fade-up">
+            <volt-card-header>
+              <lmn-code-bracket-square [size]="24" class="self-start text-primary" />
+              <volt-card-title role="heading" aria-level="3">{{
+                t('home.stabilityContractTitle')
+              }}</volt-card-title>
+              <volt-card-description>{{ t('home.stabilityContractBody') }}</volt-card-description>
+            </volt-card-header>
+          </volt-card>
+          <volt-card moveInView="fade-up">
+            <volt-card-header>
+              <lmn-shield-check [size]="24" class="self-start text-primary" />
+              <volt-card-title role="heading" aria-level="3">{{
+                t('home.stabilityDiagnosticsTitle')
+              }}</volt-card-title>
+              <volt-card-description>{{
+                t('home.stabilityDiagnosticsBody')
+              }}</volt-card-description>
+            </volt-card-header>
+          </volt-card>
+          <volt-card moveInView="fade-up">
+            <volt-card-header>
+              <lmn-bolt [size]="24" class="self-start text-primary" />
+              <volt-card-title role="heading" aria-level="3">{{
+                t('home.stabilityCliTitle')
+              }}</volt-card-title>
+              <volt-card-description>{{ t('home.stabilityCliBody') }}</volt-card-description>
+            </volt-card-header>
+          </volt-card>
         </div>
       </div>
     </section>
@@ -585,15 +669,25 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
       <p>{{ t('home.ctaBody') }}</p>
       <div class="hero-actions">
         <a
+          voltButton
+          size="lg"
           [routerLink]="i18n.path('/docs')"
           data-testid="cta-docs"
           moveWhileHover="lift"
           moveWhileTap="press"
         >
-          <volt-button class="primary-cta" size="lg">{{ t('home.ctaPrimary') }}</volt-button>
+          {{ t('home.ctaPrimary') }}
         </a>
-        <a [href]="repoUrl" rel="noopener" moveWhileHover="lift" moveWhileTap="press">
-          <volt-button variant="outline" size="lg">{{ t('home.ctaSecondary') }}</volt-button>
+        <a
+          voltButton
+          variant="outline"
+          size="lg"
+          [href]="repoUrl"
+          rel="noopener"
+          moveWhileHover="lift"
+          moveWhileTap="press"
+        >
+          {{ t('home.ctaSecondary') }}
         </a>
       </div>
     </section>

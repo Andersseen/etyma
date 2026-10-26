@@ -5,6 +5,17 @@
       "headers": {
         "Authorization": "Bearer ${GLOSSA_ETYMA_TOKEN}"
       }
+    },
+    "volt-ui": {
+      "type": "http",
+      "url": "https://voltui.dev/api/mcp"
+    },
+    "movement": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "angular-movement-mcp"
+      ]
     }
   }
 }

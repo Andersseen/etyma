@@ -34,6 +34,8 @@
   --code-ink: #dcecff;
   --accent: #6ee7f9;
   --accent-ink: #061018;
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-ink);
   --accent-2: #a78bfa;
   --accent-3: #f0abfc;
   --green: #8bffc7;
@@ -70,6 +72,8 @@
   --code-ink: #dcecff;
   --accent: #0284c7;
   --accent-ink: #ffffff;
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-ink);
   --accent-2: #7c3aed;
   --accent-3: #c026d3;
   --green: #059669;
@@ -492,21 +496,6 @@ code {
   display: inline-flex;
 }
 
-.primary-cta button {
-  gap: 0.5rem;
-  color: var(--accent-ink);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, white), var(--accent));
-  border-color: color-mix(in srgb, var(--accent) 72%, transparent);
-  box-shadow:
-    0 18px 50px color-mix(in srgb, var(--accent) 28%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 35%);
-}
-
-.primary-cta button:hover {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 96%, white), var(--accent));
-  border-color: var(--accent);
-}
-
 .install-pill {
   display: inline-flex;
   gap: 0.7rem;
@@ -541,33 +530,6 @@ code {
 
 .install-pill.wide code {
   flex: 1;
-}
-
-.copy-button {
-  display: inline-grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 2rem;
-  aspect-ratio: 1;
-  color: var(--muted);
-  cursor: pointer;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  transition:
-    color 140ms ease,
-    background 140ms ease,
-    border-color 140ms ease;
-}
-
-.copy-button:hover {
-  color: var(--ink);
-  background: var(--panel-strong);
-  border-color: var(--line);
-}
-
-.copy-button[data-copied] {
-  color: var(--green);
 }
 
 .proof-grid {
@@ -1039,84 +1001,9 @@ code {
   gap: 1rem;
 }
 
-.bento-card,
-.feature-card {
-  position: relative;
-  display: grid;
-  gap: 0.7rem;
-  align-content: start;
-  padding: 1.4rem;
-  overflow: hidden;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  transition:
-    border-color 200ms ease,
-    box-shadow 200ms ease;
-}
-
-.bento-card::after,
-.feature-card::after {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  content: '';
-  background: radial-gradient(
-    30rem circle at 0 0,
-    color-mix(in srgb, var(--accent) 9%, transparent),
-    transparent 40%
-  );
-  opacity: 0;
-  transition: opacity 240ms ease;
-}
-
-.bento-card:hover,
-.feature-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
-  box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--accent) 60%, transparent);
-}
-
-.bento-card:hover::after,
-.feature-card:hover::after {
-  opacity: 1;
-}
-
-.bento-card p,
-.feature-card p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.bento-card > *,
-.feature-card > * {
-  justify-self: start;
-}
-
-.bento-icon,
-.feature-card > lmn-check-circle,
-.feature-card > lmn-code-bracket-square,
-.feature-card > lmn-shield-check,
-.feature-card > lmn-server-stack,
-.feature-card > lmn-bolt,
-.feature-card > lmn-globe-alt,
-.feature-card > lmn-cloud-arrow-up {
-  color: var(--accent);
-}
-
 .bento-typed {
   grid-column: span 2;
   grid-row: span 2;
-  background:
-    radial-gradient(
-      circle at 100% 100%,
-      color-mix(in srgb, var(--accent-2) 14%, transparent),
-      transparent 60%
-    ),
-    var(--panel);
-}
-
-.bento-typed h3 {
-  font-size: 1.45rem;
 }
 
 .bento-ssr,
@@ -1407,11 +1294,6 @@ code {
   z-index: 1;
 }
 
-.code-frame .copy-button {
-  color: rgb(220 236 255 / 60%);
-  background: rgb(255 255 255 / 6%);
-}
-
 .start-docs {
   margin-top: 1.4rem;
 }
@@ -1533,10 +1415,6 @@ code {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
-}
-
-.stability .feature-card {
-  background: color-mix(in srgb, var(--page) 40%, transparent);
 }
 
 /* FAQ */
@@ -1699,21 +1577,6 @@ code {
   right: max(1.1rem, env(safe-area-inset-right));
   bottom: max(1.1rem, env(safe-area-inset-bottom));
   z-index: 60;
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  aspect-ratio: 1;
-  color: var(--accent-ink);
-  cursor: pointer;
-  background: var(--accent);
-  border: 1px solid rgb(255 255 255 / 22%);
-  border-radius: 999px;
-  box-shadow: 0 20px 55px var(--shadow-strong);
-  transition: transform 160ms ease;
-}
-
-.back-to-top:hover {
-  transform: translateY(-2px);
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -1758,12 +1621,6 @@ code {
 .info-card p,
 .stat-card p {
   color: var(--muted);
-}
-
-.feature-card h2 {
-  max-width: none;
-  font-size: 1.1rem;
-  letter-spacing: -0.01em;
 }
 
 .docs-grid,
