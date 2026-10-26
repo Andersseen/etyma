@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://etyma.andersseen.dev/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/" />
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/es</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/" />
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/uk</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/" />
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/docs</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/es/docs</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/uk/docs</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/docs/button</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs/button" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs/button" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs/button" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs/button" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/es/docs/button</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs/button" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs/button" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs/button" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs/button" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/uk/docs/button</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs/button" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs/button" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs/button" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs/button" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/docs/themes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs/themes" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/es/docs/themes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs/themes" />
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://etyma.andersseen.dev/uk/docs/themes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://etyma.andersseen.dev/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://etyma.andersseen.dev/es/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://etyma.andersseen.dev/uk/docs/themes" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://etyma.andersseen.dev/docs/themes" />
+    <priority>0.7</priority>
+  </url>
+</urlset>

@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "@etyma/core": "workspace:^",
-    "messageformat": "4.0.0",
+    "messageformat": "4.1.0",
     "typescript": "5.9.3"
   },
   "peerDependencies": {
@@ -85,11 +85,11 @@
   },
   "devDependencies": {
     "@astrojs/compiler": "4.0.0",
-    "@astrojs/compiler-rs": "0.5.1",
+    "@astrojs/compiler-rs": "0.5.2",
     "@angular/compiler": "21.2.25",
-    "@types/node": "26.6.4",
-    "vite": "8.3.2",
-    "vitest": "5.0.3"
+    "@types/node": "26.6.5",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
   },
   "publishConfig": {
     "access": "public",

@@ -54,10 +54,11 @@ function issues(source: string, value: MessageParamValue): unknown[] {
 describe('messageformat built-in function contracts', () => {
   it('registers exactly the built-ins Etyma types', () => {
     expect(exact).toEqual([true, true]);
-    expect(Object.keys(DefaultFunctions).sort()).toEqual(['integer', 'number', 'offset', 'string']);
-    expect(Object.keys(DraftFunctions).sort()).toEqual(
-      ['currency', 'date', 'datetime', 'percent', 'time', 'unit'].sort(),
+    // messageformat 4.1 follows LDML 48.1 and promotes :currency and :percent to stable.
+    expect(Object.keys(DefaultFunctions).sort()).toEqual(
+      ['currency', 'integer', 'number', 'offset', 'percent', 'string'].sort(),
     );
+    expect(Object.keys(DraftFunctions).sort()).toEqual(['date', 'datetime', 'time', 'unit'].sort());
   });
 
   describe.each(Object.entries(numeric))(':%s', (_name, source) => {

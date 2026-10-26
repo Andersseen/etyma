@@ -36,13 +36,12 @@ export interface MessageFormatterOptions {
   readonly bidiIsolation?: 'default' | 'none';
 
   /**
-   * Register the LDML draft functions: `:date`, `:time`, `:datetime`, `:currency`,
-   * `:percent`, `:unit`.
+   * Register the LDML draft functions: `:date`, `:time`, `:datetime`, `:unit`.
    *
    * On by default, because a toolkit where `{$when :date style=long}` silently renders
-   * `{$when}` is not one anybody would keep using. They are draft in LDML 48 and the spec
-   * may still change them; turn them off to stay on the stable subset (`:string`,
-   * `:number`, `:integer`, `:offset`), which is always registered.
+   * `{$when}` is not one anybody would keep using. They are still draft and the spec may
+   * change them; turn them off to stay on the stable subset (`:string`, `:number`,
+   * `:integer`, `:offset`, `:currency`, `:percent`), which is always registered.
    */
   readonly draftFunctions?: boolean;
 

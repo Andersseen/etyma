@@ -107,4 +107,30 @@ test.describe('localized SEO metadata', () => {
     expect(html).toContain(`<link rel="canonical" href="${baseURL}/es/docs"`);
     expect(html).toContain(`hreflang="x-default" href="${baseURL}/docs"`);
   });
+
+  test('the server response describes the page in its own language', async ({
+    request,
+    baseURL,
+  }) => {
+    const html = await (await request.get('/es')).text();
+
+    expect(html).toMatch(/<title>Etyma — [^<]+<\/title>/);
+    expect(html).toContain('<meta name="description" content="Etyma es un toolkit');
+    expect(html).toContain(`<meta property="og:url" content="${baseURL}/es"`);
+    expect(html).toContain(`<meta property="og:image" content="${baseURL}/og.jpg"`);
+    expect(html).toContain('<meta property="og:locale" content="es_ES"');
+    expect(html).toContain('"@type":"FAQPage"');
+  });
+
+  test('page metadata follows a navigation', async ({ page }) => {
+    await page.goto('/uk/docs');
+    await expect(page).toHaveTitle(/\| Etyma$/);
+
+    await page.getByTestId('to-button').click();
+    await expect(page).toHaveURL('/uk/docs/button');
+
+    await expect(page).toHaveTitle('Angular bindings на signals без runtime-церемонії. | Etyma');
+    await expect(page.locator('meta[name="description"]')).toHaveCount(1);
+    await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+  });
 });

@@ -6,6 +6,7 @@ import { LmnLanguageIcon } from 'lumen-icons/language';
 import { LmnVariableIcon } from 'lumen-icons/variable';
 
 import { injectAppI18n } from '../../i18n/inject';
+import { injectPageSeo } from '../../seo/page-seo';
 
 /** Fixed so the rendered date is the same in every run, and assertable. */
 const RELEASED_ON = new Date(Date.UTC(2026, 0, 15, 12));
@@ -55,4 +56,11 @@ export default class ButtonPage {
   protected readonly i18n = injectAppI18n();
   protected readonly t = this.i18n.t;
   protected readonly releasedOn = RELEASED_ON;
+
+  constructor() {
+    injectPageSeo(() => ({
+      title: `${this.t('button.title')} | ${this.t('seo.siteName')}`,
+      description: this.t('button.lede'),
+    }));
+  }
 }

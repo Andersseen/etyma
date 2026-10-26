@@ -37,6 +37,7 @@
   "overrides": {
     "@etyma/core": "file:../.tarballs/etyma-core.tgz",
     "@etyma/angular": "file:../.tarballs/etyma-angular.tgz",
-    "@etyma/analog": "file:../.tarballs/etyma-analog.tgz"
+    "@etyma/analog": "file:../.tarballs/etyma-analog.tgz",
+    "vitest": "4.1.11"
   }
 }

@@ -4,6 +4,7 @@ import { LmnArrowRightIcon } from 'lumen-icons/arrow-right';
 import { LmnCheckCircleIcon } from 'lumen-icons/check-circle';
 
 import { injectAppI18n } from '../../i18n/inject';
+import { injectPageSeo } from '../../seo/page-seo';
 
 @Component({
   selector: 'app-docs-page',
@@ -68,4 +69,11 @@ export default class DocsPage {
     uk: () => import('./uk.json')
   }
 });`;
+
+  constructor() {
+    injectPageSeo(() => ({
+      title: `${this.t('docs.title')} | ${this.t('seo.siteName')}`,
+      description: this.t('docs.lede'),
+    }));
+  }
 }
