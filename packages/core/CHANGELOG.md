@@ -1,5 +1,13 @@
 # @etyma/core
 
+## 1.0.1
+
+### Patch Changes
+
+- [#168](https://github.com/Andersseen/etyma/pull/168) [`3358e2f`](https://github.com/Andersseen/etyma/commit/3358e2f9923b46b48d03a4e31570a16a6df87d58) Thanks [@Andersseen](https://github.com/Andersseen)! - Update `messageformat` to 4.1.0. `:currency` and `:percent` are now stable MessageFormat 2
+  functions, so they stay registered when `draftFunctions: false` is set; the remaining draft
+  functions are `:date`, `:time`, `:datetime` and `:unit`.
+
 ## 1.0.0
 
 ### Major Changes
