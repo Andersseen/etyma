@@ -186,9 +186,9 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
               (click)="toggleTheme()"
             >
               @if (theme() === 'dark') {
-                <lmn-moon [size]="18" />
+                <lmn-moon [size]="20" />
               } @else {
-                <lmn-sun [size]="18" />
+                <lmn-sun [size]="20" />
               }
             </volt-button>
             <volt-button
