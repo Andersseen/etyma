@@ -1,12 +1,43 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
-    <title>Etyma</title>
+    <title>Etyma — Typed internationalization for Angular, AnalogJS and Astro</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Etyma is a typed i18n toolkit for Angular, AnalogJS and Astro: MessageFormat 2, localized URLs, translated SSR and hydration without a flash of the wrong language."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#05070b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <!-- Switching language fetches the next catalog from Glossa; open the connection early. -->
+    <link rel="preconnect" href="https://glossa.andersseen.dev" crossorigin />
+    <!--
+      Applies the stored or system theme before first paint, so a light-mode visitor never
+      sees the dark server render flash. The app reads the attribute back on hydration.
+    -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('etyma-theme');
+          var theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>

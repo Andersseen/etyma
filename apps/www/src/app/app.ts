@@ -8,7 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import type { Locale } from '@etyma/core';
 import {
   applyVoltTheme,
@@ -25,6 +25,7 @@ import {
 } from '@voltui/components';
 import { MOVEMENT_DIRECTIVES } from 'angular-movement';
 import { LmnArrowSmallUpIcon } from 'lumen-icons/arrow-small-up';
+import { LmnBars3Icon } from 'lumen-icons/bars-3';
 import { LmnChevronDownIcon } from 'lumen-icons/chevron-down';
 import { LmnGithubIcon } from 'lumen-icons/github';
 import { LmnGlobeAltIcon } from 'lumen-icons/globe-alt';
@@ -32,6 +33,7 @@ import { LmnLanguageIcon } from 'lumen-icons/language';
 import { LmnMoonIcon } from 'lumen-icons/moon';
 import { LmnSunIcon } from 'lumen-icons/sun';
 
+import { siteCopy } from './content/site-copy';
 import { injectAppI18n } from './i18n/inject';
 
 /** Written in the language they name, which is what a reader looks for in a switcher. */
@@ -58,6 +60,7 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
     VoltNavigationMenuList,
     ...MOVEMENT_DIRECTIVES,
     LmnArrowSmallUpIcon,
+    LmnBars3Icon,
     LmnChevronDownIcon,
     LmnGithubIcon,
     LmnGlobeAltIcon,
@@ -68,6 +71,7 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="app-shell min-h-dvh overflow-hidden bg-[var(--page)] text-[var(--ink)]">
+      <a class="skip-link" href="#main">{{ t('nav.skipToContent') }}</a>
       <header class="site-header">
         <div
           class="mx-auto flex h-18 w-full max-w-[1680px] items-center gap-4 px-5 sm:px-6 lg:px-10"
@@ -130,10 +134,39 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
                   >{{ t('nav.packages') }}</a
                 >
               </volt-navigation-menu-item>
+              <volt-navigation-menu-item>
+                <a
+                  voltNavigationMenuLink
+                  class="nav-link"
+                  [attr.href]="i18n.path('/') + '#start'"
+                  data-testid="nav-start"
+                  >{{ copy().nav.start }}</a
+                >
+              </volt-navigation-menu-item>
+              <volt-navigation-menu-item>
+                <a
+                  voltNavigationMenuLink
+                  class="nav-link"
+                  [routerLink]="i18n.path('/docs')"
+                  data-testid="nav-docs"
+                  >{{ t('nav.docs') }}</a
+                >
+              </volt-navigation-menu-item>
             </volt-navigation-menu-list>
           </volt-navigation-menu>
 
           <div class="ml-auto flex items-center gap-2">
+            <volt-button
+              variant="outline"
+              size="sm"
+              class="menu-trigger md:hidden"
+              [voltDropdownMenu]="mobileMenu"
+              placement="bottom-end"
+              data-testid="menu-trigger"
+              [attr.aria-label]="copy().nav.menu"
+            >
+              <lmn-bars-3 [size]="20" />
+            </volt-button>
             <a
               class="chrome-icon-link"
               [href]="repoUrl"
@@ -157,7 +190,7 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
               } @else {
                 <lmn-sun slot="leading" [size]="16" />
               }
-              {{ themeLabel() }}
+              <span class="hidden sm:inline">{{ themeLabel() }}</span>
             </volt-button>
             <volt-button
               variant="outline"
@@ -169,11 +202,22 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
               [attr.aria-label]="t('nav.language')"
             >
               <lmn-globe-alt slot="leading" [size]="16" />
-              {{ nameOf(i18n.locale()) }}
+              <span class="hidden sm:inline">{{ nameOf(i18n.locale()) }}</span>
+              <span class="uppercase sm:hidden">{{ i18n.locale() }}</span>
               <lmn-chevron-down slot="trailing" [size]="16" />
             </volt-button>
           </div>
         </div>
+
+        <ng-template #mobileMenu>
+          <volt-dropdown-menu class="language-menu">
+            @for (link of mobileLinks(); track link.href) {
+              <volt-dropdown-menu-item (click)="go(link.href)">{{
+                link.label
+              }}</volt-dropdown-menu-item>
+            }
+          </volt-dropdown-menu>
+        </ng-template>
 
         <ng-template #languageMenu>
           <volt-dropdown-menu class="language-menu">
@@ -212,20 +256,60 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
         </button>
       </ng-container>
 
-      <footer
-        class="mx-auto flex w-full max-w-[1680px] flex-col gap-2 px-5 py-8 text-sm text-white/48 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-10"
-      >
-        <div class="grid gap-1">
-          <strong>Etyma</strong>
-          <p class="m-0" data-testid="footer">{{ t('footer.rights', { year: year }) }}</p>
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <a class="flex items-center gap-3" [routerLink]="i18n.path('/')">
+              <span class="brand-mark"><lmn-language [size]="20" /></span>
+              <strong>Etyma</strong>
+            </a>
+            <p>{{ t('seo.tagline') }}</p>
+            <p class="legal" data-testid="footer">{{ t('footer.rights', { year: year }) }}</p>
+          </div>
+
+          <nav class="footer-col" [attr.aria-label]="copy().footer.product">
+            <h2>{{ copy().footer.product }}</h2>
+            <a [routerLink]="i18n.path('/docs')">{{ t('nav.docs') }}</a>
+            <a [routerLink]="i18n.path('/docs/button')">{{ t('docs.angularLink') }}</a>
+            <a [routerLink]="i18n.path('/docs/themes')">{{ t('docs.analogLink') }}</a>
+            <a [attr.href]="i18n.path('/') + '#faq'">{{ copy().nav.faq }}</a>
+          </nav>
+
+          <nav class="footer-col" [attr.aria-label]="copy().footer.project">
+            <h2>{{ copy().footer.project }}</h2>
+            <a [href]="repoUrl" target="_blank" rel="noopener">GitHub</a>
+            <a [href]="repoUrl + '/releases'" target="_blank" rel="noopener">{{
+              copy().footer.releases
+            }}</a>
+            <a [href]="repoUrl + '/issues'" target="_blank" rel="noopener">{{
+              copy().footer.issues
+            }}</a>
+            <a [href]="repoUrl + '/blob/main/LICENSE'" target="_blank" rel="noopener">{{
+              copy().footer.license
+            }}</a>
+          </nav>
+
+          <nav class="footer-col" [attr.aria-label]="copy().footer.languages">
+            <h2>{{ copy().footer.languages }}</h2>
+            @for (locale of i18n.locales; track locale) {
+              <a
+                [attr.href]="i18n.path('/', locale)"
+                [attr.hreflang]="locale"
+                [attr.lang]="locale"
+                [attr.aria-current]="locale === i18n.locale() ? 'true' : null"
+                >{{ nameOf(locale) }}</a
+              >
+            }
+          </nav>
         </div>
-        <p class="m-0">{{ t('footer.stack') }}</p>
+        <p class="footer-stack">{{ t('footer.stack') }}</p>
       </footer>
     </div>
   `,
 })
 export class App {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
 
   protected readonly i18n = injectAppI18n();
   protected readonly repoUrl = 'https://github.com/Andersseen/etyma';
@@ -233,6 +317,20 @@ export class App {
   protected readonly themeLabel = computed(() => (this.theme() === 'dark' ? 'Dark' : 'Light'));
   protected readonly themeAriaLabel = computed(() => `Switch to ${this.oppositeTheme()} theme`);
   protected readonly showBackToTop = signal(false);
+  protected readonly copy = computed(() => siteCopy(this.i18n.locale()));
+  protected readonly mobileLinks = computed(() => {
+    const home = this.i18n.path('/');
+
+    return [
+      { href: `${home}#features`, label: this.t('nav.features') },
+      { href: `${home}#workflow`, label: this.t('nav.workflow') },
+      { href: `${home}#start`, label: this.copy().nav.start },
+      { href: `${home}#tooling`, label: this.t('nav.tooling') },
+      { href: `${home}#packages`, label: this.t('nav.packages') },
+      { href: `${home}#faq`, label: this.copy().nav.faq },
+      { href: this.i18n.path('/docs'), label: this.t('nav.docs') },
+    ];
+  });
 
   private lastScrollY = 0;
 
@@ -247,7 +345,13 @@ export class App {
   protected readonly year = new Date().getFullYear();
 
   constructor() {
-    this.applyTheme(this.theme(), false);
+    // In the browser the inline script in index.html has already applied the stored or
+    // system theme before first paint; starting from it keeps hydration from flashing dark.
+    const painted = this.document.documentElement.getAttribute('data-theme');
+    this.applyTheme(
+      this.document.defaultView !== null && painted === 'light' ? 'light' : 'dark',
+      false,
+    );
 
     afterNextRender(() => {
       const view = this.document.defaultView;
@@ -284,6 +388,11 @@ export class App {
     void this.i18n.setLocale(locale).catch((error: unknown) => {
       console.error(error);
     });
+  }
+
+  /** Mobile menu entries are plain URLs, some with a fragment the router must keep. */
+  protected go(href: string): void {
+    void this.router.navigateByUrl(href);
   }
 
   protected toggleTheme(): void {

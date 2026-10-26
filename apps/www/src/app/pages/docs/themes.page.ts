@@ -6,6 +6,7 @@ import { LmnGlobeAltIcon } from 'lumen-icons/globe-alt';
 import { LmnServerStackIcon } from 'lumen-icons/server-stack';
 
 import { injectAppI18n } from '../../i18n/inject';
+import { injectPageSeo } from '../../seo/page-seo';
 
 @Component({
   selector: 'app-themes-page',
@@ -44,4 +45,11 @@ import { injectAppI18n } from '../../i18n/inject';
 export default class ThemesPage {
   protected readonly i18n = injectAppI18n();
   protected readonly t = this.i18n.t;
+
+  constructor() {
+    injectPageSeo(() => ({
+      title: `${this.t('themes.title')} | ${this.t('seo.siteName')}`,
+      description: this.t('themes.lede'),
+    }));
+  }
 }
