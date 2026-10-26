@@ -120,6 +120,15 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
                 <a
                   voltNavigationMenuLink
                   class="nav-link"
+                  [attr.href]="i18n.path('/') + '#start'"
+                  data-testid="nav-start"
+                  >{{ copy().nav.start }}</a
+                >
+              </volt-navigation-menu-item>
+              <volt-navigation-menu-item>
+                <a
+                  voltNavigationMenuLink
+                  class="nav-link"
                   [attr.href]="i18n.path('/') + '#tooling'"
                   data-testid="nav-tooling"
                   >{{ t('nav.tooling') }}</a
@@ -132,15 +141,6 @@ const LOCALE_NAMES: Readonly<Record<string, string>> = {
                   [attr.href]="i18n.path('/') + '#packages'"
                   data-testid="nav-packages"
                   >{{ t('nav.packages') }}</a
-                >
-              </volt-navigation-menu-item>
-              <volt-navigation-menu-item>
-                <a
-                  voltNavigationMenuLink
-                  class="nav-link"
-                  [attr.href]="i18n.path('/') + '#start'"
-                  data-testid="nav-start"
-                  >{{ copy().nav.start }}</a
                 >
               </volt-navigation-menu-item>
               <volt-navigation-menu-item>

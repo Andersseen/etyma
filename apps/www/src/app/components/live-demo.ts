@@ -74,6 +74,8 @@ many {{У вас {$count} нових повідомлень}}
 
 const LOCALES = Object.keys(CATALOGS) as DemoLocale[];
 
+const SOURCE_LINES = Math.max(...LOCALES.map(locale => CATALOGS[locale].inbox.split('\n').length));
+
 /** Counts that land on a different plural category in at least one language. */
 const TOUR = [1, 3, 5, 21, 0, 12];
 
@@ -127,14 +129,20 @@ interface SourceLine {
             <div class="demo-screen" [attr.lang]="locale">
               <!-- Only the visible panel animates; a hidden one has nothing to commit to. -->
               @for (view of locale === active() ? [render(locale)] : []; track view.key) {
-                <p class="demo-greeting" [move]="'fade-up'" moveDuration="360">
+                <p
+                  class="demo-greeting"
+                  [moveInitial]="{ opacity: 0 }"
+                  [moveAnimate]="{ opacity: 1 }"
+                  moveDuration="260"
+                >
                   {{ view.greeting }}
                 </p>
                 <p
                   class="demo-inbox"
                   data-testid="demo-inbox"
-                  [move]="'blur-in'"
-                  moveDuration="420"
+                  [moveInitial]="{ opacity: 0 }"
+                  [moveAnimate]="{ opacity: 1 }"
+                  moveDuration="260"
                 >
                   {{ view.inbox }}
                 </p>
@@ -204,10 +212,17 @@ export class LiveDemo {
       .map(line => line.split(/\s/)[0]);
     const pick = variants.includes(this.category()) ? this.category() : '*';
 
-    return lines.map(text => ({
+    const shown = lines.map(text => ({
       text,
       matched: text.split(/\s/)[0] === pick && text.includes('{{'),
     }));
+
+    // Pad to the tallest catalog so switching language never resizes the demo.
+    while (shown.length < SOURCE_LINES) {
+      shown.push({ text: '\u00a0', matched: false });
+    }
+
+    return shown;
   });
 
   private interacted = false;
