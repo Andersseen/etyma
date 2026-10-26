@@ -20,3 +20,4 @@ CHANGELOG.md
 # Prettier trying to reformat it is the same category of mistake as `validate` trying to
 # parse it as a catalog.
 packages/cli/src/__fixtures__/malformed-json/es.json
+apps/www/public/web-editor-lite.min.js

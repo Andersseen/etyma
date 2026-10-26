@@ -70,7 +70,7 @@
   --shadow-strong: rgb(15 23 42 / 14%);
   --code-bg: #0b1220;
   --code-ink: #dcecff;
-  --accent: #0284c7;
+  --accent: #0369a1;
   --accent-ink: #ffffff;
   --primary: var(--accent);
   --primary-foreground: var(--accent-ink);
@@ -118,9 +118,12 @@ body {
   background: var(--accent);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* In the base layer so utilities, such as a voltButton link's own text colour, still win. */
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 :focus-visible {
@@ -1236,6 +1239,10 @@ code {
   margin-top: 1rem;
 }
 
+.start-panel[data-state='inactive'] {
+  display: none;
+}
+
 .start-step {
   display: flex;
   flex-direction: column;
@@ -1277,8 +1284,29 @@ code {
   min-width: 0;
 }
 
+.code-frame {
+  --code-frame-bg: #282c34;
+
+  padding: 14px 16px;
+  background: var(--code-frame-bg);
+  border-radius: 12px;
+}
+
 .code-frame pre {
   height: 100%;
+  padding: 4px;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 19.6px;
+  background: transparent;
+  border: 0;
+}
+
+.code-frame vertex-editor-lite {
+  --vertex-editor-font-size: 14px;
+
+  display: block;
+  overflow: hidden;
 }
 
 .code-frame app-copy-button {

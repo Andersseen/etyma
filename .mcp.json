@@ -12,10 +12,7 @@
     },
     "movement": {
       "command": "npx",
-      "args": [
-        "-y",
-        "angular-movement-mcp"
-      ]
+      "args": ["-y", "angular-movement-mcp"]
     }
   }
 }

@@ -10,6 +10,7 @@ import {
 import { LmnArrowRightIcon } from 'lumen-icons/arrow-right';
 import { LmnCheckCircleIcon } from 'lumen-icons/check-circle';
 
+import { CodeBlock } from '../../components/code-block';
 import { injectAppI18n } from '../../i18n/inject';
 import { injectPageSeo } from '../../seo/page-seo';
 
@@ -17,6 +18,7 @@ import { injectPageSeo } from '../../seo/page-seo';
   selector: 'app-docs-page',
   imports: [
     RouterLink,
+    CodeBlock,
     VoltCard,
     VoltCardContent,
     VoltCardDescription,
@@ -38,7 +40,7 @@ import { injectPageSeo } from '../../seo/page-seo';
         <h2>{{ t('docs.setupTitle') }}</h2>
         <p>{{ t('docs.setupBody') }}</p>
       </div>
-      <pre class="code-block"><code>{{ setupCode }}</code></pre>
+      <app-code-block [code]="setupCode" [label]="t('docs.setupTitle')" />
     </section>
 
     <section class="section">

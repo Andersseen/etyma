@@ -40,6 +40,7 @@ import { LmnShieldCheckIcon } from 'lumen-icons/shield-check';
 import { LmnSignalIcon } from 'lumen-icons/signal';
 import { LmnXMarkIcon } from 'lumen-icons/x-mark';
 
+import { CodeBlock } from '../components/code-block';
 import { CopyButton } from '../components/copy-button';
 import { LiveDemo } from '../components/live-demo';
 import { siteCopy, type PackageName } from '../content/site-copy';
@@ -146,6 +147,7 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
     MoveLoopDirective,
     MoveStaggerDirective,
     MoveTapDirective,
+    CodeBlock,
     CopyButton,
     LiveDemo,
     LmnArrowRightIcon,
@@ -488,28 +490,26 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
                 <span class="step-no">2</span>
                 <h3>{{ copy().start.define }}</h3>
               </div>
-              <div class="code-frame">
-                <app-copy-button
-                  [text]="framework.setup"
-                  [label]="copy().hero.copy"
-                  [copiedLabel]="copy().hero.copied"
-                />
-                <pre><code>{{ framework.setup }}</code></pre>
-              </div>
+              <app-code-block
+                [code]="framework.setup"
+                [language]="framework.id === 'astro' ? 'html' : 'typescript'"
+                [label]="framework.name"
+                [copyLabel]="copy().hero.copy"
+                [copiedLabel]="copy().hero.copied"
+              />
             </div>
             <div class="start-step">
               <div class="start-step-head">
                 <span class="step-no">3</span>
                 <h3>{{ copy().start.use }}</h3>
               </div>
-              <div class="code-frame">
-                <app-copy-button
-                  [text]="framework.usage"
-                  [label]="copy().hero.copy"
-                  [copiedLabel]="copy().hero.copied"
-                />
-                <pre><code>{{ framework.usage }}</code></pre>
-              </div>
+              <app-code-block
+                [code]="framework.usage"
+                [language]="framework.id === 'astro' ? 'html' : 'typescript'"
+                [label]="framework.name"
+                [copyLabel]="copy().hero.copy"
+                [copiedLabel]="copy().hero.copied"
+              />
             </div>
           </volt-tabs-content>
         }
@@ -741,8 +741,8 @@ export default class HomePage {
 
   /** The slow drift of the hero and call-to-action glows: out to the far pose and back. */
   protected readonly auroraFrames = {
-    x: [0, '4%'],
-    y: [0, '6%'],
+    x: [0, 60],
+    y: [0, 48],
     rotate: [0, 6],
     scale: [1, 1.08],
   };
