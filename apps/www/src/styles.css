@@ -384,7 +384,6 @@ code {
       transparent 70%
     );
   filter: blur(40px);
-  animation: aurora 18s ease-in-out infinite alternate;
 }
 
 .hero-grid {
@@ -404,8 +403,6 @@ code {
   font-size: clamp(1rem, 1.8vw, 1.7rem);
   font-weight: 800;
   white-space: nowrap;
-  animation: drift 14s ease-in-out infinite;
-  animation-delay: var(--d);
 }
 
 .hero-copy {
@@ -439,8 +436,6 @@ code {
   aspect-ratio: 1;
   background: var(--green);
   border-radius: 999px;
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 60%, transparent);
-  animation: ping 2.2s ease-out infinite;
 }
 
 .hero h1 {
@@ -714,7 +709,6 @@ code {
   aspect-ratio: 1;
   background: var(--rose);
   border-radius: 999px;
-  animation: ping 1.8s ease-out infinite;
 }
 
 .demo-panel {
@@ -1477,7 +1471,6 @@ code {
       transparent
     );
   filter: blur(30px);
-  animation: aurora 16s ease-in-out infinite alternate;
 }
 
 .cta h2 {
@@ -1694,28 +1687,6 @@ code {
 @keyframes shimmer {
   to {
     background-position: -220% 0;
-  }
-}
-
-@keyframes aurora {
-  to {
-    transform: translate3d(4%, 6%, 0) rotate(6deg) scale(1.08);
-  }
-}
-
-@keyframes drift {
-  50% {
-    transform: translateY(-18px);
-  }
-}
-
-@keyframes ping {
-  70% {
-    box-shadow: 0 0 0 7px transparent;
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 transparent;
   }
 }
 

@@ -20,6 +20,7 @@ import {
 import {
   MoveHoverDirective,
   MoveInViewDirective,
+  MoveLoopDirective,
   MoveStaggerDirective,
   MoveTapDirective,
 } from 'angular-movement';
@@ -142,6 +143,7 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
     VoltTabsTrigger,
     MoveHoverDirective,
     MoveInViewDirective,
+    MoveLoopDirective,
     MoveStaggerDirective,
     MoveTapDirective,
     CopyButton,
@@ -167,14 +169,24 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
     <!-- Hero -->
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-backdrop" aria-hidden="true">
-        <div class="hero-aurora"></div>
+        <div
+          class="hero-aurora"
+          [moveLoop]="auroraFrames"
+          moveLoopType="reverse"
+          moveDuration="18s"
+          moveEasing="ease-in-out"
+        ></div>
         <div class="hero-grid"></div>
         @for (glyph of glyphs; track glyph.char) {
           <span
             class="hero-glyph"
             [style.--x]="glyph.x"
             [style.--y]="glyph.y"
-            [style.--d]="glyph.delay"
+            [moveLoop]="{ y: [0, -18] }"
+            moveLoopType="reverse"
+            moveDuration="7s"
+            moveEasing="ease-in-out"
+            [moveDelay]="glyph.delay"
             >{{ glyph.char }}</span
           >
         }
@@ -182,7 +194,12 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
 
       <div class="hero-copy">
         <a class="hero-badge" [href]="releasesUrl" target="_blank" rel="noopener">
-          <span class="hero-badge-dot" aria-hidden="true"></span>
+          <span
+            class="hero-badge-dot"
+            aria-hidden="true"
+            moveLoop="pulse"
+            moveDuration="2200"
+          ></span>
           {{ t('home.eyebrow') }}
           <lmn-arrow-right [size]="14" />
         </a>
@@ -664,7 +681,14 @@ const PACKAGES: readonly PackageName[] = ['core', 'angular', 'analog', 'astro', 
 
     <!-- CTA -->
     <section class="section cta" aria-labelledby="cta-title" moveInView="zoom-in">
-      <div class="cta-glow" aria-hidden="true"></div>
+      <div
+        class="cta-glow"
+        aria-hidden="true"
+        [moveLoop]="auroraFrames"
+        moveLoopType="reverse"
+        moveDuration="16s"
+        moveEasing="ease-in-out"
+      ></div>
       <h2 id="cta-title">{{ t('home.ctaTitle') }}</h2>
       <p>{{ t('home.ctaBody') }}</p>
       <div class="hero-actions">
@@ -715,14 +739,22 @@ export default class HomePage {
     'TypeScript',
   ];
 
+  /** The slow drift of the hero and call-to-action glows: out to the far pose and back. */
+  protected readonly auroraFrames = {
+    x: [0, '4%'],
+    y: [0, '6%'],
+    rotate: [0, 6],
+    scale: [1, 1.08],
+  };
+
   /** One word per script, drifting behind the hero. Decorative only. */
   protected readonly glyphs = [
-    { char: 'Hola', x: '47%', y: '88%', delay: '0s' },
-    { char: 'Привіт', x: '86%', y: '6%', delay: '-4s' },
-    { char: 'Bonjour', x: '2%', y: '92%', delay: '-8s' },
-    { char: 'こんにちは', x: '50%', y: '10%', delay: '-2s' },
-    { char: 'مرحبا', x: '94%', y: '86%', delay: '-6s' },
-    { char: 'Hallo', x: '30%', y: '4%', delay: '-10s' },
+    { char: 'Hola', x: '47%', y: '88%', delay: 0 },
+    { char: 'Привіт', x: '86%', y: '6%', delay: 4000 },
+    { char: 'Bonjour', x: '2%', y: '92%', delay: 8000 },
+    { char: 'こんにちは', x: '50%', y: '10%', delay: 2000 },
+    { char: 'مرحبا', x: '94%', y: '86%', delay: 6000 },
+    { char: 'Hallo', x: '30%', y: '4%', delay: 10000 },
   ];
 
   /** The title's sentences, each revealed on its own line; the last carries the accent. */
