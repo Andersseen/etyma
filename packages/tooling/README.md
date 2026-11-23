@@ -38,6 +38,7 @@ re-implementing catalog validation a second way:
 | `analyzeAstroMessageUsage()` (`@etyma/tooling/astro`)     | JS/TS plus Astro frontmatter and template expressions, in memory; parses `.astro` with Astro's compiler.                          |
 | `analyzeAngularMessageUsage()` (`@etyma/tooling/angular`) | Combines JS/TS analysis with provable Angular component template references; parses with the optional Angular compiler peer.      |
 | `etymaRemoteContract()` (`@etyma/tooling/vite`)           | Typed contract generation: remote **source** catalog → a committed TypeScript file of keys and each message's variables.          |
+| `etymaCatalogReload()` (`@etyma/tooling/vite`)            | Dev server: a changed catalog invalidates the modules that import it, so typed keys are not stale until a restart.                |
 | `etymaRemoteValidation()` (`@etyma/tooling/vite`)         | Build-time remote validation: **every** remote catalog → `validateCatalogs()` → the Vite build passes or fails.                   |
 | [`etyma validate`](../cli) (`@etyma/cli`)                 | The same engine from a terminal or CI job, for a local directory or a remote URL template.                                        |
 | [`etyma contract`](../cli) (`@etyma/cli`)                 | Typed contract generation for a local JSON source catalog, with the same functions `etymaRemoteContract` uses.                    |

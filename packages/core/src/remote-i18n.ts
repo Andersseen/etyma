@@ -87,7 +87,9 @@ export function defineRemoteI18n<
   const TKey extends string,
   const TLocales extends LocaleTuple,
   TParams extends MessageParamsMap = Record<never, never>,
->(options: RemoteI18nOptions<TKey, TLocales, TParams>): I18nDefinition<TKey, TParams> {
+>(
+  options: RemoteI18nOptions<TKey, TLocales, TParams>,
+): I18nDefinition<TKey, TParams, TLocales[number]> {
   const locales: readonly Locale[] = [...options.locales];
 
   validateLocales('defineRemoteI18n', locales);
@@ -136,9 +138,9 @@ export function defineRemoteI18n<
     ),
   );
 
-  const definition: I18nDefinition<TKey, TParams> = {
+  const definition: I18nDefinition<TKey, TParams, TLocales[number]> = {
     id: options.id ?? 'etyma',
-    locales,
+    locales: locales,
     sourceLocale,
     keys: options.contract.keys,
     sourceCatalog: undefined,

@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
 import arrayCatalog from './__fixtures__/array-catalog.json' with { type: 'json' };
-import { defineI18n } from './define-i18n.js';
+import { defineI18n, type I18nDefinition } from './define-i18n.js';
 import type { MessageLoader } from './loader.js';
 import {
   defineMessageContract,
@@ -163,5 +163,25 @@ describe('MessageContract', () => {
       // @ts-expect-error - `es` has no loader; unlike `defineI18n` there is no static source.
       loaders: { en: () => ({ nav: { docs: 'Docs' } }) },
     });
+  });
+});
+
+describe('typed locales', () => {
+  it('carries the literal locale union from defineI18n to the definition', () => {
+    const definition = defineI18n({
+      locales: ['es', 'en', 'ca'],
+      sourceLocale: 'en',
+      source,
+      loaders: { es: () => Promise.resolve({}), ca: () => Promise.resolve({}) },
+    });
+
+    expectTypeOf(definition.sourceLocale).toEqualTypeOf<'es' | 'en' | 'ca'>();
+    expectTypeOf(definition.locales).toEqualTypeOf<readonly ('es' | 'en' | 'ca')[]>();
+  });
+
+  it('stays assignable to the untyped definition', () => {
+    const definition = defineI18n({ locales: ['en'], sourceLocale: 'en', source });
+
+    expectTypeOf(definition).toExtend<I18nDefinition>();
   });
 });
