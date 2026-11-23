@@ -11,6 +11,8 @@ import {
   renderContractModule,
 } from './generate-contract.js';
 
+export { etymaCatalogReload } from './catalog-reload.js';
+export type { EtymaCatalogReloadOptions, EtymaCatalogReloadPlugin } from './catalog-reload.js';
 export { etymaRemoteValidation } from './remote-validation.js';
 export type {
   EtymaRemoteValidationOptions,

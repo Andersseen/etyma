@@ -69,6 +69,7 @@ const NO_TRANSFERRED_HYDRATION_STATE: EtymaHydrationState | null = null;
 export class EtymaI18n<
   TKey extends string = string,
   TParams extends MessageParamsMap = Record<never, never>,
+  TLocale extends Locale = Locale,
 > {
   /**
    * The configuration this instance was built from.
@@ -147,17 +148,22 @@ export class EtymaI18n<
   }
 
   /** Every locale this application publishes. */
-  get locales(): readonly Locale[] {
-    return this.definition.locales;
+  get locales(): readonly TLocale[] {
+    return this.definition.locales as readonly TLocale[];
   }
 
   /** The locale the source catalog is written in, and the fallback for every other one. */
-  get sourceLocale(): Locale {
-    return this.definition.sourceLocale;
+  get sourceLocale(): TLocale {
+    return this.definition.sourceLocale as TLocale;
   }
 
-  /** The locale currently rendering. */
-  readonly locale: Signal<Locale> = this.activeLocale.asReadonly();
+  /**
+   * The locale currently rendering.
+   *
+   * A union of the literal locales given to `defineI18n` when the service was obtained with
+   * `injectI18n(definition)`, a plain `string` otherwise.
+   */
+  readonly locale = this.activeLocale.asReadonly() as Signal<TLocale>;
 
   /** The text direction of {@link locale}, for `<html dir>`. */
   readonly direction: Signal<TextDirection> = computed(() =>

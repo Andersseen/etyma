@@ -1,5 +1,5 @@
 import analog from '@analogjs/platform';
-import { etymaRemoteContract } from '@etyma/tooling/vite';
+import { etymaCatalogReload, etymaRemoteContract } from '@etyma/tooling/vite';
 import { defineConfig } from 'vite';
 
 /**
@@ -49,6 +49,8 @@ export default defineConfig(({ isSsrBuild }) => ({
       load: () => import('./src/app/i18n/remote/fixture-source.js').then(m => m.default),
       output: 'src/app/i18n/remote/contract.generated.ts',
     }),
+    // A catalog edited under a running dev server refreshes the typed keys that import it.
+    etymaCatalogReload(),
     analog({
       ssr: true,
       ...cloudflareOutput,

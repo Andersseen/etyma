@@ -161,10 +161,13 @@ export interface I18nOptions<
 export interface I18nDefinition<
   TKey extends string = string,
   TParams extends MessageParamsMap = Record<never, never>,
+  TLocale extends Locale = Locale,
 > {
   readonly id: string;
-  readonly locales: readonly Locale[];
-  readonly sourceLocale: Locale;
+
+  /** Every locale the application publishes. Typed as the literal union `defineI18n` was given. */
+  readonly locales: readonly TLocale[];
+  readonly sourceLocale: TLocale;
 
   /**
    * Every message key the definition's contract carries, sorted. Also carries the key type.
@@ -256,7 +259,7 @@ export function defineI18n<
   TParams extends MessageParamsMap = Record<never, never>,
 >(
   options: I18nOptions<TSource, TLocales, TKey, TParams>,
-): I18nDefinition<TKey, StaticParams<TSource, TParams>> & {
+): I18nDefinition<TKey, StaticParams<TSource, TParams>, TLocales[number]> & {
   readonly sourceCatalog: MessageCatalog;
 } {
   const locales: readonly Locale[] = [...options.locales];
@@ -328,11 +331,11 @@ export function defineI18n<
     ),
   );
 
-  const definition: I18nDefinition<TKey, StaticParams<TSource, TParams>> & {
+  const definition: I18nDefinition<TKey, StaticParams<TSource, TParams>, TLocales[number]> & {
     readonly sourceCatalog: MessageCatalog;
   } = {
     id: options.id ?? 'etyma',
-    locales,
+    locales: locales,
     sourceLocale,
     keys: Object.freeze([...sourceCatalog.keys()].sort()) as readonly TKey[],
     sourceCatalog,

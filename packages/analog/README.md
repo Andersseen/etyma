@@ -79,16 +79,28 @@ such as `/en/docs` and redirects it to `/docs`, so it is not indexed as a duplic
 - an absolute `hreflang` link for every locale, plus `x-default`
 
 Elements are updated in place and tagged, so a server-rendered head and a hydrated one end
-up with one canonical link rather than two. The origin comes from the request being
-rendered, so the same build is correct on localhost, on a preview deployment and in
-production — pass `origin` only when rendering outside a request, such as when
-prerendering. Pass `seo: false` to leave the head entirely alone.
+up with one canonical link rather than two. Pass `seo: false` to leave the head entirely
+alone.
+
+### Canonical origin
+
+Search engines should be pointed at one place, so **set `origin` to your production domain**:
+
+```ts
+provideEtymaAnalog({ origin: 'https://example.com' });
+```
+
+Without it the origin is the one of the request being rendered. That needs no configuration
+and is right on localhost, but on a preview deployment (`pr-1-…workers.dev`) the canonical
+and every `hreflang` link then point at the preview itself, which is not what you want
+indexed. `origin` always wins over the request, so it is safe to set everywhere; read it from
+an environment variable if previews should keep their own origin on purpose.
 
 ## API
 
 - `withLocalizedRoutes()` — a router feature for `provideFileRouter()`.
 - `provideEtymaAnalog(options?)` — request-scoped locale resolution, navigation-based locale
-  switching and the localized head. `options.origin`, `options.seo`.
+  switching and the localized head. `options.origin` (set it to the production domain), `options.seo`.
 - `ETYMA_LOCALE_PARAM` — the name of the route parameter the locale prefix is captured in
   (`'etymaLocale'`), for code that reads route params directly — a resolver, or a route of
   your own under the prefixed branch. To know the active locale, read `i18n.locale()`
@@ -97,3 +109,16 @@ prerendering. Pass `seo: false` to leave the head entirely alone.
 ## Licence
 
 [MIT](./LICENSE).
+
+## Typed locales
+
+`i18n.locale()`, `i18n.locales` and `i18n.sourceLocale` are typed as the union given to
+`defineI18n({ locales: ['es', 'en', 'ca'], … })` when the service comes from
+`injectI18n(i18n)`, so a `Record<'es' | 'en' | 'ca', string>` lookup — for `og:locale`, say —
+needs no cast.
+
+## Dev server and catalog types
+
+A running `vite dev` can keep the old types of a catalog after you add a key to its JSON file.
+Add `etymaCatalogReload()` from `@etyma/tooling/vite` to the Vite config to invalidate the
+modules that depend on a catalog when it changes; restart the dev server if you do not use it.

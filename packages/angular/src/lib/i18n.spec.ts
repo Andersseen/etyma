@@ -393,6 +393,18 @@ describe('injectI18n', () => {
     expect(injected).toBe(TestBed.inject(EtymaI18n));
   });
 
+  it('types the active locale as the union the definition was given', () => {
+    const shared = definition();
+    TestBed.configureTestingModule({ providers: [provideEtyma(shared)] });
+
+    const injected = TestBed.runInInjectionContext(() => injectI18n(shared));
+    const active: 'en' | 'es' | 'uk' = injected.locale();
+    const everyLocale: readonly ('en' | 'es' | 'uk')[] = injected.locales;
+
+    expect(active).toBe('en');
+    expect(everyLocale).toEqual(['en', 'es', 'uk']);
+  });
+
   it('works with no definition at all, for a component that does not need typed keys', () => {
     TestBed.configureTestingModule({ providers: [provideEtyma(definition())] });
 

@@ -8,7 +8,8 @@ import { injectBaseURL } from '@analogjs/router/tokens';
  * the one part of them the application cannot know statically: the same build serves
  * localhost, a preview deployment and production. Analog's `BASE_URL` carries the request's
  * own origin on the server; the browser reads its own location. Neither needs configuring,
- * which is why `origin` is an override rather than a required option.
+ * which keeps localhost working out of the box, but a preview deployment would then name
+ * itself canonical - so production sets `origin`, which always wins.
  *
  * Must be called in an injection context.
  */

@@ -16,10 +16,12 @@ export interface EtymaAnalogOptions {
   /**
    * The absolute origin for canonical and `hreflang` URLs.
    *
-   * Defaults to the origin of the request being rendered, which is correct on localhost, on
-   * a preview deployment and in production without any of them being named in the
-   * repository. Set it only when rendering outside a request, or behind a proxy that does
-   * not forward the original host.
+   * Set this to your production domain. It always wins over the request, so canonical and
+   * `hreflang` URLs point search engines at production even when the page is served from a
+   * preview deployment.
+   *
+   * Without it the origin is the one of the request being rendered: correct on localhost
+   * with no configuration, but a preview deployment then names itself as canonical.
    */
   readonly origin?: string;
 
